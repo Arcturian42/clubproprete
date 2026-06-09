@@ -27,7 +27,92 @@ test.beforeAll(async () => {
       where: { ownerUserId: verifiedUser.id },
       data: { verificationStatus: 'approved', deletedAt: null },
     });
+
+    await prisma.company.upsert({
+      where: { id: 'company-1' },
+      update: {
+        ownerUserId: verifiedUser.id,
+        name: 'Azur Proprete Services',
+        city: 'Nice',
+        verificationStatus: 'approved',
+        deletedAt: null,
+      },
+      create: {
+        id: 'company-1',
+        ownerUserId: verifiedUser.id,
+        name: 'Azur Proprete Services',
+        city: 'Nice',
+        verificationStatus: 'approved',
+      },
+    });
+
+    await prisma.job.upsert({
+      where: { id: 'job-1' },
+      update: {
+        companyId: 'company-1',
+        createdBy: verifiedUser.id,
+        title: 'Chef d\'equipe propreté tertiaire',
+        description: 'Nous recherchons un chef d\'équipe expérimenté pour un site tertiaire.',
+        contractType: 'CDI',
+        city: 'Nice',
+        status: 'published',
+        deletedAt: null,
+      },
+      create: {
+        id: 'job-1',
+        companyId: 'company-1',
+        createdBy: verifiedUser.id,
+        title: 'Chef d\'equipe propreté tertiaire',
+        description: 'Nous recherchons un chef d\'équipe expérimenté pour un site tertiaire.',
+        contractType: 'CDI',
+        city: 'Nice',
+        status: 'published',
+        publishedAt: new Date(),
+      },
+    });
   }
+
+  const candidateUser = await prisma.user.upsert({
+    where: { email: 'candidat@clubproprete.test' },
+    update: {
+      passwordHash,
+      firstName: 'Laura',
+      lastName: 'D.',
+      mainRole: 'candidate_profile',
+      emailVerified: true,
+      deletedAt: null,
+    },
+    create: {
+      email: 'candidat@clubproprete.test',
+      passwordHash,
+      firstName: 'Laura',
+      lastName: 'D.',
+      mainRole: 'candidate_profile',
+      emailVerified: true,
+    },
+  });
+
+  const candidateProfile = await prisma.candidateProfile.upsert({
+    where: { userId: candidateUser.id },
+    update: {
+      firstName: 'Laura',
+      lastName: 'D.',
+      city: 'Paris',
+      deletedAt: null,
+    },
+    create: {
+      userId: candidateUser.id,
+      firstName: 'Laura',
+      lastName: 'D.',
+      city: 'Paris',
+      desiredContracts: 'CDI,CDD',
+      experienceYears: 3,
+    },
+  });
+
+  await prisma.jobApplication.deleteMany({
+    where: { jobId: 'job-1', candidateProfileId: candidateProfile.id },
+  });
 
   const unverifiedUser = await prisma.user.upsert({
     where: { email: 'societe-non-verifiee@clubproprete.test' },
@@ -105,5 +190,34 @@ test.describe('Offres d\'emploi', () => {
 
     await expect(page.getByText(/compte personnel et votre société doivent être validés/i)).toBeVisible();
     await expect(page.getByText(/offre soumise/i)).not.toBeVisible();
+  });
+
+  test('candidat postule avec son propre profil', async ({ page }) => {
+    await loginAs(page, 'candidat@clubproprete.test');
+    await page.waitForURL('/dashboard');
+
+    await page.goto('/emploi/job-1');
+    await page.getByLabel('Message au recruteur').fill('Disponible rapidement pour un entretien.');
+    await page.getByRole('button', { name: /postuler/i }).click();
+    await page.waitForURL('/dashboard');
+
+    const candidateUser = await prisma.user.findUnique({
+      where: { email: 'candidat@clubproprete.test' },
+      include: { candidateProfile: true },
+    });
+
+    if (!candidateUser?.candidateProfile) {
+      throw new Error('Profil candidat de test introuvable.');
+    }
+
+    const application = await prisma.jobApplication.findFirst({
+      where: {
+        jobId: 'job-1',
+        candidateProfileId: candidateUser.candidateProfile.id,
+        deletedAt: null,
+      },
+    });
+
+    expect(application?.applicantUserId).toBe(candidateUser.id);
   });
 });

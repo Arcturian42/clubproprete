@@ -122,7 +122,9 @@ export function LoginForm() {
               }}
             >
               <span className="block text-sm font-black text-slate-900">
-                {account.firstName} {account.lastName}
+                {account.role === "candidate_profile"
+                  ? "Compte démo candidat"
+                  : `${account.firstName} ${account.lastName}`}
               </span>
               <span className="mt-1 block text-xs font-bold text-slate-500">
                 {account.email} · {account.profileType}

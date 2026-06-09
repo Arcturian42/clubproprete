@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { PermissionError, requireEntityRole, requireUser } from "@/lib/permissions";
 
 export async function getPublishedCompanies(search?: string, page?: number, limit = 12) {
   const where: Record<string, unknown> = { verificationStatus: "approved", deletedAt: null };
@@ -64,6 +65,7 @@ export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;
 
 export async function updateCompanyProfile(data: UpdateCompanyInput) {
   try {
+    const session = await requireUser();
     const parsed = updateCompanySchema.safeParse(data);
 
     if (!parsed.success) {
@@ -71,6 +73,8 @@ export async function updateCompanyProfile(data: UpdateCompanyInput) {
     }
 
     const { id, services, clients, foundedYear, logo, photos, ...rest } = parsed.data;
+
+    await requireEntityRole(session.user.id, "company", id, ["owner", "admin"]);
 
     const company = await prisma.company.update({
       where: { id },
@@ -107,6 +111,10 @@ export async function updateCompanyProfile(data: UpdateCompanyInput) {
     revalidatePath("/dashboard");
     return { success: true, company };
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
+
     console.error("updateCompanyProfile error:", err);
     return { success: false, message: "Une erreur est survenue. Veuillez réessayer." };
   }

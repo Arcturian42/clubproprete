@@ -37,7 +37,7 @@ export default function RootLayout({
                   <ul className="mt-2 space-y-1">
                     <li><Link href="/annuaire/societes" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Sociétés</Link></li>
                     <li><Link href="/annuaire/fournisseurs" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Fournisseurs</Link></li>
-                    <li><Link href="/candidats" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Candidats</Link></li>
+                    <li><Link href="/inscription?role=candidate_profile" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Profil candidat</Link></li>
                     <li><Link href="/independants" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Indépendants</Link></li>
                   </ul>
                 </div>

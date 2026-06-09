@@ -128,12 +128,13 @@ export async function getJobById(id: string) {
 
 const applySchema = z.object({
   jobId: z.string(),
-  candidateProfileId: z.string(),
+  candidateProfileId: z.string().optional(),
   message: z.string().optional(),
 });
 
 export async function applyToJob(formData: FormData) {
   try {
+    const session = await requireUser();
     const raw = Object.fromEntries(formData.entries());
     const parsed = applySchema.safeParse(raw);
 
@@ -143,17 +144,30 @@ export async function applyToJob(formData: FormData) {
 
     const { jobId, candidateProfileId, message } = parsed.data;
 
-    const candidateProfile = await prisma.candidateProfile.findUnique({
-      where: { id: candidateProfileId },
-      select: { userId: true, firstName: true, lastName: true },
+    const candidateProfile = await prisma.candidateProfile.findFirst({
+      where: { userId: session.user.id, deletedAt: null },
+      select: { id: true, userId: true, firstName: true, lastName: true },
     });
 
     if (!candidateProfile) {
-      return { success: false, message: "Profil candidat introuvable." };
+      return { success: false, message: "Vous devez disposer d'un profil candidat pour postuler." };
+    }
+
+    if (candidateProfileId && candidateProfileId !== candidateProfile.id) {
+      return { success: false, message: "Vous ne pouvez pas postuler avec le profil d'un autre candidat." };
+    }
+
+    const job = await prisma.job.findFirst({
+      where: { id: jobId, status: "published", deletedAt: null },
+      include: { company: { include: { owner: { select: { email: true } } } } },
+    });
+
+    if (!job) {
+      return { success: false, message: "Offre introuvable ou indisponible." };
     }
 
     const existing = await prisma.jobApplication.findFirst({
-      where: { jobId, candidateProfileId, deletedAt: null },
+      where: { jobId, candidateProfileId: candidateProfile.id, deletedAt: null },
     });
 
     if (existing) {
@@ -163,16 +177,11 @@ export async function applyToJob(formData: FormData) {
     const application = await prisma.jobApplication.create({
       data: {
         jobId,
-        candidateProfileId,
-        applicantUserId: candidateProfile.userId,
+        candidateProfileId: candidateProfile.id,
+        applicantUserId: session.user.id,
         message: message || null,
         status: "submitted",
       },
-    });
-
-    const job = await prisma.job.findUnique({
-      where: { id: jobId },
-      include: { company: { include: { owner: { select: { email: true } } } } },
     });
 
     const toEmail = job?.company?.owner?.email;
@@ -187,6 +196,10 @@ export async function applyToJob(formData: FormData) {
     revalidatePath("/emploi");
     return { success: true, application };
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
+
     console.error("applyToJob error:", err);
     return { success: false, message: "Une erreur est survenue. Veuillez réessayer." };
   }
@@ -202,6 +215,23 @@ export async function getCandidateApplications(candidateProfileId: string) {
 
 export async function softDeleteJob(jobId: string) {
   try {
+    const session = await requireUser();
+    const job = await prisma.job.findFirst({
+      where: { id: jobId, deletedAt: null },
+      select: { companyId: true },
+    });
+
+    if (!job) {
+      return { success: false, message: "Offre introuvable." };
+    }
+
+    const role = session.user.role;
+    const isAdmin = role === "admin" || role === "super_admin";
+
+    if (!isAdmin) {
+      await requireEntityRole(session.user.id, "company", job.companyId, ["owner", "recruiter"]);
+    }
+
     await prisma.job.update({
       where: { id: jobId },
       data: { deletedAt: new Date() },
@@ -210,6 +240,10 @@ export async function softDeleteJob(jobId: string) {
     revalidatePath("/admin");
     return { success: true };
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
+
     console.error("softDeleteJob error:", err);
     return { success: false, message: "Une erreur est survenue. Veuillez réessayer." };
   }

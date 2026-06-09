@@ -62,7 +62,6 @@ export default async function JobDetailPage({ params }: Props) {
 
     const payload = new FormData();
     payload.append("jobId", id);
-    payload.append("candidateProfileId", currentCandidateProfile.id);
     payload.append("message", String(formData.get("message") ?? ""));
 
     await applyToJob(payload);
