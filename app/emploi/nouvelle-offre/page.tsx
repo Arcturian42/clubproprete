@@ -88,16 +88,18 @@ export default function NouvelleOffrePage() {
     formDataAction.append("salaryInfo", formData.salary);
     formDataAction.append("requirements", formData.requirements);
     formDataAction.append("companyId", company.id);
-    formDataAction.append("createdBy", user.id);
 
     const result = await createJob(formDataAction);
     setIsSubmitting(false);
 
     if (!result.success) {
-      const fieldErrors = result.errors as Record<string, string[]>;
       const mapped: Record<string, string> = {};
+      const fieldErrors = "errors" in result ? (result.errors as Record<string, string[]> | undefined) : undefined;
       for (const [key, vals] of Object.entries(fieldErrors || {})) {
         mapped[key] = vals[0];
+      }
+      if ("message" in result && result.message) {
+        mapped.general = result.message;
       }
       setErrors(mapped);
       return;

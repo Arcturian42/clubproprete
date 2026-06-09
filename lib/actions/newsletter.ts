@@ -2,6 +2,8 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { rateLimitByIp } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/ip";
 
 const schema = z.object({
   email: z.string().email("Email invalide."),
@@ -13,6 +15,12 @@ export async function subscribeNewsletter(
   _prev: NewsletterResult | undefined,
   formData: FormData
 ): Promise<NewsletterResult> {
+  const ip = await getClientIp();
+  const limit = rateLimitByIp(ip, "newsletter", 3, 60_000);
+  if (!limit.success) {
+    return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
+  }
+
   const parsed = schema.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
     return { success: false, message: parsed.error.errors[0]?.message ?? "Email invalide." };

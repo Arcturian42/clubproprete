@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { CircleSlash, Download, ShieldAlert } from "lucide-react";
+import Link from "next/link";
+import { CircleSlash, Download, ShieldAlert, ShieldCheck, Users, ArrowRight } from "lucide-react";
 import { auth } from "@/auth";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
@@ -7,15 +8,26 @@ import { StatCard } from "@/components/stat-card";
 import { StatusPill } from "@/components/status-pill";
 import { EmptyState } from "@/components/empty-state";
 import { getAdminQueue, updateEntityStatus } from "@/lib/actions/admin";
+import { getAdminStats } from "@/lib/actions/users";
 import { needsAdminValidation } from "@/lib/permissions";
 
 export default async function AdminPage() {
   const session = await auth();
-  if (session?.user?.role !== "admin" && session?.user?.role !== "super_admin") {
+  const isSuperAdmin = session?.user?.role === "super_admin";
+  const isAdmin = session?.user?.role === "admin" || isSuperAdmin;
+
+  if (!isAdmin) {
     redirect("/");
   }
 
-  const queues = await getAdminQueue();
+  const [queuesResult, statsResult] = await Promise.all([
+    getAdminQueue(),
+    getAdminStats(),
+  ]);
+
+  const queues = queuesResult;
+  const stats = statsResult.success ? statsResult.stats : null;
+
   const pendingCount = queues.filter((item) => needsAdminValidation(item.status)).length;
   const approvedCount = queues.filter((item) => item.status === "approved" || item.status === "published").length;
 
@@ -26,32 +38,59 @@ export default async function AdminPage() {
 
   return (
     <PageShell
-      eyebrow="Back-office"
-      title="Admin validation et moderation"
-      description="Centre de contrôle pour garder la qualité des données, appliquer les restrictions et préparer les exports."
+      eyebrow={isSuperAdmin ? "Back-office — Super Admin" : "Back-office — Admin"}
+      title="Validation et moderation"
+      description="Centre de controle pour garder la qualite des donnees, appliquer les restrictions et preparer les exports."
+      actions={
+        <div className="flex flex-wrap gap-3">
+          {isSuperAdmin && (
+            <Link href="/admin/users" className="bento-btn bento-btn-primary">
+              <Users size={16} aria-hidden="true" /> Gestion utilisateurs
+            </Link>
+          )}
+          <a href="/api/admin/export" className="bento-btn" download>
+            <Download size={16} aria-hidden="true" /> Export CSV
+          </a>
+        </div>
+      }
     >
-      <div className="mb-5 flex flex-wrap gap-3">
-        <a href="/api/admin/export" className="bento-btn" download>
-          <Download size={16} aria-hidden="true" /> Export CSV
-        </a>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {isSuperAdmin ? (
+          <span className="bento-tag border-rose-400 bg-rose-50 text-rose-700">
+            <ShieldCheck size={13} aria-hidden="true" /> Super Admin
+          </span>
+        ) : (
+          <span className="bento-tag border-indigo-400 bg-indigo-50 text-indigo-700">
+            <ShieldCheck size={13} aria-hidden="true" /> Admin
+          </span>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="File admin" value={String(queues.length)} detail="Tous objets modérables" />
+        <StatCard label="File admin" value={String(queues.length)} detail="Tous objets moderables" />
         <StatCard label="En attente" value={String(pendingCount)} detail="Action requise" />
-        <StatCard label="Publiés/validés" value={String(approvedCount)} detail="Visibles selon règles" />
-        <StatCard label="Paiement" value="0" detail="Interdit en V1" />
+        <StatCard label="Publies/valides" value={String(approvedCount)} detail="Visibles selon regles" />
+        <StatCard label="Utilisateurs" value={stats ? String(stats.totalUsers) : "—"} detail="Total inscrits" />
       </div>
 
+      {stats && (
+        <div className="mt-4 grid gap-4 sm:grid-cols-4">
+          <StatCard label="Societes" value={String(stats.totalCompanies)} detail="Referencees" />
+          <StatCard label="Fournisseurs" value={String(stats.totalSuppliers)} detail="Catalogue" />
+          <StatCard label="Offres" value={String(stats.totalJobs)} detail="Job board" />
+          <StatCard label="Formations" value={String(stats.totalTrainings)} detail="Catalogue" />
+        </div>
+      )}
+
       {queues.length === 0 ? (
-        <EmptyState title="File vide" description="Aucun élément en attente de modération." />
+        <EmptyState title="File vide" description="Aucun element en attente de moderation." />
       ) : (
         <div className="mt-6 overflow-x-auto rounded-[20px] border-2 border-slate-900 bg-white shadow-panel">
           <table className="w-full min-w-[640px] border-collapse text-left text-sm">
             <thead className="bg-slate-100 text-slate-700">
               <tr>
                 <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Type</th>
-                <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Élément</th>
+                <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Element</th>
                 <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Statut</th>
                 <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Actions</th>
               </tr>
@@ -101,17 +140,44 @@ export default async function AdminPage() {
       )}
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
-        <EntityCard title="Permissions sensibles" subtitle="Sous-traitance visible uniquement par membres association validés." meta={["Route guard", "Server check", "Admin override"]}>
+        <EntityCard title="Permissions sensibles" subtitle="Sous-traitance visible uniquement par membres association valides." meta={["Route guard", "Server check", "Admin override"]}>
           <div className="flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
-            <ShieldAlert size={18} aria-hidden="true" /> À verrouiller avant prod
+            <ShieldAlert size={18} aria-hidden="true" /> A verrouiller avant prod
           </div>
         </EntityCard>
-        <EntityCard title="Actions interdites V1" subtitle="Paiement, abonnement, appels d'offres, achats groupés et sponsoring restent hors scope." meta={["Pas de Stripe", "Pas de premium", "Pas d'appel d'offres"]}>
+        <EntityCard title="Actions interdites V1" subtitle="Paiement, abonnement, appels d'offres, achats groupes et sponsoring restent hors scope." meta={["Pas de Stripe", "Pas de premium", "Pas d'appel d'offres"]}>
           <div className="flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wide text-slate-600">
             <CircleSlash size={18} aria-hidden="true" /> Restrictions produit conformes au PRD
           </div>
         </EntityCard>
       </div>
+
+      {isSuperAdmin && (
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          <EntityCard
+            title="Gestion utilisateurs"
+            subtitle="Acces exclusif super admin : liste, roles, suspension des comptes."
+            meta={["Super admin only", "Modification role", "Suspension compte"]}
+          >
+            <Link href="/admin/users" className="inline-flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wide text-rose-600">
+              Ouvrir <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          </EntityCard>
+          <EntityCard
+            title="Stats plateforme"
+            subtitle="Vue d'ensemble des volumes de donnees en temps reel."
+            meta={[
+              stats ? `${stats.totalUsers} utilisateurs` : "—",
+              stats ? `${stats.totalCompanies} societes` : "—",
+              stats ? `${stats.totalSuppliers} fournisseurs` : "—",
+            ]}
+          >
+            <span className="inline-flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
+              <ShieldCheck size={15} aria-hidden="true" /> Super admin
+            </span>
+          </EntityCard>
+        </div>
+      )}
     </PageShell>
   );
 }

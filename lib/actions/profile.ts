@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { rateLimitByIp } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/ip";
 
 const updateProfileSchema = z.object({
   userId: z.string(),
@@ -22,6 +24,12 @@ export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 export async function updateUserProfile(data: UpdateProfileInput) {
   try {
+    const ip = await getClientIp();
+    const limit = rateLimitByIp(ip, "update_profile", 10, 60_000);
+    if (!limit.success) {
+      return { success: false, message: "Trop de modifications. Veuillez ralentir." };
+    }
+
     const parsed = updateProfileSchema.safeParse(data);
 
     if (!parsed.success) {

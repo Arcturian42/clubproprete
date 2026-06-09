@@ -5,6 +5,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { ADMIN_ENTITY_TYPES, WORKFLOW_STATUSES, type AdminEntityType } from "@/lib/types";
+import { rateLimitByIp } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/ip";
 
 const updateStatusSchema = z.object({
   entityType: z.enum(ADMIN_ENTITY_TYPES),
@@ -24,6 +26,11 @@ async function requireAdmin() {
 
 export async function updateEntityStatus(formData: FormData) {
   try {
+    const ip = await getClientIp();
+    const limit = rateLimitByIp(ip, "admin_action", 30, 60_000);
+    if (!limit.success) {
+      return { success: false, message: "Trop d'actions. Veuillez ralentir." };
+    }
     const admin = await requireAdmin();
     const raw = Object.fromEntries(formData.entries());
     const parsed = updateStatusSchema.safeParse(raw);

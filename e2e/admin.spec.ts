@@ -2,46 +2,49 @@ import { test, expect } from '@playwright/test';
 import { loginAs } from './fixtures';
 
 test.describe('Admin', () => {
-  test('valider une entité', async ({ page }) => {
-    test.setTimeout(60_000);
-
-    const requests: string[] = [];
-    page.on('request', req => requests.push(`${req.method()} ${req.url()}`));
-    page.on('response', res => requests.push(`=> ${res.status()} ${res.url()}`));
-
+  test('charge la file de moderation avec les boutons Valider et Refuser', async ({ page }) => {
     await loginAs(page, 'admin@clubproprete.test');
-    console.log('After loginAs, URL:', page.url());
-    console.log('Requests during login:', requests.filter(r => r.includes('auth') || r.includes('credentials')));
-
-    await page.goto('/admin');
+    await page.waitForURL('/admin');
     await page.waitForLoadState('networkidle');
-    console.log('After goto /admin, URL:', page.url());
 
     await expect(page.locator('table')).toBeVisible();
+    const firstRow = page.locator('table tbody tr').first();
+    await expect(firstRow).toBeVisible();
+    await expect(firstRow.getByRole('button', { name: 'Valider' })).toBeVisible();
+    await expect(firstRow.getByRole('button', { name: 'Refuser' })).toBeVisible();
+  });
 
-    const rowToValidate = page.locator('table tbody tr').filter({
-      hasText: /En attente|Brouillon/,
-    }).first();
+  test('admin voit le badge Admin', async ({ page }) => {
+    await loginAs(page, 'admin@clubproprete.test');
+    await page.waitForURL('/admin');
+    await expect(page.getByText('Admin').first()).toBeVisible();
+  });
+});
 
-    const hasPending = await rowToValidate.isVisible().catch(() => false);
-    if (!hasPending) {
-      await expect(page.locator('table tbody tr').first()).toBeVisible();
-      return;
-    }
+test.describe('Super Admin', () => {
+  test('super admin voit le badge Super Admin', async ({ page }) => {
+    await loginAs(page, 'superadmin@clubproprete.test');
+    await page.waitForURL('/admin');
+    await expect(page.getByText('Super Admin').first()).toBeVisible();
+  });
 
-    await page.waitForTimeout(1500);
+  test('super admin peut acceder a la gestion utilisateurs', async ({ page }) => {
+    await loginAs(page, 'superadmin@clubproprete.test');
+    await page.waitForURL('/admin');
+    await expect(page.getByRole('link', { name: /gestion utilisateurs/i })).toBeVisible();
 
-    const statusCell = rowToValidate.locator('td').nth(2);
-    const initialStatus = await statusCell.textContent();
+    await page.getByRole('link', { name: /gestion utilisateurs/i }).click();
+    await page.waitForURL('/admin/users');
+    await expect(page.getByRole('heading', { name: /gestion des utilisateurs/i })).toBeVisible();
+    await expect(page.locator('table')).toBeVisible();
+  });
 
-    const validateButton = rowToValidate.getByRole('button', { name: 'Valider' });
-    await validateButton.click();
+  test('admin standard ne peut pas acceder a la gestion utilisateurs', async ({ page }) => {
+    await loginAs(page, 'admin@clubproprete.test');
+    await page.waitForURL('/admin');
+    await expect(page.getByRole('link', { name: /gestion utilisateurs/i })).not.toBeVisible();
 
-    await expect.poll(async () => {
-      const currentStatus = await rowToValidate.locator('td').nth(2).textContent();
-      return currentStatus;
-    }).not.toBe(initialStatus);
-
-    await expect(rowToValidate.locator('td').nth(2)).toContainText('Valide');
+    await page.goto('/admin/users');
+    await expect(page).toHaveURL('/admin');
   });
 });

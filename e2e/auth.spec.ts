@@ -11,7 +11,7 @@ test.describe('Authentification', () => {
   test('connexion compte démo admin', async ({ page }) => {
     await loginAs(page, 'admin@clubproprete.test');
     await page.waitForURL('/admin');
-    await expect(page.getByRole('heading', { name: /admin validation/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /validation et moderation/i })).toBeVisible();
   });
 
   test('inscription nouvel utilisateur', async ({ page }) => {
@@ -26,7 +26,7 @@ test.describe('Authentification', () => {
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(`jean.test+${timestamp}@clubproprete.test`);
     await page.getByLabel('Mot de passe').fill('demo123');
     await page.getByRole('textbox', { name: 'Téléphone', exact: true }).fill('0600000000');
-    await page.getByRole('textbox', { name: 'Société / structure', exact: true }).fill('Test Propreté');
+    await page.getByRole('textbox', { name: /Société \/ structure/i }).fill('Test Propreté');
 
     await page.getByRole('checkbox').check();
     await page.getByRole('button', { name: /continuer l'onboarding/i }).click();

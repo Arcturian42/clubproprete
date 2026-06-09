@@ -3,6 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { AuthProvider } from "@/components/providers/session-provider";
+import { FlashToast } from "@/components/flash-toast";
 
 export const metadata: Metadata = {
   title: "Club Propreté",
@@ -21,6 +22,7 @@ export default function RootLayout({
         <AuthProvider>
           <SiteHeader />
           <main className="flex-1">{children}</main>
+          <FlashToast />
           <footer className="border-t-2 border-slate-900 bg-white mt-10">
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">

@@ -140,4 +140,15 @@ export const dashboards: DashboardSeed[] = [
       { label: "Missions", value: "2" },
     ],
   },
+  {
+    role: "super_admin",
+    label: "Dashboard super admin",
+    summary: "Gestion globale de la plateforme : utilisateurs, admins, securite et strategie.",
+    actions: ["Gerer les utilisateurs", "Moderation", "Exporter CSV", "Audit securite"],
+    metrics: [
+      { label: "En attente", value: "7" },
+      { label: "Utilisateurs", value: "10" },
+      { label: "Admins", value: "2" },
+    ],
+  },
 ];

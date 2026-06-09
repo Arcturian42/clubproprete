@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { sendNewJobNotification, sendAdminNotification, sendJobApplicationNotification } from "@/lib/email";
+import { canPublishJob, PermissionError, requireEntityRole, requireUser } from "@/lib/permissions";
 
 const createJobSchema = z.object({
   title: z.string().min(5, "Le titre doit contenir au moins 5 caractères."),
@@ -13,11 +14,11 @@ const createJobSchema = z.object({
   salaryInfo: z.string().optional(),
   requirements: z.string().optional(),
   companyId: z.string().min(1),
-  createdBy: z.string().min(1),
 });
 
 export async function createJob(formData: FormData) {
   try {
+    const session = await requireUser();
     const raw = Object.fromEntries(formData.entries());
     const parsed = createJobSchema.safeParse(raw);
 
@@ -25,8 +26,34 @@ export async function createJob(formData: FormData) {
       return { success: false, errors: parsed.error.flatten().fieldErrors };
     }
 
-    const { title, description, city, contractType, salaryInfo, requirements, companyId, createdBy } =
-      parsed.data;
+    const { title, description, city, contractType, salaryInfo, requirements, companyId } = parsed.data;
+
+    const [user, company] = await Promise.all([
+      prisma.user.findFirst({
+        where: { id: session.user.id, deletedAt: null },
+        include: { profile: true },
+      }),
+      prisma.company.findFirst({
+        where: { id: companyId, deletedAt: null },
+      }),
+    ]);
+
+    if (!user) {
+      return { success: false, message: "Utilisateur introuvable." };
+    }
+
+    if (!company) {
+      return { success: false, message: "Société introuvable." };
+    }
+
+    const membership = await requireEntityRole(user.id, "company", company.id, ["owner", "recruiter"]);
+
+    if (!canPublishJob(user, company, membership.role)) {
+      return {
+        success: false,
+        message: "Votre compte personnel et votre société doivent être validés pour publier une offre.",
+      };
+    }
 
     const job = await prisma.job.create({
       data: {
@@ -37,19 +64,14 @@ export async function createJob(formData: FormData) {
         salaryMin: salaryInfo ? parseInt(salaryInfo) || undefined : undefined,
         requiredSkills: requirements || null,
         companyId,
-        createdBy,
+        createdBy: user.id,
         status: "pending",
       },
       include: { company: true },
     });
 
-    const creator = await prisma.user.findUnique({
-      where: { id: createdBy },
-      select: { email: true, firstName: true },
-    });
-
-    if (creator?.email) {
-      await sendNewJobNotification(creator.email, title);
+    if (user.email) {
+      await sendNewJobNotification(user.email, title);
     }
 
     await sendAdminNotification(
@@ -60,6 +82,10 @@ export async function createJob(formData: FormData) {
     revalidatePath("/emploi");
     return { success: true, job };
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
+
     console.error("createJob error:", err);
     return { success: false, message: "Une erreur est survenue. Veuillez réessayer." };
   }

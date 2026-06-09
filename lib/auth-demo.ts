@@ -94,6 +94,15 @@ export const demoAccounts: DemoAccount[] = [
     profileType: "Admin",
     associationMember: true,
   },
+  {
+    id: "demo-super-admin",
+    email: "superadmin@clubproprete.test",
+    firstName: "Super",
+    lastName: "Admin",
+    role: "super_admin",
+    profileType: "Super Admin",
+    associationMember: true,
+  },
 ];
 
 export const profileOptions: Array<{ label: string; role: Role; associationEligible: boolean }> = [

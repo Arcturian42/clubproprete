@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { signIn } from "@/auth";
 import { sendWelcomeEmail } from "@/lib/email";
+import { rateLimitByIp, rateLimitByEmail } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/ip";
+import { setFlash } from "@/lib/flash";
 
 const signupSchema = z.object({
   email: z.string().email("Veuillez saisir un email valide."),
@@ -30,6 +33,12 @@ export type SignupInput = z.infer<typeof signupSchema>;
 
 export async function registerUser(data: SignupInput) {
   try {
+    const ip = await getClientIp();
+    const limit = rateLimitByIp(ip, "register", 5, 3_600_000);
+    if (!limit.success) {
+      return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
+    }
+
     const parsed = signupSchema.safeParse(data);
     if (!parsed.success) {
       return { success: false, errors: parsed.error.flatten().fieldErrors };
@@ -146,6 +155,11 @@ export async function registerUser(data: SignupInput) {
 
 export async function loginUser(email: string, password: string) {
   try {
+    const ip = await getClientIp();
+    const limit = rateLimitByIp(ip, "login", 10, 300_000);
+    if (!limit.success) {
+      return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
+    }
     await signIn("credentials", { email, password, redirect: false });
     return { success: true };
   } catch {

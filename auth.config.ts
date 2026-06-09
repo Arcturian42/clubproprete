@@ -55,7 +55,6 @@ export const authConfig = {
         path.startsWith("/emploi") ||
         path.startsWith("/formations") ||
         path.startsWith("/ressources") ||
-        path.startsWith("/candidats") ||
         path.startsWith("/independants") ||
         path.startsWith("/association") ||
         path.startsWith("/connexion") ||

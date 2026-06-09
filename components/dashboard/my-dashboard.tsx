@@ -49,6 +49,11 @@ const roleActions: Record<string, Array<{ label: string; href: string }>> = {
     { label: "Administration", href: "/admin" },
     { label: "Modifier mon profil", href: "/profil" },
   ],
+  super_admin: [
+    { label: "Administration", href: "/admin" },
+    { label: "Gestion utilisateurs", href: "/admin/users" },
+    { label: "Modifier mon profil", href: "/profil" },
+  ],
   registered_user: [
     { label: "Choisir un profil", href: "/profil" },
     { label: "Compléter mes informations", href: "/profil" },
@@ -139,7 +144,17 @@ export function MyDashboard({
             <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-500">{dashboard.summary}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {user.associationMember ? (
+            {user.role === "super_admin" ? (
+              <span className="bento-tag border-rose-400 bg-rose-100 text-rose-800">
+                <ShieldCheck size={13} aria-hidden="true" />
+                Super Admin
+              </span>
+            ) : user.role === "admin" ? (
+              <span className="bento-tag border-indigo-400 bg-indigo-100 text-indigo-800">
+                <ShieldCheck size={13} aria-hidden="true" />
+                Admin
+              </span>
+            ) : user.associationMember ? (
               <span className="bento-tag border-amber-400 bg-amber-100 text-slate-900">
                 <ShieldCheck size={13} aria-hidden="true" />
                 Membre association

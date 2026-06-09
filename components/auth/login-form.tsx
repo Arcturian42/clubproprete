@@ -49,7 +49,8 @@ export function LoginForm() {
       }
     }
 
-    router.push(safeCallbackUrl || (selectedAccount.role === "admin" ? "/admin" : "/dashboard"));
+    const isAdminRole = selectedAccount.role === "admin" || selectedAccount.role === "super_admin";
+    router.push(safeCallbackUrl || (isAdminRole ? "/admin" : "/dashboard"));
     router.refresh();
   }
 
