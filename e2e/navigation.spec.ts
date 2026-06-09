@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Navigation', () => {
   test('navigation publique', async ({ page }) => {
     const publicRoutes = [
-      { path: '/', heading: /boite a outils/i },
+      { path: '/', heading: /club propreté/i },
       { path: '/emploi', heading: /offres d'emploi/i },
       { path: '/formations', heading: /espace formation/i },
       { path: '/ressources', heading: /ressources/i },
