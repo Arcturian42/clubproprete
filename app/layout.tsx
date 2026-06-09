@@ -1,0 +1,69 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import "./globals.css";
+import { SiteHeader } from "@/components/site-header";
+import { AuthProvider } from "@/components/providers/session-provider";
+
+export const metadata: Metadata = {
+  title: "Club Propreté",
+  description:
+    "La boite a outils gratuite des professionnels du nettoyage : annuaire, emploi, formations, association et sous-traitance privee.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="fr">
+      <body className="flex min-h-screen flex-col">
+        <AuthProvider>
+          <SiteHeader />
+          <main className="flex-1">{children}</main>
+          <footer className="border-t-2 border-slate-900 bg-white mt-10">
+            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+              <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">Club Propreté</h3>
+                  <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+                    La boite a outils gratuite des professionnels du nettoyage.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">Annuaires</h3>
+                  <ul className="mt-2 space-y-1">
+                    <li><Link href="/annuaire/societes" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Sociétés</Link></li>
+                    <li><Link href="/annuaire/fournisseurs" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Fournisseurs</Link></li>
+                    <li><Link href="/candidats" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Candidats</Link></li>
+                    <li><Link href="/independants" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Indépendants</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">Services</h3>
+                  <ul className="mt-2 space-y-1">
+                    <li><Link href="/emploi" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Emploi</Link></li>
+                    <li><Link href="/formations" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Formations</Link></li>
+                    <li><Link href="/association" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Association</Link></li>
+                    <li><Link href="/ressources" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Ressources</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">Légal</h3>
+                  <ul className="mt-2 space-y-1">
+                    <li><Link href="/mentions-legales" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Mentions légales</Link></li>
+                    <li><Link href="/politique-confidentialite" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Politique de confidentialité</Link></li>
+                    <li><Link href="/cgu" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">CGU</Link></li>
+                  </ul>
+                </div>
+              </div>
+              <div className="mt-8 border-t-2 border-slate-100 pt-4 text-center">
+                <p className="text-[11px] font-bold text-slate-400">© 2026 Club Propreté. Tous droits réservés. V1 production-ready.</p>
+              </div>
+            </div>
+          </footer>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}

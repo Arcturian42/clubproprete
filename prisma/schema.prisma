@@ -1,0 +1,511 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String?
+  firstName         String?
+  lastName          String?
+  phone             String?
+  avatarUrl         String?
+  bio               String?
+  photos            String?
+  address           String?
+  city              String?
+  emailVerified     Boolean   @default(false)
+  phoneVerified     Boolean   @default(false)
+  mainRole          String    @default("registered_user")
+  status            String    @default("active")
+  newsletterOptIn   Boolean   @default(false)
+  termsAcceptedAt   DateTime?
+  privacyAcceptedAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  profile                 UserProfile?
+  companies               Company[]
+  suppliers               Supplier[]
+  independentProfile      IndependentProfile?
+  candidateProfile        CandidateProfile?
+  trainingOrganizations   TrainingOrganization[]
+  jobs                    Job[]
+  trainings               Training[]
+  memberships             AssociationMembership[]
+  subcontractingMissions  SubcontractingMission[]
+  subcontractingResponses SubcontractingApplication[]
+  articles                Article[]
+  leads                   Lead[]
+  analyticsEvents         AnalyticsEvent[]
+}
+
+model UserProfile {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  profileType        String
+  completionScore    Int       @default(0)
+  verificationStatus String    @default("draft")
+  associationStatus  String    @default("draft")
+  primaryGoal        String?
+  mainNeeds          String?
+  city               String?
+  postalCode         String?
+  region             String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Company {
+  id                 String    @id @default(cuid())
+  ownerUserId        String
+  name               String
+  legalName          String?
+  siret              String?
+  siren              String?
+  legalForm          String?
+  foundedAt          DateTime?
+  directorName       String?
+  descriptionShort   String?
+  descriptionLong    String?
+  logoUrl            String?
+  photos             String?
+  website            String?
+  linkedin           String?
+  email              String?
+  phone              String?
+  address            String?
+  city               String?
+  postalCode         String?
+  department         String?
+  region             String?
+  country            String    @default("France")
+  serviceAreas       String?
+  interventionRadius Int?
+  employeeCount      String?
+  clientCount        Int?
+  siteCount          Int?
+  verificationStatus String    @default("draft")
+  claimedStatus      String    @default("unclaimed")
+  associationMember  Boolean   @default(false)
+  wantsRecruitment   Boolean   @default(false)
+  wantsSubcontracting Boolean  @default(false)
+  wantsTraining      Boolean   @default(false)
+  wantsSuppliers     Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  owner       User                @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  services    CompanyService[]
+  clientTypes CompanyClientType[]
+  documents   CompanyDocument[]
+  jobs        Job[]
+}
+
+model CompanyService {
+  id          String  @id @default(cuid())
+  companyId   String
+  serviceType String
+  isPrimary   Boolean @default(false)
+  description String?
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model CompanyClientType {
+  id         String @id @default(cuid())
+  companyId  String
+  clientType String
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model CompanyDocument {
+  id                 String   @id @default(cuid())
+  companyId          String
+  documentType       String
+  fileUrl            String
+  verificationStatus String   @default("pending")
+  uploadedAt         DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model Supplier {
+  id                 String    @id @default(cuid())
+  ownerUserId        String
+  name               String
+  legalName          String?
+  siret              String?
+  category           String
+  description        String?
+  logoUrl            String?
+  website            String?
+  email              String?
+  phone              String?
+  contactName        String?
+  deliveryAreas      String?
+  nationalCoverage   Boolean   @default(false)
+  verificationStatus String    @default("draft")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  owner    User              @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  services SupplierService[]
+}
+
+model SupplierService {
+  id          String  @id @default(cuid())
+  supplierId  String
+  title       String
+  category    String
+  description String?
+  documentUrl String?
+  isActive    Boolean @default(true)
+
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+}
+
+model IndependentProfile {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  displayName        String
+  businessName       String?
+  legalStatus        String?
+  siret              String?
+  email              String?
+  phone              String?
+  city               String?
+  postalCode         String?
+  region             String?
+  mobilityRadius     Int?
+  hasVehicle         Boolean   @default(false)
+  hasInsurance       Boolean   @default(false)
+  equipmentOwned     String?
+  experienceYears    Int?
+  availabilityStatus String?
+  availableFrom      DateTime?
+  hourlyRateRange    String?
+  dailyRateRange     String?
+  bio                String?
+  verificationStatus String    @default("draft")
+  associationStatus  String    @default("draft")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CandidateProfile {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  firstName        String?
+  lastName         String?
+  email            String?
+  phone            String?
+  city             String?
+  postalCode       String?
+  mobilityRadius   Int?
+  hasVehicle       Boolean   @default(false)
+  hasDriverLicense Boolean   @default(false)
+  cvUrl            String?
+  experienceYears  Int?
+  desiredContracts String?
+  availabilityDate DateTime?
+  desiredSalary    String?
+  acceptedHours    String?
+  bio              String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+}
+
+model Skill {
+  id       String @id @default(cuid())
+  name     String
+  category String?
+}
+
+model Certification {
+  id                 String    @id @default(cuid())
+  ownerType          String
+  ownerId            String
+  title              String
+  issuer             String?
+  issuedAt           DateTime?
+  expiresAt          DateTime?
+  fileUrl            String?
+  verificationStatus String    @default("pending")
+}
+
+model Job {
+  id                 String    @id @default(cuid())
+  companyId          String
+  createdBy          String
+  title              String
+  description        String
+  contractType       String
+  workingTime        String?
+  city               String?
+  postalCode         String?
+  salaryMin          Int?
+  salaryMax          Int?
+  startDate          DateTime?
+  requiredSkills     String?
+  requiredExperience String?
+  status             String    @default("draft")
+  publishedAt        DateTime?
+  expiresAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  creator      User             @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id                 String    @id @default(cuid())
+  jobId              String
+  applicantUserId    String
+  candidateProfileId String
+  message            String?
+  cvUrl              String?
+  status             String    @default("submitted")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  job              Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidateProfile CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+}
+
+model TrainingOrganization {
+  id                 String    @id @default(cuid())
+  ownerUserId        String
+  name               String
+  legalName          String?
+  siret              String?
+  declarationNumber  String?
+  qualiopiStatus     String?
+  website            String?
+  email              String?
+  phone              String?
+  contactName        String?
+  description        String?
+  logoUrl            String?
+  verificationStatus String    @default("draft")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  owner User @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+}
+
+model Training {
+  id                String    @id @default(cuid())
+  creatorUserId     String
+  creatorType       String
+  creatorEntityId   String?
+  title             String
+  category          String
+  description       String?
+  targetAudience    String?
+  prerequisites     String?
+  duration          String?
+  format            String?
+  location          String?
+  city              String?
+  postalCode        String?
+  certificationName String?
+  fundingOptions    String?
+  priceInfoOptional String?
+  contactEmail      String?
+  website           String?
+  phone             String?
+  recommendedBy     String?
+  status            String    @default("draft")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  creator  User              @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  sessions TrainingSession[]
+}
+
+model TrainingSession {
+  id             String    @id @default(cuid())
+  trainingId     String
+  startDate      DateTime?
+  endDate        DateTime?
+  location       String?
+  availableSeats Int?
+  contactEmail   String?
+  status         String    @default("draft")
+
+  training Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+}
+
+model AssociationMembership {
+  id              String    @id @default(cuid())
+  userId          String
+  profileType     String
+  entityType      String
+  entityId        String?
+  motivation      String?
+  needs           String?
+  contribution    String?
+  status          String    @default("draft")
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SubcontractingMission {
+  id                 String    @id @default(cuid())
+  creatorUserId      String
+  creatorEntityId    String?
+  title              String
+  description        String?
+  serviceType        String
+  city               String?
+  postalCode         String?
+  locationDetails    String?
+  startDate          DateTime?
+  endDate            DateTime?
+  durationEstimate   String?
+  urgencyLevel       String?
+  budgetInfoOptional String?
+  requiredSkills     String?
+  requiredDocuments  String?
+  requiredEquipment  String?
+  peopleNeeded       Int?
+  status             String    @default("draft")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  creator      User                         @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
+  applications SubcontractingApplication[]
+}
+
+model SubcontractingApplication {
+  id                    String   @id @default(cuid())
+  missionId             String
+  applicantUserId       String
+  applicantType         String
+  applicantEntityId     String?
+  message               String?
+  proposedPriceOptional String?
+  availability          String?
+  status                String   @default("submitted")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  mission   SubcontractingMission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  applicant User                  @relation(fields: [applicantUserId], references: [id], onDelete: Cascade)
+}
+
+model Article {
+  id             String    @id @default(cuid())
+  authorId       String
+  title          String
+  slug           String    @unique
+  excerpt        String?
+  content        String?
+  category       String?
+  seoTitle       String?
+  seoDescription String?
+  featuredImage  String?
+  readTime       String?
+  tags           String?
+  status         String    @default("draft")
+  publishedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model NewsletterSubscriber {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  firstName   String?
+  profileType String?
+  city        String?
+  region      String?
+  interests   String?
+  source      String?
+  consentAt   DateTime @default(now())
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  badgeType   String
+  icon        String?
+  createdAt   DateTime @default(now())
+}
+
+model EntityBadge {
+  id         String   @id @default(cuid())
+  badgeId    String
+  entityType String
+  entityId   String
+  awardedBy  String?
+  awardedAt  DateTime @default(now())
+}
+
+model Lead {
+  id           String   @id @default(cuid())
+  sourceType   String
+  sourceId     String?
+  targetType   String?
+  targetId     String?
+  senderUserId String?
+  message      String?
+  email        String?
+  phone        String?
+  status       String   @default("new")
+  createdAt    DateTime @default(now())
+
+  sender User? @relation(fields: [senderUserId], references: [id], onDelete: SetNull)
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  userId     String?
+  eventName  String
+  entityType String?
+  entityId   String?
+  metadata   String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
