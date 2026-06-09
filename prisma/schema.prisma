@@ -39,6 +39,7 @@ model User {
   jobs                    Job[]
   trainings               Training[]
   memberships             AssociationMembership[]
+  entityMemberships       EntityMember[] @relation("UserEntityMemberships")
   subcontractingMissions  SubcontractingMission[]
   subcontractingResponses SubcontractingApplication[]
   articles                Article[]
@@ -53,6 +54,7 @@ model UserProfile {
   completionScore    Int       @default(0)
   verificationStatus String    @default("draft")
   associationStatus  String    @default("draft")
+  visibility         String    @default("private")
   primaryGoal        String?
   mainNeeds          String?
   city               String?
@@ -63,6 +65,26 @@ model UserProfile {
   deletedAt          DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EntityMember {
+  id           String    @id @default(cuid())
+  userId       String
+  entityType   String
+  entityId     String
+  role         String    @default("member")
+  status       String    @default("active")
+  invitedBy    String?
+  invitedEmail String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  user User @relation("UserEntityMemberships", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entityType, entityId])
+  @@index([entityType, entityId])
+  @@index([userId])
 }
 
 model Company {
@@ -508,4 +530,3 @@ model AnalyticsEvent {
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
-

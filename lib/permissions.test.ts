@@ -6,9 +6,11 @@ import {
   hasAllowedEntityRole,
   isVerifiedPersonalAccount,
   PermissionError,
+  requireEntityRole,
   type PermissionCompany,
   type PermissionUser,
 } from "./permissions";
+import { prisma } from "./prisma";
 
 const verifiedUser: PermissionUser = {
   id: "user-owner",
@@ -90,4 +92,53 @@ test("PermissionError carries an authorization code", () => {
   const error = new PermissionError("FORBIDDEN", "Refusé");
   assert.equal(error.code, "FORBIDDEN");
   assert.equal(error.message, "Refusé");
+});
+
+test("requireEntityRole resolves active EntityMember roles", async () => {
+  const owner = await prisma.user.create({
+    data: {
+      email: `owner-${Date.now()}@clubproprete.test`,
+      firstName: "Owner",
+      lastName: "Test",
+      mainRole: "company_owner",
+    },
+  });
+  const recruiter = await prisma.user.create({
+    data: {
+      email: `recruiter-${Date.now()}@clubproprete.test`,
+      firstName: "Recruiter",
+      lastName: "Test",
+      mainRole: "registered_user",
+    },
+  });
+
+  try {
+    const company = await prisma.company.create({
+      data: {
+        ownerUserId: owner.id,
+        name: "Société test membership",
+        verificationStatus: "approved",
+      },
+    });
+    await prisma.entityMember.create({
+      data: {
+        userId: recruiter.id,
+        entityType: "company",
+        entityId: company.id,
+        role: "recruiter",
+      },
+    });
+
+    const membership = await requireEntityRole(recruiter.id, "company", company.id, ["recruiter"]);
+    assert.equal(membership.role, "recruiter");
+
+    await assert.rejects(
+      () => requireEntityRole(recruiter.id, "company", company.id, ["owner"]),
+      (error) => error instanceof PermissionError && error.code === "FORBIDDEN"
+    );
+  } finally {
+    await prisma.user.deleteMany({
+      where: { id: { in: [owner.id, recruiter.id] } },
+    });
+  }
 });

@@ -80,7 +80,7 @@ export async function registerUser(data: SignupInput) {
       });
 
       if (role === "company_owner") {
-        await tx.company.create({
+        const company = await tx.company.create({
           data: {
             ownerUserId: createdUser.id,
             name: organizationName,
@@ -90,8 +90,16 @@ export async function registerUser(data: SignupInput) {
             verificationStatus: "pending",
           },
         });
+        await tx.entityMember.create({
+          data: {
+            userId: createdUser.id,
+            entityType: "company",
+            entityId: company.id,
+            role: "owner",
+          },
+        });
       } else if (role === "supplier_owner") {
-        await tx.supplier.create({
+        const supplier = await tx.supplier.create({
           data: {
             ownerUserId: createdUser.id,
             name: organizationName,
@@ -101,6 +109,14 @@ export async function registerUser(data: SignupInput) {
             phone: phone || null,
             contactName: `${firstName} ${lastName}`.trim(),
             verificationStatus: "pending",
+          },
+        });
+        await tx.entityMember.create({
+          data: {
+            userId: createdUser.id,
+            entityType: "supplier",
+            entityId: supplier.id,
+            role: "owner",
           },
         });
       } else if (role === "candidate_profile") {
@@ -128,7 +144,7 @@ export async function registerUser(data: SignupInput) {
           },
         });
       } else if (role === "training_organization") {
-        await tx.trainingOrganization.create({
+        const trainingOrganization = await tx.trainingOrganization.create({
           data: {
             ownerUserId: createdUser.id,
             name: organizationName,
@@ -137,6 +153,14 @@ export async function registerUser(data: SignupInput) {
             phone: phone || null,
             contactName: `${firstName} ${lastName}`.trim(),
             verificationStatus: "pending",
+          },
+        });
+        await tx.entityMember.create({
+          data: {
+            userId: createdUser.id,
+            entityType: "training_organization",
+            entityId: trainingOrganization.id,
+            role: "owner",
           },
         });
       }

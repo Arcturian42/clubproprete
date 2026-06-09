@@ -67,7 +67,7 @@ export async function requireEntityRole(
     throw new PermissionError("UNAUTHENTICATED", "Vous devez être connecté.");
   }
 
-  const membership = await findLegacyOwnerMembership(userId, entityType, entityId);
+  const membership = await findEntityMembership(userId, entityType, entityId);
 
   if (!membership) {
     throw new PermissionError("NOT_FOUND", "Entité introuvable ou inaccessible.");
@@ -99,11 +99,23 @@ export async function canViewCandidate(viewer: CandidateViewer, candidateUserId:
     return true;
   }
 
+  const companyMemberships = await prisma.entityMember.findMany({
+    where: {
+      userId: viewer.id,
+      entityType: "company",
+      status: "active",
+      deletedAt: null,
+      role: { in: ["owner", "admin", "recruiter"] },
+    },
+    select: { entityId: true },
+  });
+  const memberCompanyIds = companyMemberships.map((membership) => membership.entityId);
+
   const matchingCompanyCount = await prisma.company.count({
     where: {
-      ownerUserId: viewer.id,
       verificationStatus: "approved",
       deletedAt: null,
+      OR: [{ ownerUserId: viewer.id }, { id: { in: memberCompanyIds } }],
       jobs: {
         some: {
           deletedAt: null,
@@ -160,6 +172,35 @@ async function findLegacyOwnerMembership(
   return trainingOrganization
     ? { userId, entityType, entityId: trainingOrganization.id, role: "owner", status: "active" }
     : null;
+}
+
+async function findEntityMembership(
+  userId: string,
+  entityType: EntityType,
+  entityId: string
+): Promise<EntityMembership | null> {
+  const membership = await prisma.entityMember.findFirst({
+    where: {
+      userId,
+      entityType,
+      entityId,
+      status: "active",
+      deletedAt: null,
+    },
+    select: {
+      role: true,
+    },
+  });
+
+  if (membership && isEntityRole(membership.role)) {
+    return { userId, entityType, entityId, role: membership.role, status: "active" };
+  }
+
+  return findLegacyOwnerMembership(userId, entityType, entityId);
+}
+
+function isEntityRole(role: string): role is EntityRole {
+  return ENTITY_ROLES.includes(role as EntityRole);
 }
 
 export function canAccessSubcontracting(roles: Role[]) {

@@ -102,7 +102,7 @@ async function main() {
   });
 
   if (companyOwner) {
-    await prisma.company.upsert({
+    const company = await prisma.company.upsert({
       where: { id: "company-1" },
       update: {},
       create: {
@@ -125,6 +125,23 @@ async function main() {
         foundedAt: new Date("2015-01-01"),
         verificationStatus: "approved",
         associationMember: true,
+      },
+    });
+    await prisma.entityMember.upsert({
+      where: {
+        userId_entityType_entityId: {
+          userId: companyOwner.id,
+          entityType: "company",
+          entityId: company.id,
+        },
+      },
+      update: { role: "owner", status: "active", deletedAt: null },
+      create: {
+        userId: companyOwner.id,
+        entityType: "company",
+        entityId: company.id,
+        role: "owner",
+        status: "active",
       },
     });
   }
@@ -357,7 +374,7 @@ async function main() {
     ];
 
     for (const s of suppliers) {
-      await prisma.supplier.upsert({
+      const supplier = await prisma.supplier.upsert({
         where: { id: s.id },
         update: {},
         create: {
@@ -368,6 +385,23 @@ async function main() {
           email: `contact@${s.name.toLowerCase().replace(/\s+/g, "")}.fr`,
           phone: "01 80 00 00 00",
           verificationStatus: "approved",
+        },
+      });
+      await prisma.entityMember.upsert({
+        where: {
+          userId_entityType_entityId: {
+            userId: supplierOwner.id,
+            entityType: "supplier",
+            entityId: supplier.id,
+          },
+        },
+        update: { role: "owner", status: "active", deletedAt: null },
+        create: {
+          userId: supplierOwner.id,
+          entityType: "supplier",
+          entityId: supplier.id,
+          role: "owner",
+          status: "active",
         },
       });
     }
