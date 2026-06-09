@@ -13,6 +13,11 @@ import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
 import { getSupplierById } from "@/lib/actions/public";
+import {
+  getOfferTypeLabel,
+  getSupplierFamilyLabel,
+  getSupplierSubCategoryLabel,
+} from "@/lib/supplier-taxonomy";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -28,12 +33,18 @@ export default async function SupplierDetailPage({ params }: Props) {
 
   const specialties = supplier.services.map((s) => s.title);
   const coverage = supplier.nationalCoverage ? "National" : supplier.deliveryAreas || "Local";
+  const familyLabel = getSupplierFamilyLabel(supplier.family);
+  const subCategoryLabel = getSupplierSubCategoryLabel(supplier.subCategory ?? supplier.category);
+  const offerTypeLabel = getOfferTypeLabel(supplier.offerType);
+  const taxonomyLabel = offerTypeLabel
+    ? `${familyLabel} · ${subCategoryLabel} · ${offerTypeLabel}`
+    : `${familyLabel} · ${subCategoryLabel}`;
 
   return (
     <PageShell
       eyebrow="Fournisseur"
       title={supplier.name}
-      description={`${supplier.category} · ${coverage}`}
+      description={`${taxonomyLabel} · ${coverage}`}
       actions={
         <Link href="/annuaire/fournisseurs" className="bento-btn">
           <ArrowLeft size={16} /> Retour aux fournisseurs
@@ -42,9 +53,9 @@ export default async function SupplierDetailPage({ params }: Props) {
     >
       {/* Stats rapides */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Categorie" value={supplier.category} detail="Specialite" />
+        <StatCard label="Famille" value={familyLabel} detail={subCategoryLabel} />
         <StatCard label="Couverture" value={coverage} detail="Zone d'intervention" />
-        <StatCard label="Contact" value={supplier.contactName || "Non précisé"} detail="Interlocuteur" />
+        <StatCard label="Offre" value={offerTypeLabel || "Service"} detail="Achat / location" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -59,7 +70,7 @@ export default async function SupplierDetailPage({ params }: Props) {
               <h2 className="text-xl font-black text-slate-900">A propos</h2>
             </div>
             <p className="text-base font-medium leading-7 text-slate-600">
-              {supplier.name} est un fournisseur specialise dans la categorie &ldquo;{supplier.category}&rdquo;. 
+              {supplier.name} est un fournisseur spécialisé dans &ldquo;{taxonomyLabel}&rdquo;.
               Il intervient sur {coverage}.
             </p>
             

@@ -334,7 +334,10 @@ async function main() {
       {
         id: "supplier-1",
         name: "EcoMateriel Pro",
-        category: "Produits d'entretien ecologiques",
+        category: "produits_ecologiques",
+        family: "consommables",
+        subCategory: "produits_ecologiques",
+        offerType: null,
         description: "Gamme complete de produits eco-labellises pour le nettoyage tertiaire et industriel. Basés à Paris.",
         deliveryAreas: "France entiere",
         nationalCoverage: true,
@@ -342,7 +345,10 @@ async function main() {
       {
         id: "supplier-2",
         name: "EPI Direct",
-        category: "Equipements de protection individuelle",
+        category: "uniformes_vetements_pro",
+        family: "materiel",
+        subCategory: "uniformes_vetements_pro",
+        offerType: null,
         description: "Distributeur d'EPI : gants, chaussures, vetements, masques. Stocks importants. Basés à Lyon.",
         deliveryAreas: "France entiere",
         nationalCoverage: true,
@@ -350,7 +356,10 @@ async function main() {
       {
         id: "supplier-3",
         name: "MachinesNet Industries",
-        category: "Materiel et machines de nettoyage",
+        category: "autolaveuses",
+        family: "machines",
+        subCategory: "autolaveuses",
+        offerType: "les_deux",
         description: "Vente, location et maintenance d'autolaveuses, monobrosses et aspirateurs professionnels. Basés à Lille.",
         deliveryAreas: "Hauts-de-France, Ile-de-France, Normandie",
         nationalCoverage: false,
@@ -358,7 +367,10 @@ async function main() {
       {
         id: "supplier-4",
         name: "TextilePro Services",
-        category: "Linge et textile",
+        category: "linge_textile",
+        family: "materiel",
+        subCategory: "linge_textile",
+        offerType: null,
         description: "Lavage, location et entretien du linge professionnel pour les societes de nettoyage. Basés à Nantes.",
         deliveryAreas: "Grand Ouest",
         nationalCoverage: false,
@@ -366,7 +378,10 @@ async function main() {
       {
         id: "supplier-5",
         name: "AssurNet Conseil",
-        category: "Services aux entreprises",
+        category: "logiciel_metier_proprete",
+        family: "logiciels",
+        subCategory: "logiciel_metier_proprete",
+        offerType: null,
         description: "Courtage en assurance, conseil RH et juridique specialise propreté. Basés à Bordeaux.",
         deliveryAreas: "France entiere",
         nationalCoverage: true,
@@ -376,7 +391,16 @@ async function main() {
     for (const s of suppliers) {
       const supplier = await prisma.supplier.upsert({
         where: { id: s.id },
-        update: {},
+        update: {
+          category: s.category,
+          family: s.family,
+          subCategory: s.subCategory,
+          offerType: s.offerType,
+          description: s.description,
+          deliveryAreas: s.deliveryAreas,
+          nationalCoverage: s.nationalCoverage,
+          verificationStatus: "approved",
+        },
         create: {
           ...s,
           ownerUserId: supplierOwner.id,
@@ -419,48 +443,66 @@ async function main() {
   const supplierServicesData = [
     {
       id: "ss-1",
+      supplierId: "supplier-1",
       title: "Produits d'entretien écologiques",
-      category: "Produits",
+      category: "produits_ecologiques",
+      offerType: null,
       description: "Gamme complète de produits éco-labellisés pour le nettoyage professionnel.",
     },
     {
       id: "ss-2",
+      supplierId: "supplier-2",
       title: "Equipements de protection individuelle",
-      category: "EPI",
+      category: "uniformes_vetements_pro",
+      offerType: null,
       description: "Fourniture d'EPI : gants, chaussures de sécurité, vêtements professionnels.",
     },
     {
       id: "ss-3",
+      supplierId: "supplier-3",
       title: "Location de machines de nettoyage",
-      category: "Machines",
+      category: "autolaveuses",
+      offerType: "location",
       description: "Location et maintenance d'autolaveuses, monobrosses et aspirateurs industriels.",
     },
     {
       id: "ss-4",
+      supplierId: "supplier-4",
       title: "Linge professionnel",
-      category: "Textile",
+      category: "linge_textile",
+      offerType: null,
       description: "Lavage, location et entretien du linge professionnel pour sociétés de nettoyage.",
     },
     {
       id: "ss-5",
+      supplierId: "supplier-5",
       title: "Assurance et conseil RH",
-      category: "Services",
+      category: "logiciel_metier_proprete",
+      offerType: null,
       description: "Courtage en assurance, conseil juridique et RH spécialisé propreté.",
     },
   ];
 
-  for (let i = 0; i < seededSuppliers.length; i++) {
-    const supplier = seededSuppliers[i];
-    const serviceData = supplierServicesData[i];
-    if (supplier && serviceData) {
+  const seededSupplierIds = new Set(seededSuppliers.map((supplier) => supplier.id));
+  for (const serviceData of supplierServicesData) {
+    const supplierExists = seededSupplierIds.has(serviceData.supplierId);
+    if (supplierExists) {
       await prisma.supplierService.upsert({
         where: { id: serviceData.id },
-        update: {},
-        create: {
-          id: serviceData.id,
-          supplierId: supplier.id,
+        update: {
+          supplierId: serviceData.supplierId,
           title: serviceData.title,
           category: serviceData.category,
+          offerType: serviceData.offerType,
+          description: serviceData.description,
+          isActive: true,
+        },
+        create: {
+          id: serviceData.id,
+          supplierId: serviceData.supplierId,
+          title: serviceData.title,
+          category: serviceData.category,
+          offerType: serviceData.offerType,
           description: serviceData.description,
           isActive: true,
         },

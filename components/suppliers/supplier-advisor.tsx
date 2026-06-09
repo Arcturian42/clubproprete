@@ -4,15 +4,12 @@ import { Bot, GitCompareArrows, Send, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { EntityCard } from "@/components/entity-card";
 import { StatusPill } from "@/components/status-pill";
+import {
+  getSupplierFamilyLabel,
+  SUPPLIER_FAMILIES,
+  type SupplierFamily,
+} from "@/lib/supplier-taxonomy";
 import type { Supplier } from "@/lib/types";
-
-const supplierCategories = [
-  "Fournisseurs de machine",
-  "Loueur de machine",
-  "Fournisseur de matériel",
-  "Fournisseur de consommables",
-  "Fournisseur logiciel"
-];
 
 const starterQuestions = [
   "Quel type de fournisseur ?",
@@ -21,12 +18,11 @@ const starterQuestions = [
   "De quoi avez-vous besoin ?"
 ];
 
-const categoryKeywords: Record<string, string[]> = {
-  "Fournisseurs de machine": ["machine", "autolaveuse", "monobrosse", "balayeuse", "aspirateur", "achat", "acheter"],
-  "Loueur de machine": ["louer", "location", "loueur", "ponctuel", "courte duree", "chantier exceptionnel"],
-  "Fournisseur de matériel": ["materiel", "chariot", "frange", "balai", "seau", "vitrerie", "accessoire"],
-  "Fournisseur de consommables": ["consommable", "produit", "chimie", "detergent", "epi", "gant", "sac", "papier"],
-  "Fournisseur logiciel": ["logiciel", "planning", "devis", "facture", "erp", "gestion", "agent", "tableau de bord"]
+const categoryKeywords: Record<SupplierFamily, string[]> = {
+  consommables: ["consommable", "produit", "chimie", "detergent", "désinfectant", "gant", "sac", "papier"],
+  materiel: ["materiel", "matériel", "chariot", "frange", "balai", "seau", "vitrerie", "accessoire", "textile"],
+  machines: ["machine", "autolaveuse", "monobrosse", "balayeuse", "aspirateur", "achat", "acheter", "louer", "location"],
+  logiciels: ["logiciel", "planning", "devis", "facture", "erp", "gestion", "agent", "tableau de bord"],
 };
 
 type SupplierAdvisorProps = {
@@ -46,24 +42,24 @@ function normalize(value: string) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function detectCategory(query: string) {
+function detectCategory(query: string): SupplierFamily | null {
   const normalizedQuery = normalize(query);
 
   return (
-    supplierCategories.find((category) =>
+    SUPPLIER_FAMILIES.find((category) =>
       categoryKeywords[category].some((keyword) => normalizedQuery.includes(normalize(keyword)))
     ) ?? null
   );
 }
 
-function scoreSupplier(supplier: Supplier, query: string, selectedCategory: string | null): Recommendation {
+function scoreSupplier(supplier: Supplier, query: string, selectedCategory: SupplierFamily | null): Recommendation {
   const normalizedQuery = normalize(query);
   const reasons: string[] = [];
   let score = 42;
 
-  if (selectedCategory && supplier.category === selectedCategory) {
+  if (selectedCategory && supplier.family === selectedCategory) {
     score += 34;
-    reasons.push("catégorie alignée");
+    reasons.push("famille alignée");
   }
 
   if (supplier.status === "approved") {
@@ -97,7 +93,7 @@ function scoreSupplier(supplier: Supplier, query: string, selectedCategory: stri
 export function SupplierAdvisor({ suppliers }: SupplierAdvisorProps) {
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<SupplierFamily | null>(null);
 
   const activeNeed = submittedQuery || selectedCategory || "";
   const question = starterQuestions[(activeNeed.length + suppliers.length) % starterQuestions.length];
@@ -110,7 +106,12 @@ export function SupplierAdvisor({ suppliers }: SupplierAdvisorProps) {
       .slice(0, 3);
   }, [selectedCategory, submittedQuery, suppliers]);
 
-  const categoryLabel = selectedCategory ?? detectCategory(submittedQuery);
+  const detectedCategory = detectCategory(submittedQuery);
+  const categoryLabel = selectedCategory
+    ? getSupplierFamilyLabel(selectedCategory)
+    : detectedCategory
+    ? getSupplierFamilyLabel(detectedCategory)
+    : null;
   const hasConversation = Boolean(submittedQuery || selectedCategory);
 
   function submitNeed(value = query) {
@@ -124,17 +125,17 @@ export function SupplierAdvisor({ suppliers }: SupplierAdvisorProps) {
     setQuery("");
   }
 
-  function chooseCategory(category: string) {
+  function chooseCategory(category: SupplierFamily) {
     setSelectedCategory(category);
-    setSubmittedQuery(category);
+    setSubmittedQuery(getSupplierFamilyLabel(category));
     setQuery("");
   }
 
   return (
     <section className="mt-6 grid gap-5">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {supplierCategories.map((category) => {
-          const count = suppliers.filter((supplier) => supplier.category === category).length;
+        {SUPPLIER_FAMILIES.map((category) => {
+          const count = suppliers.filter((supplier) => supplier.family === category).length;
           const isActive = category === selectedCategory;
 
           return (
@@ -143,7 +144,7 @@ export function SupplierAdvisor({ suppliers }: SupplierAdvisorProps) {
               className={`bento-card bento-card-interactive p-4 text-left ${isActive ? "bg-indigo-50" : "bg-white"}`}
               onClick={() => chooseCategory(category)}
             >
-              <span className="block text-sm font-black text-slate-900">{category}</span>
+              <span className="block text-sm font-black text-slate-900">{getSupplierFamilyLabel(category)}</span>
               <span className="mt-3 inline-flex font-mono text-2xl font-extrabold text-slate-950">{count}</span>
               <span className="ml-2 text-xs font-extrabold uppercase tracking-wide text-slate-500">
                 fournisseur{count > 1 ? "s" : ""}

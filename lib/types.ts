@@ -73,6 +73,9 @@ export type Supplier = {
   id: string;
   name: string;
   category: string;
+  family?: string | null;
+  subCategory?: string | null;
+  offerType?: string | null;
   city: string;
   coverage: string;
   status: WorkflowStatus;

@@ -18,4 +18,14 @@ test.describe('Annuaire fournisseurs', () => {
     await page.waitForURL(/\/annuaire\/fournisseurs\/.+/);
     await expect(page.getByRole('heading', { name: /EcoMateriel Pro/i })).toBeVisible();
   });
+
+  test('filtre les machines par location', async ({ page }) => {
+    await page.goto('/annuaire/fournisseurs?family=machines&offerType=location');
+
+    await expect(page.getByRole('heading', { name: /fournisseurs/i })).toBeVisible();
+    const supplierCard = page.getByRole('link', { name: /Voir la fiche de MachinesNet Industries/i });
+    await expect(supplierCard).toBeVisible();
+    await expect(supplierCard).toContainText('Achat & location');
+    await expect(page.getByText('EcoMateriel Pro').first()).not.toBeVisible();
+  });
 });

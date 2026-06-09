@@ -170,6 +170,9 @@ model Supplier {
   legalName          String?
   siret              String?
   category           String
+  family             String?
+  subCategory        String?
+  offerType          String?
   description        String?
   logoUrl            String?
   website            String?
@@ -192,6 +195,7 @@ model SupplierService {
   supplierId  String
   title       String
   category    String
+  offerType   String?
   description String?
   documentUrl String?
   isActive    Boolean @default(true)
