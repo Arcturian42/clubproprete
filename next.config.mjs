@@ -10,7 +10,7 @@ const csp = [
   // Next.js needs unsafe-inline/unsafe-eval in dev for HMR; tighter in prod
   `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://*.tile.openstreetmap.org",
   "font-src 'self' data:",
   "connect-src 'self'",
   "frame-ancestors 'none'",

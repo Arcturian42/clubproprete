@@ -70,7 +70,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             >
               <EntityCard
                 title={job.title}
-                subtitle={`${job.company?.name || "Entreprise"} · ${job.city || ""}`}
+                subtitle={`${job.employerName || job.company?.name || "Entreprise"} · ${job.city || ""}`}
                 meta={[job.contractType, `${job._count?.applications || 0} candidature(s)`]}
               >
                 <div className="flex items-center justify-between gap-4">

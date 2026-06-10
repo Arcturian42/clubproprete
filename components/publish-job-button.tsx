@@ -7,11 +7,15 @@ import { Plus } from "lucide-react";
 export function PublishJobButton() {
   const { data: session, status } = useSession();
   const user = session?.user;
-  const isCompany =
-    user?.role === "company_owner" ||
-    user?.role === "verified_company" ||
+  const canOpenPublisher =
+    !!user &&
+    (user.role === "company_owner" ||
+    user.role === "verified_company" ||
+    user.role === "supplier_owner" ||
+    user.role === "verified_supplier" ||
     user?.role === "admin" ||
-    user?.role === "super_admin";
+    user?.role === "super_admin" ||
+    user?.role === "registered_user");
 
   if (status === "loading") {
     return (
@@ -31,7 +35,7 @@ export function PublishJobButton() {
     );
   }
 
-  if (isCompany) {
+  if (canOpenPublisher) {
     return (
       <Link href="/emploi/nouvelle-offre" className="bento-btn bento-btn-primary">
         <Plus size={16} className="mr-2" />
@@ -41,9 +45,9 @@ export function PublishJobButton() {
   }
 
   return (
-    <button className="bento-btn" disabled title="Reserve aux societes de nettoyage">
+    <Link href="/emploi/nouvelle-offre" className="bento-btn bento-btn-primary">
       <Plus size={16} className="mr-2" />
       Publier une offre
-    </button>
+    </Link>
   );
 }

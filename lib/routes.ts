@@ -11,4 +11,3 @@ export const appRoutes = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/admin", label: "Admin" }
 ];
-

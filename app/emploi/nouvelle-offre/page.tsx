@@ -11,11 +11,20 @@ import {
   FileText,
   Save,
   CheckCircle2,
+  Building2,
+  Package,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { PageShell } from "@/components/page-shell";
 import { EntityCard } from "@/components/entity-card";
 import { createJob } from "@/lib/actions/jobs";
+
+type PublishingEntity = {
+  id: string;
+  name: string;
+  entityType: "company" | "supplier";
+  verificationStatus: string;
+};
 
 export default function NouvelleOffrePage() {
   const router = useRouter();
@@ -23,6 +32,8 @@ export default function NouvelleOffrePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [publishingEntities, setPublishingEntities] = useState<PublishingEntity[]>([]);
+  const [selectedEntityKey, setSelectedEntityKey] = useState("");
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const [formData, setFormData] = useState({
@@ -48,16 +59,30 @@ export default function NouvelleOffrePage() {
       router.push("/connexion");
       return;
     }
-    if (
-      user.role !== "company_owner" &&
-      user.role !== "verified_company" &&
-      user.role !== "admin" &&
-      user.role !== "super_admin"
-    ) {
-      router.push("/emploi");
-      return;
-    }
   }, [user, status, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    fetch(`/api/user-company`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((payload) => {
+        if (cancelled) return;
+        const entities = (payload?.entities || []) as PublishingEntity[];
+        setPublishingEntities(entities);
+        if (entities.length > 0) {
+          setSelectedEntityKey(`${entities[0].entityType}:${entities[0].id}`);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPublishingEntities([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -70,12 +95,21 @@ export default function NouvelleOffrePage() {
     setIsSubmitting(true);
     setErrors({});
 
-    const company = await fetch(`/api/user-company`).then((r) =>
-      r.ok ? r.json() : null
-    );
+    let availableEntities = publishingEntities;
+    if (availableEntities.length === 0) {
+      const payload = await fetch(`/api/user-company`).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      availableEntities = (payload?.entities || []) as PublishingEntity[];
+      setPublishingEntities(availableEntities);
+      if (availableEntities.length > 0 && !selectedEntityKey) {
+        setSelectedEntityKey(`${availableEntities[0].entityType}:${availableEntities[0].id}`);
+      }
+    }
 
-    if (!company?.id) {
-      setErrors({ general: "Vous devez d'abord créer une fiche entreprise." });
+    const selectedEntity =
+      availableEntities.find((entity) => `${entity.entityType}:${entity.id}` === selectedEntityKey) ?? availableEntities[0];
+
+    if (!selectedEntity) {
+      setErrors({ general: "Vous devez d'abord créer une fiche société ou fournisseur." });
       setIsSubmitting(false);
       return;
     }
@@ -87,7 +121,11 @@ export default function NouvelleOffrePage() {
     formDataAction.append("contractType", formData.contract);
     formDataAction.append("salaryInfo", formData.salary);
     formDataAction.append("requirements", formData.requirements);
-    formDataAction.append("companyId", company.id);
+    formDataAction.append("employerType", selectedEntity.entityType);
+    formDataAction.append("employerEntityId", selectedEntity.id);
+    if (selectedEntity.entityType === "company") {
+      formDataAction.append("companyId", selectedEntity.id);
+    }
 
     const result = await createJob(formDataAction);
     setIsSubmitting(false);
@@ -122,6 +160,8 @@ export default function NouvelleOffrePage() {
     );
   }
 
+  const selectedEntity = publishingEntities.find((entity) => `${entity.entityType}:${entity.id}` === selectedEntityKey);
+
   if (showSuccess) {
     return (
       <PageShell eyebrow="Emploi" title="Offre soumise !" description="Votre offre d'emploi a été soumise pour validation.">
@@ -145,7 +185,7 @@ export default function NouvelleOffrePage() {
     <PageShell
       eyebrow="Emploi"
       title="Publier une offre"
-      description="Créez une nouvelle offre d'emploi pour votre entreprise."
+      description="Créez une nouvelle offre d'emploi pour une société ou un fournisseur validé."
       actions={
         <Link href="/emploi" className="bento-btn">
           <ArrowLeft size={16} /> Retour aux offres
@@ -154,9 +194,12 @@ export default function NouvelleOffrePage() {
     >
       <div className="max-w-2xl mx-auto">
         <EntityCard
-          title={user.organization || "Votre entreprise"}
+          title={selectedEntity?.name || user.organization || "Votre structure"}
           subtitle="Publication au nom de"
-          meta={["Offre d'emploi"]}
+          meta={[
+            selectedEntity?.entityType === "supplier" ? "Fournisseur" : "Société",
+            selectedEntity?.verificationStatus === "approved" ? "Validé" : "En attente de validation",
+          ]}
         >
           {errors.general && (
             <div className="mb-4 rounded-[14px] border-2 border-red-500 bg-red-50 p-3 text-sm font-bold text-red-600">
@@ -164,6 +207,39 @@ export default function NouvelleOffrePage() {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+            <div>
+              <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">
+                Publier au nom de *
+              </label>
+              {publishingEntities.length > 0 ? (
+                <select
+                  required
+                  aria-label="Structure porteuse"
+                  className="bento-input w-full"
+                  value={selectedEntityKey}
+                  onChange={(e) => setSelectedEntityKey(e.target.value)}
+                >
+                  {publishingEntities.map((entity) => (
+                    <option key={`${entity.entityType}:${entity.id}`} value={`${entity.entityType}:${entity.id}`}>
+                      {entity.entityType === "supplier" ? "Fournisseur" : "Société"} · {entity.name} · {entity.verificationStatus}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="rounded-[14px] border-2 border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-700">
+                  Aucune société ou fournisseur rattaché à votre compte.
+                </div>
+              )}
+              {selectedEntity && (
+                <div className="mt-2 flex items-center gap-2 text-xs font-bold text-slate-500">
+                  {selectedEntity.entityType === "supplier" ? <Package size={14} /> : <Building2 size={14} />}
+                  {selectedEntity.verificationStatus === "approved"
+                    ? "Cette structure peut soumettre une offre à la modération."
+                    : "Cette structure doit être validée avant publication."}
+                </div>
+              )}
+            </div>
+
             <div>
               <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">
                 <Briefcase size={12} className="inline mr-1" /> Intitulé du poste *
@@ -215,6 +291,7 @@ export default function NouvelleOffrePage() {
               </label>
               <select
                 required
+                aria-label="Type de contrat"
                 className="bento-input w-full"
                 value={formData.contract}
                 onChange={(e) => handleChange("contract", e.target.value)}

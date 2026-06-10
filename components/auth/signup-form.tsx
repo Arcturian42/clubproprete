@@ -102,7 +102,7 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
       lastName,
       phone,
       organization,
-      role: role as "company_owner" | "supplier_owner" | "independent_profile" | "candidate_profile" | "training_organization" | "author",
+      role: role as "company_owner" | "supplier_owner" | "independent_profile" | "candidate_profile" | "training_organization",
       termsAccepted: termsAccepted as true,
     });
 

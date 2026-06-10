@@ -37,13 +37,30 @@ export default async function TrainingDetailPage({ params }: Props) {
   }
 
   let creatorName = "";
+  let creatorTypeLabel = "Centre de formation";
+  let creatorHref: string | null = null;
   if (training.creatorEntityId) {
-    const org = await prisma.trainingOrganization.findUnique({
-      where: { id: training.creatorEntityId },
-    });
-    creatorName = org?.name || "";
+    if (training.creatorType === "company") {
+      const company = await prisma.company.findUnique({ where: { id: training.creatorEntityId } });
+      creatorName = company?.name || "";
+      creatorTypeLabel = "Société de nettoyage";
+      creatorHref = company ? `/annuaire/societes/${company.id}` : null;
+    } else if (training.creatorType === "supplier") {
+      const supplier = await prisma.supplier.findUnique({ where: { id: training.creatorEntityId } });
+      creatorName = supplier?.name || "";
+      creatorTypeLabel = "Fournisseur";
+      creatorHref = supplier ? `/annuaire/fournisseurs/${supplier.id}` : null;
+    } else {
+      const org = await prisma.trainingOrganization.findUnique({
+        where: { id: training.creatorEntityId },
+      });
+      creatorName = org?.name || "";
+      creatorTypeLabel = "Centre de formation";
+      creatorHref = org ? `/annuaire/centres-formation/${org.id}` : null;
+    }
   } else if (training.creator) {
     creatorName = `${training.creator.firstName || ""} ${training.creator.lastName || ""}`.trim();
+    creatorTypeLabel = "Auteur individuel";
   }
 
   const prerequisites = training.prerequisites
@@ -129,6 +146,42 @@ export default async function TrainingDetailPage({ params }: Props) {
               <p className="text-slate-600 font-medium">{training.certificationName}</p>
             </article>
           )}
+
+          {/* Sessions programmées */}
+          {training.sessions.length > 0 && (
+            <article className="surface p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-2 text-white shadow-[3px_3px_0px_#0f172a]">
+                  <Clock size={20} />
+                </div>
+                <h2 className="text-xl font-black text-slate-900">Sessions programmées</h2>
+              </div>
+              <ul className="space-y-3">
+                {training.sessions
+                  .slice()
+                  .sort((a, b) => (a.startDate?.getTime() ?? 0) - (b.startDate?.getTime() ?? 0))
+                  .map((session) => (
+                    <li key={session.id} className="flex flex-wrap items-center gap-3 rounded-[12px] border-2 border-slate-200 p-3">
+                      <span className="font-bold text-slate-900">
+                        {session.startDate
+                          ? new Date(session.startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+                          : "Date à préciser"}
+                      </span>
+                      {session.location && (
+                        <span className="flex items-center gap-1 text-sm text-slate-500">
+                          <MapPin size={14} /> {session.location}
+                        </span>
+                      )}
+                      {typeof session.availableSeats === "number" && (
+                        <span className="flex items-center gap-1 text-sm text-slate-500">
+                          <Users size={14} /> {session.availableSeats} places
+                        </span>
+                      )}
+                    </li>
+                  ))}
+              </ul>
+            </article>
+          )}
         </div>
 
         {/* Colonne latérale */}
@@ -141,8 +194,14 @@ export default async function TrainingDetailPage({ params }: Props) {
                 <Building2 className="text-indigo-600 shrink-0" size={20} />
                 <div>
                   <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-500">Organisme</p>
-                  <p className="font-bold text-slate-900">{creatorName || "Non précisé"}</p>
-                  <p className="text-sm text-slate-500">{training.creatorType === "Societe" ? "Société de nettoyage" : "Centre de formation"}</p>
+                  {creatorHref ? (
+                    <Link href={creatorHref} className="font-bold text-slate-900 hover:text-indigo-600">
+                      {creatorName || "Non précisé"}
+                    </Link>
+                  ) : (
+                    <p className="font-bold text-slate-900">{creatorName || "Non précisé"}</p>
+                  )}
+                  <p className="text-sm text-slate-500">{creatorTypeLabel}</p>
                 </div>
               </div>
 

@@ -1,5 +1,5 @@
 import type { Session } from "next-auth";
-import type { Company, User, UserProfile } from "@prisma/client";
+import type { Company, Supplier, User, UserProfile } from "@prisma/client";
 import type { Role } from "./types";
 import { prisma } from "./prisma";
 
@@ -38,7 +38,8 @@ export type PermissionUser = Pick<User, "id" | "emailVerified" | "mainRole"> & {
   profile?: Pick<UserProfile, "verificationStatus"> | null;
 };
 
-export type PermissionCompany = Pick<Company, "id" | "ownerUserId" | "verificationStatus">;
+export type PermissionPublishingEntity = Pick<Company | Supplier, "id" | "ownerUserId" | "verificationStatus">;
+export type PermissionCompany = PermissionPublishingEntity;
 
 export type CandidateViewer = {
   id: string;
@@ -82,14 +83,14 @@ export async function requireEntityRole(
 
 export function canPublishJob(
   user: PermissionUser,
-  company: PermissionCompany,
+  entity: PermissionPublishingEntity,
   entityRole?: EntityRole | null
 ) {
-  const publisherRole = entityRole ?? (company.ownerUserId === user.id ? "owner" : null);
+  const publisherRole = entityRole ?? (entity.ownerUserId === user.id ? "owner" : null);
 
   return (
     isVerifiedPersonalAccount(user) &&
-    company.verificationStatus === "approved" &&
+    entity.verificationStatus === "approved" &&
     (publisherRole === "owner" || publisherRole === "recruiter")
   );
 }
@@ -110,30 +111,66 @@ export async function canViewCandidate(viewer: CandidateViewer, candidateUserId:
     select: { entityId: true },
   });
   const memberCompanyIds = companyMemberships.map((membership) => membership.entityId);
-
-  const matchingCompanyCount = await prisma.company.count({
+  const supplierMemberships = await prisma.entityMember.findMany({
     where: {
-      verificationStatus: "approved",
+      userId: viewer.id,
+      entityType: "supplier",
+      status: "active",
       deletedAt: null,
-      OR: [{ ownerUserId: viewer.id }, { id: { in: memberCompanyIds } }],
-      jobs: {
-        some: {
-          deletedAt: null,
-          applications: {
-            some: {
-              deletedAt: null,
-              candidateProfile: {
-                userId: candidateUserId,
+      role: { in: ["owner", "admin", "recruiter"] },
+    },
+    select: { entityId: true },
+  });
+  const legacySuppliers = await prisma.supplier.findMany({
+    where: { ownerUserId: viewer.id, deletedAt: null },
+    select: { id: true },
+  });
+  const memberSupplierIds = [
+    ...supplierMemberships.map((membership) => membership.entityId),
+    ...legacySuppliers.map((supplier) => supplier.id),
+  ];
+
+  const [matchingCompanyCount, matchingSupplierJobCount] = await Promise.all([
+    prisma.company.count({
+      where: {
+        verificationStatus: "approved",
+        deletedAt: null,
+        OR: [{ ownerUserId: viewer.id }, { id: { in: memberCompanyIds } }],
+        jobs: {
+          some: {
+            deletedAt: null,
+            applications: {
+              some: {
                 deletedAt: null,
+                candidateProfile: {
+                  userId: candidateUserId,
+                  deletedAt: null,
+                },
               },
             },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.job.count({
+      where: {
+        employerType: "supplier",
+        employerEntityId: { in: memberSupplierIds },
+        deletedAt: null,
+        applications: {
+          some: {
+            deletedAt: null,
+            candidateProfile: {
+              userId: candidateUserId,
+              deletedAt: null,
+            },
+          },
+        },
+      },
+    }),
+  ]);
 
-  return matchingCompanyCount > 0;
+  return matchingCompanyCount > 0 || matchingSupplierJobCount > 0;
 }
 
 export function isVerifiedPersonalAccount(user: PermissionUser) {
@@ -220,4 +257,19 @@ export function canModerate(roles: Role[]) {
 
 export function needsAdminValidation(status: string) {
   return status === "pending" || status === "draft";
+}
+
+export async function canViewPublicProfile(viewerId: string | null, profileUserId: string) {
+  if (viewerId === profileUserId) return true;
+
+  const profile = await prisma.userProfile.findFirst({
+    where: { userId: profileUserId, deletedAt: null },
+    select: { visibility: true },
+  });
+
+  if (!profile || profile.visibility !== "public") {
+    return false;
+  }
+
+  return true;
 }

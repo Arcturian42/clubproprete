@@ -5,6 +5,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
+import { PermissionError, requireUser } from "@/lib/permissions";
 
 const updateProfileSchema = z.object({
   userId: z.string(),
@@ -18,6 +19,7 @@ const updateProfileSchema = z.object({
   address: z.string().optional(),
   avatar: z.string().optional(),
   photos: z.array(z.string()).optional(),
+  visibility: z.enum(["public", "private"]).optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
@@ -36,8 +38,13 @@ export async function updateUserProfile(data: UpdateProfileInput) {
       return { success: false, errors: parsed.error.flatten().fieldErrors };
     }
 
-    const { userId, firstName, lastName, email, phone, city, website, bio, address, avatar, photos } =
+    const { userId, firstName, lastName, email, phone, city, website, bio, address, avatar, photos, visibility } =
       parsed.data;
+
+    const session = await requireUser();
+    if (session.user.id !== userId) {
+      throw new PermissionError("FORBIDDEN", "Vous ne pouvez modifier que votre propre profil.");
+    }
 
     const existing = await prisma.user.findUnique({
       where: { email },
@@ -63,6 +70,18 @@ export async function updateUserProfile(data: UpdateProfileInput) {
       },
     });
 
+    if (visibility) {
+      await prisma.userProfile.upsert({
+        where: { userId },
+        create: {
+          userId,
+          profileType: session.user.role || "registered_user",
+          visibility,
+        },
+        update: { visibility },
+      });
+    }
+
     const company = await prisma.company.findFirst({
       where: { ownerUserId: userId },
     });
@@ -78,15 +97,26 @@ export async function updateUserProfile(data: UpdateProfileInput) {
     revalidatePath("/dashboard");
     return { success: true };
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
     console.error("updateUserProfile error:", err);
     return { success: false, message: "Une erreur est survenue. Veuillez réessayer." };
   }
 }
 
 export async function getUserProfile(userId: string) {
+  const session = await requireUser();
+  const isAdmin = session.user.role === "admin" || session.user.role === "super_admin";
+
+  if (!isAdmin && session.user.id !== userId) {
+    throw new PermissionError("FORBIDDEN", "Vous n'avez pas accès à ce profil.");
+  }
+
   return prisma.user.findUnique({
     where: { id: userId },
     include: {
+      profile: true,
       companies: { where: { deletedAt: null } },
       candidateProfile: { where: { deletedAt: null } },
       independentProfile: { where: { deletedAt: null } },

@@ -48,6 +48,15 @@ export const {
             candidateProfile: { where: { deletedAt: null } },
             independentProfile: { where: { deletedAt: null } },
             trainingOrganizations: { where: { deletedAt: null }, take: 1 },
+            profile: true,
+            entityMemberships: {
+              where: { status: "active", deletedAt: null },
+              include: {
+                user: true,
+              },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
           },
         });
 
@@ -56,6 +65,60 @@ export const {
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
 
+        // Détecter l'organisation via EntityMember (nouveau RBAC) puis fallback legacy
+        const entityMember = user.entityMemberships[0];
+        let organizationName: string | null = null;
+        let isAssociationMember = false;
+
+        if (entityMember) {
+          if (entityMember.entityType === "company") {
+            const company = await prisma.company.findFirst({
+              where: { id: entityMember.entityId, deletedAt: null },
+              select: { name: true, associationMember: true },
+            });
+            if (company) {
+              organizationName = company.name;
+              isAssociationMember = company.associationMember ?? false;
+            }
+          } else if (entityMember.entityType === "supplier") {
+            const supplier = await prisma.supplier.findFirst({
+              where: { id: entityMember.entityId, deletedAt: null },
+              select: { name: true },
+            });
+            if (supplier) {
+              organizationName = supplier.name;
+            }
+          } else if (entityMember.entityType === "training_organization") {
+            const org = await prisma.trainingOrganization.findFirst({
+              where: { id: entityMember.entityId, deletedAt: null },
+              select: { name: true },
+            });
+            if (org) {
+              organizationName = org.name;
+            }
+          }
+        }
+
+        // Fallback legacy
+        if (!organizationName) {
+          organizationName =
+            user.companies[0]?.name ??
+            user.suppliers[0]?.name ??
+            user.trainingOrganizations[0]?.name ??
+            user.independentProfile?.businessName ??
+            user.independentProfile?.city ??
+            user.candidateProfile?.city ??
+            null;
+        }
+
+        if (!isAssociationMember) {
+          isAssociationMember = Boolean(
+            user.companies[0]?.associationMember ||
+              user.profile?.associationStatus === "approved" ||
+              user.independentProfile?.associationStatus === "approved"
+          );
+        }
+
         return {
           id: user.id,
           email: user.email,
@@ -63,17 +126,8 @@ export const {
           lastName: user.lastName ?? "",
           role: user.mainRole,
           status: user.status,
-          associationMember:
-            user.companies[0]?.associationMember ??
-            (user.independentProfile?.associationStatus === "approved"),
-          organization:
-            user.companies[0]?.name ??
-            user.suppliers[0]?.name ??
-            user.trainingOrganizations[0]?.name ??
-            user.independentProfile?.businessName ??
-            user.independentProfile?.city ??
-            user.candidateProfile?.city ??
-            null,
+          associationMember: isAssociationMember,
+          organization: organizationName,
           phone: user.phone ?? "",
         };
       },

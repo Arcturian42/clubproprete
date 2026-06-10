@@ -111,5 +111,4 @@ export const profileOptions: Array<{ label: string; role: Role; associationEligi
   { label: "Independant / sous-traitant", role: "independent_profile", associationEligible: true },
   { label: "Candidat emploi", role: "candidate_profile", associationEligible: false },
   { label: "Organisme de formation", role: "training_organization", associationEligible: false },
-  { label: "Auteur / redacteur", role: "author", associationEligible: false },
 ];

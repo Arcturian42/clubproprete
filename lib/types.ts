@@ -39,9 +39,11 @@ export type WorkflowStatus = (typeof WORKFLOW_STATUSES)[number];
 export const ADMIN_ENTITY_TYPES = [
   "company",
   "supplier",
+  "training_organization",
   "job",
   "training",
   "article",
+  "author_application",
   "membership",
 ] as const;
 

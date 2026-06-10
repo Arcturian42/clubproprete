@@ -7,6 +7,7 @@ import { auth } from "@/auth";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
 import { setFlash } from "@/lib/flash";
+import { PermissionError, requireUser } from "@/lib/permissions";
 
 const ROLES = [
   "registered_user",
@@ -24,11 +25,11 @@ const ROLES = [
 ] as const;
 
 async function requireSuperAdmin() {
-  const session = await auth();
-  if (session?.user?.role !== "super_admin") {
-    throw new Error("Forbidden: super_admin required");
+  const session = await requireUser();
+  if (session.user.role !== "super_admin") {
+    throw new PermissionError("FORBIDDEN", "Super admin requis.");
   }
-  return session!.user;
+  return session.user;
 }
 
 const updateUserRoleSchema = z.object({
@@ -73,6 +74,9 @@ export async function updateUserRole(formData: FormData) {
     setFlash("success", `Rôle mis à jour : ${role}`);
     return { success: true };
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
     console.error("updateUserRole error:", err);
     return { success: false, message: "Une erreur est survenue." };
   }
@@ -119,43 +123,57 @@ export async function updateUserStatus(formData: FormData) {
     setFlash("success", `Statut mis à jour : ${status}`);
     return { success: true };
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
     console.error("updateUserStatus error:", err);
     return { success: false, message: "Une erreur est survenue." };
   }
 }
 
-export async function getUsersList() {
+export async function getUsersList(page?: number, limit = 50) {
   try {
     await requireSuperAdmin();
 
-    const users = await prisma.user.findMany({
-      where: { deletedAt: null },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        mainRole: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        emailVerified: true,
-        phoneVerified: true,
-        _count: {
-          select: {
-            companies: true,
-            suppliers: true,
-            jobs: true,
-            trainings: true,
-            articles: true,
+    const currentPage = Math.max(1, page ?? 1);
+    const skip = (currentPage - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          mainRole: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          emailVerified: true,
+          phoneVerified: true,
+          _count: {
+            select: {
+              companies: true,
+              suppliers: true,
+              jobs: true,
+              trainings: true,
+              articles: true,
+            },
           },
         },
-      },
-    });
+      }),
+      prisma.user.count({ where: { deletedAt: null } }),
+    ]);
 
-    return { success: true, users };
+    return { success: true, users, total, page: currentPage, totalPages: Math.ceil(total / limit) };
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
     console.error("getUsersList error:", err);
     return { success: false, message: "Accès refusé." };
   }
@@ -163,10 +181,10 @@ export async function getUsersList() {
 
 export async function getAdminStats() {
   try {
-    const session = await auth();
-    const role = session?.user?.role;
+    const session = await requireUser();
+    const role = session.user.role;
     if (role !== "admin" && role !== "super_admin") {
-      throw new Error("Forbidden");
+      throw new PermissionError("FORBIDDEN", "Accès réservé aux administrateurs.");
     }
 
     const [totalUsers, totalCompanies, totalSuppliers, totalJobs, totalTrainings, totalArticles, pendingCompanies, pendingSuppliers, pendingJobs, pendingMemberships] = await Promise.all([
@@ -199,6 +217,9 @@ export async function getAdminStats() {
       },
     };
   } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
     console.error("getAdminStats error:", err);
     return { success: false, message: "Une erreur est survenue." };
   }

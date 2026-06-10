@@ -1,6 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 
 export const authConfig = {
+  trustHost: process.env.AUTH_TRUST_HOST === "true",
   pages: {
     signIn: "/connexion",
   },
@@ -41,12 +42,7 @@ export const authConfig = {
 
       if (path.startsWith("/emploi/nouvelle-offre")) {
         if (!isLoggedIn) return false;
-        return (
-          role === "company_owner" ||
-          role === "verified_company" ||
-          role === "admin" ||
-          role === "super_admin"
-        );
+        return true;
       }
 
       const isPublic =
@@ -57,8 +53,11 @@ export const authConfig = {
         path.startsWith("/ressources") ||
         path.startsWith("/independants") ||
         path.startsWith("/association") ||
+        path.startsWith("/membres") ||
         path.startsWith("/connexion") ||
         path.startsWith("/inscription") ||
+        path.startsWith("/mot-de-passe-oublie") ||
+        path.startsWith("/reinitialiser-mot-de-passe") ||
         path.startsWith("/onboarding") ||
         path.startsWith("/sous-traitance") ||
         path.startsWith("/mentions-legales") ||

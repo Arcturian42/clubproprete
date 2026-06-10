@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BadgeCheck, Filter } from "lucide-react";
+import { auth } from "@/auth";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
 import { SupplierAdvisor } from "@/components/suppliers/supplier-advisor";
@@ -29,6 +30,8 @@ interface SuppliersPageProps {
 
 export default async function SuppliersPage({ searchParams }: SuppliersPageProps) {
   const params = await searchParams;
+  const session = await auth();
+  const referenceHref = session?.user ? "/dashboard/fournisseur" : "/inscription?role=supplier_owner";
   const page = params.page ? parseInt(params.page, 10) : 1;
   const family = isSupplierFamily(params.family) ? params.family : undefined;
   const subCategory = isSupplierSubCategory(params.subCategory) ? params.subCategory : undefined;
@@ -72,7 +75,7 @@ export default async function SuppliersPage({ searchParams }: SuppliersPageProps
       title="Fournisseurs"
       description="Fournisseurs vérifiés par famille métier : consommables, matériel, machines et logiciels."
       actions={
-        <Link href="/inscription?role=supplier_owner" className="bento-btn bento-btn-primary">
+        <Link href={referenceHref} className="bento-btn bento-btn-primary">
           Référencer un fournisseur
         </Link>
       }

@@ -104,6 +104,11 @@ export function LoginForm() {
           {loading ? "Connexion..." : "Se connecter"}
           <ArrowRight size={16} aria-hidden="true" />
         </button>
+        <div className="mt-3 text-center">
+          <a href="/mot-de-passe-oublie" className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+            Mot de passe oublié ?
+          </a>
+        </div>
       </div>
 
       <div className="surface p-6">

@@ -22,7 +22,6 @@ const signupSchema = z.object({
     "independent_profile",
     "candidate_profile",
     "training_organization",
-    "author",
   ]),
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: "Vous devez accepter les conditions." }),
@@ -63,6 +62,11 @@ export async function registerUser(data: SignupInput) {
           lastName,
           phone: phone || null,
           mainRole: role,
+          // Le compte personnel est auto-vérifié à l'inscription : il n'existe pas de
+          // parcours de double opt-in. La validation métier reste portée par la modération
+          // admin de l'entité (société/fournisseur/centre). Sans cela, isVerifiedPersonalAccount
+          // resterait toujours faux et aucune offre ne pourrait être publiée.
+          emailVerified: true,
           termsAcceptedAt: new Date(),
         },
       });
@@ -72,9 +76,10 @@ export async function registerUser(data: SignupInput) {
           userId: createdUser.id,
           profileType: role,
           completionScore: role === "candidate_profile" ? 35 : 30,
-          verificationStatus: role === "candidate_profile" || role === "author" ? "draft" : "pending",
+          verificationStatus: role === "candidate_profile" ? "draft" : "pending",
           associationStatus:
             role === "company_owner" || role === "independent_profile" ? "draft" : "not_applicable",
+          visibility: role === "candidate_profile" ? "private" : "public",
           primaryGoal: organizationName || null,
         },
       });

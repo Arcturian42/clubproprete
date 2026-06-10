@@ -76,7 +76,7 @@ export default async function JobDetailPage({ params }: Props) {
     <PageShell
       eyebrow="Offre d'emploi"
       title={job.title}
-      description={`${job.company?.name || "Entreprise"} · ${job.city || ""} · ${job.contractType}`}
+      description={`${job.employerName || job.company?.name || "Entreprise"} · ${job.city || ""} · ${job.contractType}`}
       actions={
         <Link href="/emploi" className="bento-btn">
           <ArrowLeft size={16} /> Retour aux offres
@@ -139,15 +139,15 @@ export default async function JobDetailPage({ params }: Props) {
 
         {/* Colonne latérale */}
         <div className="space-y-6">
-          {/* Société */}
+          {/* Employeur */}
           <article className="surface p-6">
-            <h2 className="text-lg font-black text-slate-900 mb-4">Société</h2>
+            <h2 className="text-lg font-black text-slate-900 mb-4">Employeur</h2>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <Building2 className="text-indigo-600 shrink-0" size={20} />
                 <div>
                   <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-500">Nom</p>
-                  <p className="font-bold text-slate-900">{job.company?.name || "Non précisé"}</p>
+                  <p className="font-bold text-slate-900">{job.employerName || job.company?.name || "Non précisé"}</p>
                 </div>
               </div>
 
@@ -174,13 +174,13 @@ export default async function JobDetailPage({ params }: Props) {
               </div>
             </div>
 
-            {job.company?.id && (
+            {(job.employerHref || job.company?.id) && (
               <div className="mt-6">
                 <Link
-                  href={`/annuaire/societes/${job.company.id}`}
+                  href={job.employerHref || `/annuaire/societes/${job.company?.id}`}
                   className="bento-btn w-full justify-center"
                 >
-                  Voir la fiche société
+                  Voir la fiche
                 </Link>
               </div>
             )}

@@ -13,7 +13,9 @@ test.describe('Navigation', () => {
     for (const route of publicRoutes) {
       const response = await page.goto(route.path);
       expect(response?.status()).toBe(200);
-      await expect(page.getByRole('heading', { name: route.heading })).toBeVisible();
+      // .first() : certaines pages répètent le nom (héros + pied de page), on vérifie
+      // simplement qu'au moins un titre attendu est rendu.
+      await expect(page.getByRole('heading', { name: route.heading }).first()).toBeVisible();
     }
   });
 

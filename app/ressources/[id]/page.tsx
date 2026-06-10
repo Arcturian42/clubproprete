@@ -5,12 +5,11 @@ import {
   BookOpen,
   Tag,
   User,
-  Share2,
-  Bookmark
+  Home,
+  ChevronRight,
 } from "lucide-react";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
-import { StatCard } from "@/components/stat-card";
 import { getArticleById } from "@/lib/actions/public";
 
 type Props = {
@@ -29,6 +28,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   const authorName = article.author
     ? `${article.author.firstName || ""} ${article.author.lastName || ""}`.trim() || "Club Propreté"
     : "Club Propreté";
+  const authorInitials = `${article.author?.firstName?.[0] ?? ""}${article.author?.lastName?.[0] ?? ""}`;
 
   return (
     <PageShell
@@ -41,53 +41,90 @@ export default async function ArticleDetailPage({ params }: Props) {
         </Link>
       }
     >
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard 
-          label="Categorie" 
-          value={article.category || "Non classé"} 
-          detail="Thematique" 
-        />
-        <StatCard 
-          label="Lecture" 
-          value={article.readTime || "5 min"} 
-          detail="Temps estimé" 
-        />
-        <StatCard 
-          label="Publication" 
-          value={article.publishedAt ? new Date(article.publishedAt).toLocaleDateString("fr-FR") : "Recent"} 
-          detail="Date" 
-        />
-      </div>
+      {/* Breadcrumb */}
+      <nav aria-label="Breadcrumb" className="mb-6">
+        <ol className="flex flex-wrap items-center gap-1.5 text-sm font-semibold text-slate-500">
+          <li>
+            <Link href="/" className="flex items-center gap-1 hover:text-indigo-600 transition-colors">
+              <Home size={14} />
+              <span>Accueil</span>
+            </Link>
+          </li>
+          <li>
+            <ChevronRight size={14} className="text-slate-400" />
+          </li>
+          <li>
+            <Link href="/ressources" className="hover:text-indigo-600 transition-colors">
+              Blog
+            </Link>
+          </li>
+          <li>
+            <ChevronRight size={14} className="text-slate-400" />
+          </li>
+          <li className="max-w-xs truncate text-slate-900" aria-current="page">
+            {article.title}
+          </li>
+        </ol>
+      </nav>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         {/* Contenu principal */}
-        <div className="space-y-6">
-          {/* Résumé */}
-          {article.excerpt && (
-            <article className="surface p-6 bg-indigo-50 border-indigo-200">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-2 text-white shadow-[3px_3px_0px_#0f172a]">
-                  <BookOpen size={20} />
-                </div>
-                <h2 className="text-xl font-black text-slate-900">En résumé</h2>
+        <div className="space-y-8">
+          {/* Header article */}
+          <header className="surface p-6 lg:p-8 space-y-4">
+            {article.category && (
+              <span className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">
+                {article.category}
+              </span>
+            )}
+            <h1 className="text-3xl font-black leading-tight text-slate-900">
+              {article.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-500">
+              <Link
+                href={`/membres/${article.author?.id}`}
+                className="flex items-center gap-2 text-slate-700 hover:text-indigo-600 transition-colors"
+              >
+                {authorInitials ? (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+                    {authorInitials}
+                  </div>
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                    <User size={16} />
+                  </div>
+                )}
+                <span>{authorName}</span>
+              </Link>
+              <span className="text-slate-300">·</span>
+              <span>{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString("fr-FR") : "Récent"}</span>
+              <span className="text-slate-300">·</span>
+              <span>{article.readTime || "5 min"} de lecture</span>
+            </div>
+            {article.featuredImage && (
+              <div className="surface overflow-hidden">
+                <img
+                  src={article.featuredImage}
+                  alt={article.title}
+                  className="h-auto w-full object-cover"
+                />
               </div>
-              <p className="text-lg font-medium text-slate-700 italic">
+            )}
+          </header>
+
+          {/* Chapô */}
+          {article.excerpt && (
+            <div className="surface p-6 bg-indigo-50 border-indigo-200">
+              <p className="text-lg font-medium leading-8 text-slate-700 italic">
                 &ldquo;{article.excerpt}&rdquo;
               </p>
-            </article>
+            </div>
           )}
 
           {/* Contenu */}
-          <article className="surface p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="rounded-[14px] border-2 border-slate-900 bg-emerald-500 p-2 text-white shadow-[3px_3px_0px_#0f172a]">
-                <BookOpen size={20} />
-              </div>
-              <h2 className="text-xl font-black text-slate-900">Contenu</h2>
-            </div>
-            <div className="prose prose-slate max-w-none">
-              <p className="text-base font-medium leading-7 text-slate-600 whitespace-pre-wrap">
+          <article className="surface p-6 lg:p-8">
+            <div className="prose prose-slate max-w-none prose-lg">
+              <p className="leading-relaxed text-slate-600 whitespace-pre-wrap">
                 {article.content || "Contenu de l'article en cours de rédaction."}
               </p>
             </div>
@@ -95,22 +132,31 @@ export default async function ArticleDetailPage({ params }: Props) {
 
           {/* Tags */}
           {tags.length > 0 && (
-            <article className="surface p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-[14px] border-2 border-slate-900 bg-amber-400 p-2 text-slate-900 shadow-[3px_3px_0px_#0f172a]">
-                  <Tag size={20} />
-                </div>
-                <h2 className="text-xl font-black text-slate-900">Tags</h2>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span key={tag} className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </article>
+            <div className="flex flex-wrap items-center gap-2">
+              <Tag size={14} className="text-slate-400" />
+              {tags.map((tag) => (
+                <span key={tag} className="bento-tag border-slate-200 bg-slate-50 text-slate-600 text-xs">
+                  {tag}
+                </span>
+              ))}
+            </div>
           )}
+
+          {/* CTA fin d'article */}
+          <div className="surface p-6 lg:p-8 bg-slate-900 text-white">
+            <h2 className="text-xl font-black">Vous avez trouvé cet article utile ?</h2>
+            <p className="mt-2 text-sm font-medium text-slate-300">
+              Rejoignez la communauté de professionnels de la propreté et accédez à plus de ressources exclusives.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/inscription" className="bento-btn bento-btn-primary">
+                Rejoindre Club Propreté
+              </Link>
+              <Link href="/association" className="bento-btn bg-white text-slate-900 hover:bg-slate-100">
+                Découvrir l'association
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Colonne latérale */}
@@ -119,26 +165,26 @@ export default async function ArticleDetailPage({ params }: Props) {
           <article className="surface p-6">
             <h2 className="text-lg font-black text-slate-900 mb-4">Auteur</h2>
             <div className="flex items-start gap-3">
-              <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-100 p-3 text-indigo-600 shadow-[3px_3px_0px_#0f172a]">
-                <User size={20} />
-              </div>
+              <Link href={`/membres/${article.author?.id}`} className="shrink-0">
+                {authorInitials ? (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+                    {authorInitials}
+                  </div>
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 border-2 border-slate-900 shadow-[2px_2px_0px_#0f172a]">
+                    <User size={20} />
+                  </div>
+                )}
+              </Link>
               <div>
-                <p className="font-bold text-slate-900">{authorName}</p>
+                <Link
+                  href={`/membres/${article.author?.id}`}
+                  className="font-bold text-slate-900 hover:text-indigo-600 transition-colors"
+                >
+                  {authorName}
+                </Link>
                 <p className="text-sm text-slate-500">Contributeur Club Propreté</p>
               </div>
-            </div>
-          </article>
-
-          {/* Actions */}
-          <article className="surface p-6">
-            <h2 className="text-lg font-black text-slate-900 mb-4">Actions</h2>
-            <div className="space-y-3">
-              <button className="bento-btn w-full" disabled>
-                <Share2 size={16} /> Partager l'article
-              </button>
-              <button className="bento-btn w-full" disabled>
-                <Bookmark size={16} /> Sauvegarder
-              </button>
             </div>
           </article>
 

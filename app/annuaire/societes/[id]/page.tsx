@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, BadgeCheck, Building2, MapPin, UsersRound } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Building2, MapPin, UsersRound, UserRound } from "lucide-react";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
-import { getCompanyById } from "@/lib/actions/public";
+import { getCompanyById, getEntityMembers } from "@/lib/actions/public";
 import { prisma } from "@/lib/prisma";
 
 type CompanyDetailPageProps = {
@@ -28,6 +28,8 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
       creatorEntityId: company.id,
     },
   });
+
+  const members = await getEntityMembers("company", id);
 
   const wants = [
     company.wantsRecruitment ? "Recrutement" : null,
@@ -149,18 +151,67 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
       </div>
 
       <div className="surface mt-8 p-6">
-        <div className="flex items-start gap-4">
-          <div className="rounded-[14px] border-2 border-slate-900 bg-amber-400 p-3 text-slate-900 shadow-[3px_3px_0px_#0f172a]">
+        <div className="flex items-start gap-4 mb-4">
+          <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-3 text-white shadow-[3px_3px_0px_#0f172a]">
             <UsersRound size={22} aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-xl font-black text-slate-900">Ce que cette fiche doit devenir</h2>
-            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
-              En V0 data complete, cette page affichera aussi description longue, SIRET, zone d'intervention,
-              documents, contacts RGPD, offres actives, formations et badges.
+            <h2 className="text-xl font-black text-slate-900">Équipe</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {members.length > 0
+                ? `${members.length} membre(s) actif(s) dans cette société.`
+                : "Aucun membre public pour le moment."}
             </p>
           </div>
         </div>
+
+        {members.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {members.map((member) => {
+              const isPublic = member.user.profile?.visibility === "public";
+              const roleLabels: Record<string, string> = {
+                owner: "Propriétaire",
+                admin: "Administrateur",
+                recruiter: "Recruteur",
+                member: "Membre",
+              };
+
+              return (
+                <div
+                  key={member.id}
+                  className="flex items-center gap-3 p-3 rounded-[14px] border-2 border-slate-200 bg-white"
+                >
+                  {member.user.avatarUrl ? (
+                    <img
+                      src={member.user.avatarUrl}
+                      alt={`${member.user.firstName} ${member.user.lastName}`}
+                      className="w-10 h-10 rounded-full border-2 border-slate-900 object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-indigo-100 flex items-center justify-center">
+                      <UserRound size={18} className="text-indigo-600" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    {isPublic ? (
+                      <Link
+                        href={`/membres/${member.user.id}`}
+                        className="font-bold text-slate-900 hover:text-indigo-600 truncate block"
+                      >
+                        {member.user.firstName} {member.user.lastName}
+                      </Link>
+                    ) : (
+                      <span className="font-bold text-slate-900 truncate block">
+                        {member.user.firstName} {member.user.lastName}
+                      </span>
+                    )}
+                    <span className="text-xs text-slate-500">{roleLabels[member.role] || member.role}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </PageShell>
   );

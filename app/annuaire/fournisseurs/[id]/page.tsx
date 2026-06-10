@@ -7,12 +7,14 @@ import {
   Globe,
   Mail,
   Package,
-  Phone
+  Phone,
+  UsersRound,
+  UserRound,
 } from "lucide-react";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
-import { getSupplierById } from "@/lib/actions/public";
+import { getSupplierById, getEntityMembers } from "@/lib/actions/public";
 import {
   getOfferTypeLabel,
   getSupplierFamilyLabel,
@@ -30,6 +32,8 @@ export default async function SupplierDetailPage({ params }: Props) {
   if (!supplier || supplier.verificationStatus !== "approved") {
     notFound();
   }
+
+  const members = await getEntityMembers("supplier", id);
 
   const specialties = supplier.services.map((s) => s.title);
   const coverage = supplier.nationalCoverage ? "National" : supplier.deliveryAreas || "Local";
@@ -163,6 +167,71 @@ export default async function SupplierDetailPage({ params }: Props) {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Équipe */}
+      <div className="surface mt-8 p-6">
+        <div className="flex items-start gap-4 mb-4">
+          <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-3 text-white shadow-[3px_3px_0px_#0f172a]">
+            <UsersRound size={22} aria-hidden="true" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-slate-900">Équipe</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {members.length > 0
+                ? `${members.length} membre(s) actif(s) chez ce fournisseur.`
+                : "Aucun membre public pour le moment."}
+            </p>
+          </div>
+        </div>
+
+        {members.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {members.map((member) => {
+              const isPublic = member.user.profile?.visibility === "public";
+              const roleLabels: Record<string, string> = {
+                owner: "Propriétaire",
+                admin: "Administrateur",
+                recruiter: "Recruteur",
+                member: "Membre",
+              };
+
+              return (
+                <div
+                  key={member.id}
+                  className="flex items-center gap-3 p-3 rounded-[14px] border-2 border-slate-200 bg-white"
+                >
+                  {member.user.avatarUrl ? (
+                    <img
+                      src={member.user.avatarUrl}
+                      alt={`${member.user.firstName} ${member.user.lastName}`}
+                      className="w-10 h-10 rounded-full border-2 border-slate-900 object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full border-2 border-slate-900 bg-indigo-100 flex items-center justify-center">
+                      <UserRound size={18} className="text-indigo-600" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    {isPublic ? (
+                      <Link
+                        href={`/membres/${member.user.id}`}
+                        className="font-bold text-slate-900 hover:text-indigo-600 truncate block"
+                      >
+                        {member.user.firstName} {member.user.lastName}
+                      </Link>
+                    ) : (
+                      <span className="font-bold text-slate-900 truncate block">
+                        {member.user.firstName} {member.user.lastName}
+                      </span>
+                    )}
+                    <span className="text-xs text-slate-500">{roleLabels[member.role] || member.role}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </PageShell>
   );

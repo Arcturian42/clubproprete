@@ -44,7 +44,7 @@ export function JoinAssociationButton() {
 
   if (isEligible) {
     return (
-      <Link href="/profil" className="bento-btn bento-btn-primary">
+      <Link href="/association/adhesion" className="bento-btn bento-btn-primary">
         <Shield size={16} className="mr-2" />
         Demander l'adhesion
       </Link>

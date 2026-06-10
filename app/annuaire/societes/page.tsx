@@ -5,6 +5,7 @@ import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
 import { Pagination } from "@/components/pagination";
+import CompanyMap from "@/components/company-map";
 import { getPublishedCompanies } from "@/lib/actions/companies";
 
 interface CompaniesPageProps {
@@ -33,6 +34,22 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
         <StatCard label="Societes" value={String(total)} detail="Verifiees" />
         <StatCard label="Regions" value="8" detail="Couvertes" />
         <StatCard label="Specialites" value="12" detail="Services listes" />
+      </div>
+
+      <div className="mt-6">
+        <CompanyMap companies={companies} />
+      </div>
+
+      <div className="mt-6 rounded-[20px] border-2 border-indigo-200 bg-indigo-50 p-6 text-center">
+        <p className="text-sm font-semibold text-indigo-900">
+          Votre entreprise n&apos;est pas sur la carte ?
+        </p>
+        <Link
+          href="/inscription?role=company_owner"
+          className="mt-3 inline-block bento-btn bento-btn-primary"
+        >
+          Ajouter gratuitement votre entreprise
+        </Link>
       </div>
 
       <form method="GET" action="/annuaire/societes" className="mt-6 flex gap-2">

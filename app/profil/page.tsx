@@ -43,6 +43,7 @@ type EditableProfile = {
   website: string;
   avatar: string | null;
   photos: string[];
+  visibility: "public" | "private";
 };
 
 function getProfileType(role: string) {
@@ -84,6 +85,7 @@ export default function ProfilPage() {
     website: "",
     avatar: null,
     photos: [],
+    visibility: "private",
   });
 
   useEffect(() => {
@@ -99,6 +101,7 @@ export default function ProfilPage() {
         website: "",
         avatar: null,
         photos: [],
+        visibility: "private",
       });
       getUserProfile(user.id).then((data) => {
         if (data) {
@@ -114,6 +117,7 @@ export default function ProfilPage() {
             avatar: data.avatarUrl || prev.avatar,
             photos: data.photos ? JSON.parse(data.photos) : [],
             website: data.companies?.[0]?.website || prev.website,
+            visibility: data.profile?.visibility === "public" ? "public" : "private",
           }));
         }
       });
@@ -135,6 +139,7 @@ export default function ProfilPage() {
       address: profile.address,
       avatar: profile.avatar || undefined,
       photos: profile.photos,
+      visibility: profile.visibility,
     });
     if (result.success) {
       setIsEditing(false);
@@ -155,6 +160,7 @@ export default function ProfilPage() {
       website: "",
       avatar: null,
       photos: [],
+      visibility: "private",
     });
     getUserProfile(user.id).then((data) => {
       if (data) {
@@ -170,6 +176,7 @@ export default function ProfilPage() {
           avatar: data.avatarUrl || prev.avatar,
           photos: data.photos ? JSON.parse(data.photos) : [],
           website: data.companies?.[0]?.website || prev.website,
+          visibility: data.profile?.visibility === "public" ? "public" : "private",
         }));
       }
     });
@@ -432,7 +439,7 @@ export default function ProfilPage() {
       <div className="grid gap-4 sm:grid-cols-4">
         <StatCard label="Profil" value={roleLabels[user.role as keyof typeof roleLabels] || user.role} detail={getProfileType(user.role)} />
         <StatCard label="Association" value={user.associationMember ? "Membre" : "Non membre"} detail={user.associationMember ? "Accès complet" : "Adhésion possible"} />
-        <StatCard label="Compte" value="Actif" detail="V1 production" />
+        <StatCard label="Visibilité" value={profile.visibility === "public" ? "Public" : "Privé"} detail="Profil membre" />
         <StatCard label="Photos" value={String(profile.photos.length)} detail="Dans la galerie" />
       </div>
 
@@ -509,6 +516,20 @@ export default function ProfilPage() {
                   <Globe size={12} className="inline mr-1" /> Site web
                 </label>
                 <input className="bento-input w-full" value={profile.website} onChange={(e) => handleChange("website", e.target.value)} disabled={!isEditing} placeholder="www.votresite.com" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">
+                  <Eye size={12} className="inline mr-1" /> Visibilité du profil
+                </label>
+                <select
+                  className="bento-input w-full"
+                  value={profile.visibility}
+                  onChange={(e) => handleChange("visibility", e.target.value)}
+                  disabled={!isEditing}
+                >
+                  <option value="public">Public</option>
+                  <option value="private">Privé</option>
+                </select>
               </div>
             </div>
           </div>

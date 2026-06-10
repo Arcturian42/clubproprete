@@ -29,7 +29,8 @@ import { useSession } from "next-auth/react";
 import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
 import { EntityCard } from "@/components/entity-card";
-import { getCompanyByOwner, updateCompanyProfile } from "@/lib/actions/companies";
+import { createCompanyProfile, getCompanyByOwner, updateCompanyProfile } from "@/lib/actions/companies";
+import { getApplicationsForCompany } from "@/lib/actions/jobs";
 
 type CompanyProfile = {
   name: string;
@@ -67,6 +68,8 @@ export default function EntrepriseProfilePage() {
   const [newService, setNewService] = useState("");
   const [newClient, setNewClient] = useState("");
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [applications, setApplications] = useState<Awaited<ReturnType<typeof getApplicationsForCompany>>["applications"] | null>(null);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   const user = session?.user;
 
@@ -148,10 +151,21 @@ export default function EntrepriseProfilePage() {
     loadCompany();
   }, [user, status, router]);
 
-  const handleSave = async () => {
+  useEffect(() => {
     if (!companyId) return;
-    const result = await updateCompanyProfile({
-      id: companyId,
+    const loadApplications = async () => {
+      setApplicationsLoading(true);
+      const result = await getApplicationsForCompany(companyId);
+      if (result.success) {
+        setApplications(result.applications);
+      }
+      setApplicationsLoading(false);
+    };
+    loadApplications();
+  }, [companyId]);
+
+  const handleSave = async () => {
+    const payload = {
       name: profile.name,
       legalName: profile.legalName,
       siret: profile.siret,
@@ -169,8 +183,14 @@ export default function EntrepriseProfilePage() {
       photos: profile.photos,
       services: profile.services,
       clients: profile.clients,
-    });
+    };
+    const result = companyId
+      ? await updateCompanyProfile({ id: companyId, ...payload })
+      : await createCompanyProfile(payload);
     if (result.success) {
+      if (!companyId && "company" in result && result.company) {
+        setCompanyId(result.company.id);
+      }
       setIsEditing(false);
     }
   };
@@ -427,6 +447,37 @@ export default function EntrepriseProfilePage() {
         <StatCard label="Photos" value={String(profile.photos.length)} detail="Dans la galerie" />
         <StatCard label="Clients" value={String(profile.clients.length)} detail="Types servis" />
         <StatCard label="Effectif" value={profile.employeeCount} detail="Salariés" />
+      </div>
+
+      <div className="mt-6 surface p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-black text-slate-900">Candidatures reçues</h2>
+          <Link href="/dashboard/entreprise/offres" className="bento-btn">
+            Voir mes offres
+          </Link>
+        </div>
+        {applicationsLoading ? (
+          <p className="text-slate-600">Chargement des candidatures...</p>
+        ) : applications && applications.length > 0 ? (
+          <div className="space-y-3">
+            {applications.map((app) => (
+              <div key={app.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-2 border-slate-200 rounded-[14px]">
+                <div>
+                  <p className="font-bold text-slate-900">
+                    {app.candidateProfile?.user?.firstName ?? ""} {app.candidateProfile?.user?.lastName ?? ""}
+                  </p>
+                  <p className="text-sm text-slate-500">Offre : {app.job?.title}</p>
+                  <span className="inline-block mt-1 bento-tag border-slate-300 bg-slate-50 text-slate-700">{app.status}</span>
+                </div>
+                <p className="text-sm text-slate-500 shrink-0">
+                  {app.createdAt ? new Date(app.createdAt).toLocaleDateString("fr-FR") : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-slate-600">Aucune candidature pour le moment.</p>
+        )}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">

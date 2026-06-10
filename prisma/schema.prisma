@@ -40,11 +40,45 @@ model User {
   trainings               Training[]
   memberships             AssociationMembership[]
   entityMemberships       EntityMember[] @relation("UserEntityMemberships")
+  recommendationsReceived  Recommendation[] @relation("CandidateRecommendations")
+  recommendationsGiven   Recommendation[] @relation("AuthorRecommendations")
   subcontractingMissions  SubcontractingMission[]
   subcontractingResponses SubcontractingApplication[]
   articles                Article[]
+  authorApplications      AuthorApplication[]
   leads                   Lead[]
   analyticsEvents         AnalyticsEvent[]
+  passwordResetTokens     PasswordResetToken[]
+  notifications           Notification[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }
 
 model UserProfile {
@@ -123,6 +157,8 @@ model Company {
   wantsSubcontracting Boolean  @default(false)
   wantsTraining      Boolean   @default(false)
   wantsSuppliers     Boolean   @default(false)
+  latitude           Float?
+  longitude          Float?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   deletedAt          DateTime?
@@ -281,7 +317,9 @@ model Certification {
 
 model Job {
   id                 String    @id @default(cuid())
-  companyId          String
+  companyId          String?
+  employerType       String    @default("company")
+  employerEntityId   String?
   createdBy          String
   title              String
   description        String
@@ -301,9 +339,12 @@ model Job {
   updatedAt          DateTime  @updatedAt
   deletedAt          DateTime?
 
-  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company      Company?         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   creator      User             @relation(fields: [createdBy], references: [id], onDelete: Cascade)
   applications JobApplication[]
+
+  @@index([employerType, employerEntityId])
+  @@index([createdBy])
 }
 
 model JobApplication {
@@ -314,6 +355,7 @@ model JobApplication {
   message            String?
   cvUrl              String?
   status             String    @default("submitted")
+  internalNotes      String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   deletedAt          DateTime?
@@ -471,7 +513,28 @@ model Article {
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author            User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorApplication AuthorApplication? @relation("AuthorApplicationArticle")
+}
+
+model AuthorApplication {
+  id              String    @id @default(cuid())
+  userId          String
+  articleId       String?   @unique
+  motivation      String?
+  expertise       String?
+  status          String    @default("pending")
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article Article? @relation("AuthorApplicationArticle", fields: [articleId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
 }
 
 model NewsletterSubscriber {
@@ -533,4 +596,26 @@ model AnalyticsEvent {
   createdAt  DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model Recommendation {
+  id              String   @id @default(cuid())
+  candidateUserId String
+  authorUserId    String?
+  authorEmail     String?
+  authorEntityId  String?
+  authorRole      String?
+  relationship    String?
+  comment         String?
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+
+  candidate User  @relation("CandidateRecommendations", fields: [candidateUserId], references: [id], onDelete: Cascade)
+  author    User? @relation("AuthorRecommendations", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([candidateUserId])
+  @@index([authorUserId])
+  @@index([status])
 }

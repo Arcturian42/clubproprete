@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin", "/dashboard", "/profil", "/connexion", "/inscription", "/onboarding"],
+      disallow: ["/admin", "/dashboard", "/profil", "/connexion", "/inscription", "/api/"],
     },
     sitemap: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://clubproprete.com"}/sitemap.xml`,
   };

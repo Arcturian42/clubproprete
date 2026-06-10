@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Settings, UserRound } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { roleLabels } from "@/lib/auth-demo";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export function AuthNav() {
   const { data: session, status } = useSession();
@@ -33,6 +34,7 @@ export function AuthNav() {
 
   return (
     <div className="flex items-center gap-2">
+      <NotificationBell />
       <Link href="/dashboard" className="bento-tag border-indigo-300 bg-indigo-50 text-indigo-700">
         <UserRound size={13} aria-hidden="true" />
         {user.firstName} · {roleLabels[user.role as keyof typeof roleLabels] || user.role}
