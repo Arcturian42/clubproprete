@@ -6,7 +6,7 @@
     "dev": "next dev",
     "clean:next": "node -e \"require('node:fs').rmSync('.next',{recursive:true,force:true})\"",
     "build": "npm run clean:next && next build",
-    "vercel-build": "prisma migrate deploy && npm run clean:next && next build",
+    "vercel-build": "node scripts/migrate-deploy.mjs && npm run clean:next && next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "test:unit": "node --import tsx --test lib/permissions.test.ts",
