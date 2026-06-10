@@ -86,7 +86,12 @@ export default async function SubcontractingPage() {
                 ].filter((m): m is string => !!m)}
               >
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm font-semibold text-slate-500">Postulez directement à cette mission.</p>
+                  <Link
+                    href={`/membres/${mission.creator.id}`}
+                    className="text-sm font-semibold text-indigo-600 hover:underline"
+                  >
+                    Publié par {`${mission.creator.firstName ?? ""} ${mission.creator.lastName ?? ""}`.trim() || "un membre"}
+                  </Link>
                   <Send className="text-indigo-600" size={22} aria-hidden="true" />
                 </div>
               </EntityCard>

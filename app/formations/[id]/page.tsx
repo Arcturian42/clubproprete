@@ -61,6 +61,7 @@ export default async function TrainingDetailPage({ params }: Props) {
   } else if (training.creator) {
     creatorName = `${training.creator.firstName || ""} ${training.creator.lastName || ""}`.trim();
     creatorTypeLabel = "Auteur individuel";
+    creatorHref = `/membres/${training.creator.id}`;
   }
 
   const prerequisites = training.prerequisites

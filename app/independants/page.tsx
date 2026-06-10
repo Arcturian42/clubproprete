@@ -74,7 +74,12 @@ export default async function IndependentsPage({ searchParams }: IndependentsPag
                 <span className="inline-flex items-center gap-1 text-[12px] font-extrabold uppercase tracking-wide text-emerald-600">
                   <BadgeCheck size={14} /> Profil vérifié
                 </span>
-                <Hammer className="text-indigo-600" size={22} aria-hidden="true" />
+                <Link
+                  href={`/membres/${profile.userId}`}
+                  className="inline-flex items-center gap-1 text-[12px] font-extrabold uppercase tracking-wide text-indigo-600 hover:underline"
+                >
+                  Voir le profil <Hammer size={16} aria-hidden="true" />
+                </Link>
               </div>
             </EntityCard>
           ))}

@@ -19,6 +19,7 @@ import {
   EyeOff,
   Mail,
   FileText,
+  Linkedin,
 } from "lucide-react";
 
 type Props = {
@@ -30,12 +31,22 @@ export default async function PublicProfilePage({ params }: Props) {
   const session = await auth();
   const viewerId = session?.user?.id ?? null;
 
-  const canView = await canViewPublicProfile(viewerId, id);
+  // Un profil privé reste consultable par un recruteur légitime (candidature
+  // reçue) : même règle que pour les recommandations plus bas.
+  let canView = await canViewPublicProfile(viewerId, id);
+  let recruiterAccess = false;
+  if (!canView && viewerId) {
+    recruiterAccess = await canViewCandidate(
+      { id: viewerId, role: session?.user?.role as string | undefined },
+      id
+    );
+    canView = recruiterAccess;
+  }
   if (!canView) {
     notFound();
   }
 
-  const profile = await getPublicProfile(id, { includePrivate: viewerId === id });
+  const profile = await getPublicProfile(id, { includePrivate: viewerId === id || recruiterAccess });
   if (!profile) {
     notFound();
   }
@@ -136,15 +147,28 @@ export default async function PublicProfilePage({ params }: Props) {
                   </span>
                 )}
               </div>
-              {profile.email && (
-                <div className="mt-4">
-                  <a
-                    href={`mailto:${profile.email}`}
-                    className="bento-btn bento-btn-primary inline-flex items-center gap-2"
-                  >
-                    <Mail size={16} aria-hidden="true" />
-                    Contacter
-                  </a>
+              {(profile.email || profile.profile?.linkedinUrl) && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {profile.email && (
+                    <a
+                      href={`mailto:${profile.email}`}
+                      className="bento-btn bento-btn-primary inline-flex items-center gap-2"
+                    >
+                      <Mail size={16} aria-hidden="true" />
+                      Contacter
+                    </a>
+                  )}
+                  {profile.profile?.linkedinUrl && (
+                    <a
+                      href={profile.profile.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bento-btn inline-flex items-center gap-2"
+                    >
+                      <Linkedin size={16} aria-hidden="true" />
+                      LinkedIn
+                    </a>
+                  )}
                 </div>
               )}
             </div>

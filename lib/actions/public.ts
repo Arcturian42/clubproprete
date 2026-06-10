@@ -71,6 +71,7 @@ export async function getPublicProfile(userId: string, options?: { includePrivat
           visibility: true,
           verificationStatus: true,
           associationStatus: true,
+          linkedinUrl: true,
         },
       },
     },

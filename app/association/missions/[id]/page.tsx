@@ -176,7 +176,11 @@ export default async function MissionDetailPage({ params }: Props) {
                         {app.applicant.firstName?.[0]}{app.applicant.lastName?.[0]}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900">{app.applicant.firstName} {app.applicant.lastName}</p>
+                        <p className="font-bold text-slate-900">
+                          <Link href={`/membres/${app.applicant.id}`} className="hover:text-indigo-600 hover:underline">
+                            {app.applicant.firstName} {app.applicant.lastName}
+                          </Link>
+                        </p>
                         <p className="text-xs text-slate-500">{app.applicant.email}</p>
                       </div>
                     </div>
@@ -228,7 +232,11 @@ export default async function MissionDetailPage({ params }: Props) {
                 </div>
               )}
               <div>
-                <p className="font-bold text-slate-900">{mission.creator.firstName} {mission.creator.lastName}</p>
+                <p className="font-bold text-slate-900">
+                  <Link href={`/membres/${mission.creator.id}`} className="hover:text-indigo-600 hover:underline">
+                    {mission.creator.firstName} {mission.creator.lastName}
+                  </Link>
+                </p>
                 <p className="text-xs text-slate-500">Membre Club Propreté</p>
               </div>
             </div>

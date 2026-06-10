@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ClipboardList, ShieldCheck, Building2, Briefcase, Shield, Mic } from "lucide-react";
+import { ArrowRight, ClipboardList, ShieldCheck, Building2, Briefcase, Shield, Mic, Package, GraduationCap, Hammer } from "lucide-react";
 import { CandidateDashboard } from "@/components/dashboard/candidate-dashboard";
 import { EntityCard } from "@/components/entity-card";
 import { StatCard } from "@/components/stat-card";
@@ -70,11 +70,46 @@ const roleActions: Record<string, Array<{ label: string; href: string }>> = {
     { label: "Modifier mon profil", href: "/profil" },
   ],
   registered_user: [
+    { label: "Reprendre l'onboarding", href: "/onboarding" },
     { label: "Espace auteur", href: "/dashboard/auteur" },
-    { label: "Choisir un profil", href: "/profil" },
     { label: "Compléter mes informations", href: "/profil" },
   ],
 };
+
+// Fonctionnalités activables par un compte sans fiche : chaque carte relance
+// l'onboarding avec l'intention correspondante.
+const activationCards = [
+  {
+    title: "Créer ma fiche société",
+    subtitle: "Annuaire, recrutement, sous-traitance pour votre entreprise de propreté.",
+    href: "/onboarding?intent=company",
+    icon: Building2,
+  },
+  {
+    title: "Devenir fournisseur",
+    subtitle: "Présentez vos produits, machines ou logiciels aux professionnels.",
+    href: "/onboarding?intent=supplier",
+    icon: Package,
+  },
+  {
+    title: "Créer mon centre de formation",
+    subtitle: "Référencez votre organisme et proposez vos formations.",
+    href: "/onboarding?intent=training",
+    icon: GraduationCap,
+  },
+  {
+    title: "Je suis indépendant",
+    subtitle: "Auto-entrepreneur ou sous-traitant : créez votre profil pro.",
+    href: "/onboarding?intent=independent",
+    icon: Hammer,
+  },
+  {
+    title: "Je cherche un emploi",
+    subtitle: "Créez votre profil candidat et postulez aux offres du secteur.",
+    href: "/onboarding?intent=job_seeker",
+    icon: Briefcase,
+  },
+];
 
 const fallbackDashboards: Record<string, DashboardSeed> = {
   training_organization: {
@@ -292,6 +327,63 @@ export function MyDashboard({
 
   if (user.role === "candidate_profile") {
     return <CandidateDashboard user={user} applications={candidateApplications} jobsCount={jobsCount} trainingsCount={trainingsCount} />;
+  }
+
+  if (user.role === "registered_user") {
+    return (
+      <div className="grid gap-6">
+        <section className="surface p-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
+                {roleLabels.registered_user}
+              </p>
+              <h2 className="mt-2 text-3xl font-black text-slate-900">Bienvenue {user.firstName} !</h2>
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
+                Votre compte est créé. Activez les fonctionnalités adaptées à votre activité : vous pouvez
+                cumuler plusieurs fiches (société, fournisseur, formation) en plus de votre profil personnel.
+              </p>
+            </div>
+            <Link href="/onboarding" className="bento-btn bento-btn-primary shrink-0">
+              Reprendre l&apos;onboarding <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {(roleActions.registered_user || []).map((action) => (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 cursor-pointer"
+              >
+                {action.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <div className="grid gap-5 lg:grid-cols-3">
+          {activationCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <EntityCard key={card.title} title={card.title} subtitle={card.subtitle}>
+                <Link href={card.href} className="bento-btn bento-btn-primary w-full block text-center">
+                  <Icon size={16} className="inline mr-2" /> Activer
+                </Link>
+              </EntityCard>
+            );
+          })}
+          <EntityCard
+            title="Optimiser mon profil"
+            subtitle="Photo, bio, visibilité : votre profil public façon LinkedIn."
+          >
+            <Link href="/profil" className="bento-btn bento-btn-primary w-full block text-center">
+              <ClipboardList size={16} className="inline mr-2" /> Compléter mon profil
+            </Link>
+          </EntityCard>
+        </div>
+      </div>
+    );
   }
 
   const isCompanyRole = user.role === "company_owner" || user.role === "verified_company";

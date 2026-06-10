@@ -92,6 +92,8 @@ model UserProfile {
   visibility         String    @default("private")
   primaryGoal        String?
   mainNeeds          String?
+  linkedinUrl        String?
+  onboardingCompletedAt DateTime?
   city               String?
   postalCode         String?
   region             String?

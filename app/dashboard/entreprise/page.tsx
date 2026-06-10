@@ -464,7 +464,18 @@ export default function EntrepriseProfilePage() {
               <div key={app.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-2 border-slate-200 rounded-[14px]">
                 <div>
                   <p className="font-bold text-slate-900">
-                    {app.candidateProfile?.user?.firstName ?? ""} {app.candidateProfile?.user?.lastName ?? ""}
+                    {app.candidateProfile?.user?.id ? (
+                      <Link
+                        href={`/membres/${app.candidateProfile.user.id}`}
+                        className="hover:text-indigo-600 hover:underline"
+                      >
+                        {app.candidateProfile.user.firstName ?? ""} {app.candidateProfile.user.lastName ?? ""}
+                      </Link>
+                    ) : (
+                      <>
+                        {app.candidateProfile?.user?.firstName ?? ""} {app.candidateProfile?.user?.lastName ?? ""}
+                      </>
+                    )}
                   </p>
                   <p className="text-sm text-slate-500">Offre : {app.job?.title}</p>
                   <span className="inline-block mt-1 bento-tag border-slate-300 bg-slate-50 text-slate-700">{app.status}</span>
