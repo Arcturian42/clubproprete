@@ -12,7 +12,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 border-b-2 border-slate-900 bg-[#f8fafc]/95 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3" aria-label="Club Proprete">
+        <Link href="/" className="flex items-center gap-3" aria-label="Club Propreté">
           <span className="flex h-11 w-11 items-center justify-center rounded-[14px] border-2 border-slate-900 bg-amber-400 text-slate-900 shadow-[3px_3px_0px_#0f172a]">
             <ShieldCheck size={22} aria-hidden="true" />
           </span>

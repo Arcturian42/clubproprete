@@ -176,7 +176,7 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
             >
               <span className="text-sm font-black text-slate-900">{option.label}</span>
               <span className="mt-1 block text-xs font-bold text-slate-500">
-                {option.associationEligible ? "Eligible association" : "Profil public / validation admin"}
+                {option.associationEligible ? "Éligible association" : "Profil public / validation admin"}
               </span>
             </button>
           ))}

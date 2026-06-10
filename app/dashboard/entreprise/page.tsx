@@ -53,8 +53,8 @@ type CompanyProfile = {
 };
 
 const serviceOptions = [
-  "Bureaux", "Coproprietes", "Commerce", "Industriel",
-  "Vitrerie", "Remise en etat", "Fin de chantier", "Desinfection",
+  "Bureaux", "Copropriétés", "Commerce", "Industriel",
+  "Vitrerie", "Remise en état", "Fin de chantier", "Désinfection",
 ];
 
 const employeeOptions = ["1-10", "11-50", "51-200", "201-500", "500+"];

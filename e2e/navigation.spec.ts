@@ -7,7 +7,7 @@ test.describe('Navigation', () => {
       { path: '/emploi', heading: /offres d'emploi/i },
       { path: '/formations', heading: /espace formation/i },
       { path: '/ressources', heading: /ressources/i },
-      { path: '/annuaire/societes', heading: /societes/i },
+      { path: '/annuaire/societes', heading: /sociétés/i },
     ];
 
     for (const route of publicRoutes) {

@@ -71,7 +71,7 @@ test.describe('Vérification de compte & rôles (régressions audit)', () => {
     const email = `qa-publish-${ts}@clubproprete.test`;
 
     await page.goto('/inscription');
-    await page.getByRole('button', { name: 'Societe de nettoyage' }).click();
+    await page.getByRole('button', { name: 'Société de nettoyage' }).click();
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Pub');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Lisher');
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(email);

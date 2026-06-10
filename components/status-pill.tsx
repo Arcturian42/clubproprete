@@ -3,11 +3,11 @@ import type { WorkflowStatus } from "@/lib/types";
 const statusLabels: Record<string, string> = {
   draft: "Brouillon",
   pending: "En attente",
-  approved: "Valide",
-  rejected: "Refuse",
+  approved: "Validé",
+  rejected: "Refusé",
   suspended: "Suspendu",
-  archived: "Archive",
-  published: "Publie",
+  archived: "Archivé",
+  published: "Publié",
 };
 
 const statusClasses: Record<string, string> = {

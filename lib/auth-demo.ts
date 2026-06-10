@@ -3,11 +3,11 @@ import type { Role } from "@/lib/types";
 export const roleLabels: Record<Role, string> = {
   public: "Visiteur",
   registered_user: "Utilisateur inscrit",
-  company_owner: "Societe de nettoyage",
-  verified_company: "Societe verifiee",
+  company_owner: "Société de nettoyage",
+  verified_company: "Société vérifiée",
   supplier_owner: "Fournisseur",
-  verified_supplier: "Fournisseur verifie",
-  independent_profile: "Independant",
+  verified_supplier: "Fournisseur vérifié",
+  independent_profile: "Indépendant",
   candidate_profile: "Candidat",
   training_organization: "Organisme de formation",
   author: "Auteur",
@@ -33,9 +33,9 @@ export const demoAccounts: DemoAccount[] = [
     email: "societe@clubproprete.test",
     firstName: "Claire",
     lastName: "Martin",
-    organization: "Azur Proprete Services",
+    organization: "Azur Propreté Services",
     role: "company_owner",
-    profileType: "Societe",
+    profileType: "Société",
     associationMember: true,
   },
   {
@@ -54,7 +54,7 @@ export const demoAccounts: DemoAccount[] = [
     firstName: "Karim",
     lastName: "B.",
     role: "independent_profile",
-    profileType: "Independant",
+    profileType: "Indépendant",
     associationMember: true,
   },
   {
@@ -71,7 +71,7 @@ export const demoAccounts: DemoAccount[] = [
     email: "formation@clubproprete.test",
     firstName: "Marie",
     lastName: "Lefebvre",
-    organization: "Institut Hygiene Formation",
+    organization: "Institut Hygiène Formation",
     role: "training_organization",
     profileType: "Organisme de formation",
     associationMember: false,
@@ -106,9 +106,9 @@ export const demoAccounts: DemoAccount[] = [
 ];
 
 export const profileOptions: Array<{ label: string; role: Role; associationEligible: boolean }> = [
-  { label: "Societe de nettoyage", role: "company_owner", associationEligible: true },
+  { label: "Société de nettoyage", role: "company_owner", associationEligible: true },
   { label: "Fournisseur", role: "supplier_owner", associationEligible: false },
-  { label: "Independant / sous-traitant", role: "independent_profile", associationEligible: true },
+  { label: "Indépendant / sous-traitant", role: "independent_profile", associationEligible: true },
   { label: "Candidat emploi", role: "candidate_profile", associationEligible: false },
   { label: "Organisme de formation", role: "training_organization", associationEligible: false },
 ];

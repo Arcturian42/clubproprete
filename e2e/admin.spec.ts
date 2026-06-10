@@ -38,7 +38,7 @@ test.afterAll(async () => {
 });
 
 test.describe('Admin', () => {
-  test('charge la file de moderation avec les boutons Valider et Refuser', async ({ page }) => {
+  test('charge la file de modération avec les boutons Valider et Refuser', async ({ page }) => {
     await loginAs(page, 'admin@clubproprete.test');
     await page.waitForURL('/admin');
     await page.waitForLoadState('networkidle');

@@ -32,7 +32,7 @@ test.beforeAll(async () => {
       where: { id: 'company-1' },
       update: {
         ownerUserId: verifiedUser.id,
-        name: 'Azur Proprete Services',
+        name: 'Azur Propreté Services',
         city: 'Nice',
         verificationStatus: 'approved',
         deletedAt: null,
@@ -40,7 +40,7 @@ test.beforeAll(async () => {
       create: {
         id: 'company-1',
         ownerUserId: verifiedUser.id,
-        name: 'Azur Proprete Services',
+        name: 'Azur Propreté Services',
         city: 'Nice',
         verificationStatus: 'approved',
       },
@@ -51,7 +51,7 @@ test.beforeAll(async () => {
       update: {
         companyId: 'company-1',
         createdBy: verifiedUser.id,
-        title: 'Chef d\'equipe propreté tertiaire',
+        title: 'Chef d\'équipe propreté tertiaire',
         description: 'Nous recherchons un chef d\'équipe expérimenté pour un site tertiaire.',
         contractType: 'CDI',
         city: 'Nice',
@@ -62,7 +62,7 @@ test.beforeAll(async () => {
         id: 'job-1',
         companyId: 'company-1',
         createdBy: verifiedUser.id,
-        title: 'Chef d\'equipe propreté tertiaire',
+        title: 'Chef d\'équipe propreté tertiaire',
         description: 'Nous recherchons un chef d\'équipe expérimenté pour un site tertiaire.',
         contractType: 'CDI',
         city: 'Nice',
