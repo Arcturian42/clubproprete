@@ -7,7 +7,7 @@ export default function InscriptionPage() {
     <PageShell
       eyebrow="Compte gratuit"
       title="Inscription"
-      description="Créez un compte V0 local, choisissez votre persona et continuez vers l'onboarding de qualification."
+      description="Créez votre compte gratuit en 2 minutes, choisissez votre profil et rejoignez l'écosystème Club Propreté."
       actions={
         <Link href="/connexion" className="bento-btn">
           Déjà inscrit

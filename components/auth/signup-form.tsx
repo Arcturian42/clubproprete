@@ -274,22 +274,28 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
             aria-describedby={errors.terms ? "error-terms" : undefined}
           />
           <span>
-            J'accepte la collecte de ces informations pour créer mon profil Club Propreté.
+            J'accepte la collecte de ces informations pour créer mon profil Club Propreté, conformément à la{" "}
+            <a href="/politique-confidentialite" target="_blank" rel="noopener" className="text-indigo-600 underline hover:text-indigo-800">
+              politique de confidentialité
+            </a>
+            .
             {errors.terms && <span id="error-terms" className="block text-[11px] font-bold text-red-500 normal-case mt-1">{errors.terms}</span>}
           </span>
         </label>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <button type="button" className="bento-btn" onClick={fillExample}>
-            Remplir un exemple
-          </button>
+          {process.env.NODE_ENV === "development" && (
+            <button type="button" className="bento-btn" onClick={fillExample}>
+              Remplir un exemple
+            </button>
+          )}
           <button
             type="button"
             className="bento-btn bento-btn-primary"
             disabled={!canSubmit || loading}
             onClick={submitSignup}
           >
-            {loading ? "Création..." : "Continuer l'onboarding"}
+            {loading ? "Création..." : "Créer mon compte"}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
           <span className="bento-tag border-emerald-400 bg-emerald-50 text-emerald-700">

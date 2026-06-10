@@ -17,16 +17,7 @@ export function PublishJobButton() {
     user?.role === "super_admin" ||
     user?.role === "registered_user");
 
-  if (status === "loading") {
-    return (
-      <button className="bento-btn" disabled>
-        <Plus size={16} className="mr-2" />
-        Chargement...
-      </button>
-    );
-  }
-
-  if (!user) {
+  if (status === "loading" || !user) {
     return (
       <Link href="/inscription?role=company_owner" className="bento-btn bento-btn-primary">
         <Plus size={16} className="mr-2" />

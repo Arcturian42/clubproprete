@@ -18,7 +18,7 @@ export function SiteHeader() {
           </span>
           <span>
             <span className="block text-sm font-black uppercase tracking-wide text-slate-900">Club Propreté</span>
-            <span className="block text-xs font-bold text-slate-500">Boite a outils proprete</span>
+            <span className="block text-xs font-bold text-slate-500">Boîte à outils propreté</span>
           </span>
         </Link>
 

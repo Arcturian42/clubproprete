@@ -38,6 +38,13 @@ const nextConfig = {
     }
     return [{ source: "/(.*)", headers }];
   },
+  async redirects() {
+    return [
+      { source: "/societes", destination: "/annuaire/societes", permanent: true },
+      { source: "/fournisseurs", destination: "/annuaire/fournisseurs", permanent: true },
+      { source: "/centres-formation", destination: "/annuaire/centres-formation", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -15,20 +15,11 @@ export function JoinAssociationButton() {
     user?.role === "admin" ||
     user?.role === "super_admin";
 
-  if (status === "loading") {
-    return (
-      <button className="bento-btn" disabled>
-        <Shield size={16} className="mr-2" />
-        Chargement...
-      </button>
-    );
-  }
-
-  if (!user) {
+  if (status === "loading" || !user) {
     return (
       <Link href="/inscription?role=company_owner" className="bento-btn bento-btn-primary">
         <Shield size={16} className="mr-2" />
-        Demander l'adhesion
+        Demander l'adhésion
       </Link>
     );
   }

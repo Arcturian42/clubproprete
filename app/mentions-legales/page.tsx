@@ -17,7 +17,7 @@ export default function MentionsLegalesPage() {
           <h2 className="text-xl font-black text-slate-900 mb-3">Éditeur du site</h2>
           <div className="text-sm font-medium leading-7 text-slate-600 space-y-1">
             <p><strong>Raison sociale :</strong> Club Propreté</p>
-            <p><strong>Forme juridique :</strong> Association en cours de constitution (V0)</p>
+            <p><strong>Forme juridique :</strong> Association en cours de constitution</p>
             <p><strong>Siège social :</strong> France</p>
             <p><strong>Email :</strong> contact@clubproprete.fr</p>
             <p><strong>Directeur de la publication :</strong> Administrateur Club Propreté</p>

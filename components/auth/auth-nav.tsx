@@ -9,15 +9,9 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 export function AuthNav() {
   const { data: session, status } = useSession();
 
-  if (status === "loading") {
-    return (
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-bold text-slate-400">Chargement...</span>
-      </div>
-    );
-  }
-
-  if (!session?.user) {
+  // Pendant la vérification de session, afficher l'état visiteur par défaut
+  // plutôt qu'un "Chargement..." bloquant (la majorité du trafic est non connecté).
+  if (status === "loading" || !session?.user) {
     return (
       <div className="flex items-center gap-2">
         <Link href="/connexion" className="bento-btn min-h-0 px-3 py-2">

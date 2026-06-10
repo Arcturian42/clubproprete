@@ -6,9 +6,9 @@ import { PageShell } from "@/components/page-shell";
 export default function ConnexionPage() {
   return (
     <PageShell
-      eyebrow="Auth"
+      eyebrow="Espace membre"
       title="Connexion"
-      description="Connectez-vous avec un compte de test pour accéder aux dashboards, à l'admin ou aux flows privés."
+      description="Connectez-vous à votre espace Club Propreté."
       actions={
         <Link href="/inscription" className="bento-btn">
           Créer un compte
