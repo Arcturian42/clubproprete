@@ -112,7 +112,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
           >
             <div className="flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
               <BadgeCheck size={18} aria-hidden="true" />
-              Profil verifie
+              Profil vérifié
             </div>
           </EntityCard>
 

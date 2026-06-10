@@ -24,13 +24,13 @@ export default async function TrainingsPage({ searchParams }: TrainingsPageProps
     <PageShell
       eyebrow="Formation"
       title="Espace formation"
-      description="Formations verifiees proposees par les organismes et societes de nettoyage du secteur."
+      description="Formations vérifiées proposées par les organismes et sociétés de nettoyage du secteur."
       actions={<ProposeTrainingButton />}
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Formations" value={String(total)} detail="Catalogue actif" />
-        <StatCard label="Organismes" value={String(creators.size)} detail="Centres et societes" />
-        <StatCard label="Disponibilite" value="24/7" detail="Inscription en ligne" />
+        <StatCard label="Organismes" value={String(creators.size)} detail="Centres et sociétés" />
+        <StatCard label="Disponibilité" value="24/7" detail="Inscription en ligne" />
       </div>
 
       <form method="GET" action="/formations" className="mt-6 flex gap-2">
@@ -57,7 +57,7 @@ export default async function TrainingsPage({ searchParams }: TrainingsPageProps
       {trainings.length === 0 ? (
         <EmptyState
           title="Aucune formation disponible"
-          description="Le catalogue de formations est en cours de construction. Revenez bientot pour decouvrir les formations verifiees du secteur."
+          description="Le catalogue de formations est en cours de construction. Revenez bientôt pour découvrir les formations vérifiées du secteur."
         />
       ) : (
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
@@ -66,7 +66,7 @@ export default async function TrainingsPage({ searchParams }: TrainingsPageProps
               key={training.id}
               href={`/formations/${training.id}`}
               className="block focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300"
-              aria-label={`Voir les details de ${training.title}`}
+              aria-label={`Voir les détails de ${training.title}`}
             >
               <EntityCard
                 title={training.title}
@@ -91,7 +91,7 @@ export default async function TrainingsPage({ searchParams }: TrainingsPageProps
                   </div>
                   <div className="flex items-center justify-between pt-2 border-t-2 border-slate-100">
                     <span className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
-                      Voir les details
+                      Voir les détails
                     </span>
                     <ArrowRight className="text-indigo-600" size={18} />
                   </div>

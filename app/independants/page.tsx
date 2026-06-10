@@ -21,18 +21,18 @@ export default async function IndependentsPage({ searchParams }: IndependentsPag
   return (
     <PageShell
       eyebrow="Sous-traitants"
-      title="Profils independants"
-      description="Profils independants verifies : competences, disponibilite et zones d'intervention."
+      title="Profils indépendants"
+      description="Profils indépendants vérifiés : compétences, disponibilité et zones d'intervention."
       actions={
         <Link href="/inscription?role=independent_profile" className="bento-btn bento-btn-primary">
-          Créer un profil independant
+          Créer un profil indépendant
         </Link>
       }
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Profils" value={String(total)} detail="Independents actifs" />
-        <StatCard label="Competences" value="12+" detail="Specialites couvertes" />
-        <StatCard label="Zones" value="8" detail="Regions disponibles" />
+        <StatCard label="Profils" value={String(total)} detail="Indépendants actifs" />
+        <StatCard label="Compétences" value="12+" detail="Spécialités couvertes" />
+        <StatCard label="Zones" value="8" detail="Régions disponibles" />
       </div>
 
       <form method="GET" action="/independants" className="mt-6 flex gap-2">
@@ -58,8 +58,8 @@ export default async function IndependentsPage({ searchParams }: IndependentsPag
 
       {independents.length === 0 ? (
         <EmptyState
-          title="Aucun independant verifie"
-          description="Les profils independants verifies apparaitront ici. Si vous etes sous-traitant, creez votre profil pour etre visible."
+          title="Aucun indépendant vérifié"
+          description="Les profils indépendants vérifiés apparaîtront ici. Si vous êtes sous-traitant, créez votre profil pour être visible."
         />
       ) : (
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
@@ -68,11 +68,11 @@ export default async function IndependentsPage({ searchParams }: IndependentsPag
               key={profile.id}
               title={profile.displayName}
               subtitle={`${profile.city || ""} · ${profile.availabilityStatus || "Disponible"}`}
-              meta={["✓ Verifie", profile.equipmentOwned || ""].filter(Boolean)}
+              meta={["✓ Vérifié", profile.equipmentOwned || ""].filter(Boolean)}
             >
               <div className="flex items-center justify-between gap-4">
                 <span className="inline-flex items-center gap-1 text-[12px] font-extrabold uppercase tracking-wide text-emerald-600">
-                  <BadgeCheck size={14} /> Profil verifie
+                  <BadgeCheck size={14} /> Profil vérifié
                 </span>
                 <Hammer className="text-indigo-600" size={22} aria-hidden="true" />
               </div>

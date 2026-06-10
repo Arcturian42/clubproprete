@@ -1,5 +1,5 @@
 export const publicRoutes = [
-  { href: "/annuaire/societes", label: "Societes" },
+  { href: "/annuaire/societes", label: "Sociétés" },
   { href: "/annuaire/fournisseurs", label: "Fournisseurs" },
   { href: "/emploi", label: "Emploi" },
   { href: "/formations", label: "Formations" },

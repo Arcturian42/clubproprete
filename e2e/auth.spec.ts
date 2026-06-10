@@ -11,7 +11,7 @@ test.describe('Authentification', () => {
   test('connexion compte démo admin', async ({ page }) => {
     await loginAs(page, 'admin@clubproprete.test');
     await page.waitForURL('/admin');
-    await expect(page.getByRole('heading', { name: /validation et moderation/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /validation et modération/i })).toBeVisible();
   });
 
   test('inscription nouvel utilisateur', async ({ page }) => {
@@ -19,7 +19,7 @@ test.describe('Authentification', () => {
     await page.goto('/inscription');
 
     // Sélectionner un profil (par défaut Société)
-    await page.getByRole('button', { name: 'Societe de nettoyage' }).click();
+    await page.getByRole('button', { name: 'Société de nettoyage' }).click();
 
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Jean');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Test');

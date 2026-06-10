@@ -334,7 +334,7 @@ export async function getAdminQueue(): Promise<QueueItem[]> {
     ]);
 
     return [
-      ...companies.map((c) => ({ id: c.id, entityType: "company" as const, type: "Societe", title: c.name, status: c.verificationStatus })),
+      ...companies.map((c) => ({ id: c.id, entityType: "company" as const, type: "Société", title: c.name, status: c.verificationStatus })),
       ...suppliers.map((s) => ({ id: s.id, entityType: "supplier" as const, type: "Fournisseur", title: s.name, status: s.verificationStatus })),
       ...trainingOrganizations.map((organization) => ({
         id: organization.id,
@@ -417,15 +417,15 @@ export async function exportModerationQueue() {
     await requireAdmin();
 
     const queue = await getAdminQueue();
-    const headers = ["Type", "Element", "Statut"];
+    const headers = ["Type", "Élément", "Statut"];
     const rows = queue.map((item) => [item.type, item.title.replace(/"/g, '""'), item.status]);
     const csv = [headers.join(";"), ...rows.map((r) => r.map((cell) => `"${cell}"`).join(";"))].join("\n");
     return csv;
   } catch (err) {
     if (err instanceof PermissionError) {
-      return "Type;Element;Statut\n";
+      return "Type;Élément;Statut\n";
     }
     console.error("exportModerationQueue error:", err);
-    return "Type;Element;Statut\n";
+    return "Type;Élément;Statut\n";
   }
 }

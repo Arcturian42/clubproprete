@@ -9,7 +9,7 @@ const steps = [
   "Informations personnelles",
   "Objectif principal",
   "Besoins actuels",
-  "Redirection vers le formulaire metier"
+  "Redirection vers le formulaire métier"
 ];
 
 export default function OnboardingPage() {
@@ -17,7 +17,7 @@ export default function OnboardingPage() {
     <PageShell
       eyebrow="Onboarding"
       title="Qualification multi-profils"
-      description="Le premier objectif de la V0 est de collecter des donnees qualifiees sans bloquer l'utilisateur."
+      description="Le premier objectif de la V0 est de collecter des données qualifiées sans bloquer l'utilisateur."
     >
       <div className="grid gap-4 lg:grid-cols-5">
         {steps.map((step, index) => (
@@ -49,10 +49,10 @@ export default function OnboardingPage() {
             <ClipboardCheck size={22} aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-xl font-black text-slate-900">Score de completion</h2>
+            <h2 className="text-xl font-black text-slate-900">Score de complétion</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500">
               La V0 doit pouvoir calculer un score simple par profil pour distinguer les fiches exploitables,
-              incompletes et pretes pour verification.
+              incomplètes et prêtes pour vérification.
             </p>
           </div>
         </div>

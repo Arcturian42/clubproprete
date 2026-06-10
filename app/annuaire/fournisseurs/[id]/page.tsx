@@ -71,7 +71,7 @@ export default async function SupplierDetailPage({ params }: Props) {
               <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-2 text-white shadow-[3px_3px_0px_#0f172a]">
                 <Package size={20} />
               </div>
-              <h2 className="text-xl font-black text-slate-900">A propos</h2>
+              <h2 className="text-xl font-black text-slate-900">À propos</h2>
             </div>
             <p className="text-base font-medium leading-7 text-slate-600">
               {supplier.name} est un fournisseur spécialisé dans &ldquo;{taxonomyLabel}&rdquo;.
@@ -80,7 +80,7 @@ export default async function SupplierDetailPage({ params }: Props) {
             
             {specialties.length > 0 && (
               <div className="mt-4">
-                <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">Specialites</p>
+                <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">Spécialités</p>
                 <div className="flex flex-wrap gap-2">
                   {specialties.map((specialty) => (
                     <span key={specialty} className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">
@@ -121,7 +121,7 @@ export default async function SupplierDetailPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-500">Statut</p>
-                  <p className="text-sm text-slate-500">Fournisseur verifie</p>
+                  <p className="text-sm text-slate-500">Fournisseur vérifié</p>
                 </div>
               </div>
             </div>
@@ -158,7 +158,7 @@ export default async function SupplierDetailPage({ params }: Props) {
 
           {/* CTA */}
           <div className="surface p-6 bg-indigo-50 border-indigo-200">
-            <h3 className="text-lg font-black text-slate-900 mb-2">Interesse ?</h3>
+            <h3 className="text-lg font-black text-slate-900 mb-2">Intéressé ?</h3>
             <p className="text-sm text-slate-600 mb-4">
               Contactez {supplier.name} pour obtenir un devis ou plus d'informations.
             </p>

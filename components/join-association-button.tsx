@@ -37,15 +37,15 @@ export function JoinAssociationButton() {
     return (
       <Link href="/association/adhesion" className="bento-btn bento-btn-primary">
         <Shield size={16} className="mr-2" />
-        Demander l'adhesion
+        Demander l'adhésion
       </Link>
     );
   }
 
   return (
-    <button className="bento-btn" disabled title="Reserve aux societes et independants">
+    <button className="bento-btn" disabled title="Réservé aux sociétés et indépendants">
       <Shield size={16} className="mr-2" />
-      Demander l'adhesion
+      Demander l'adhésion
     </button>
   );
 }
