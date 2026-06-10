@@ -40,35 +40,25 @@ export const authConfig = {
       const role = auth?.user?.role as string | undefined;
       const path = nextUrl.pathname;
 
-      if (path.startsWith("/emploi/nouvelle-offre")) {
-        if (!isLoggedIn) return false;
-        return true;
-      }
+      // Seules les zones privées exigent une session ; toute autre URL reste
+      // publique afin que les pages inconnues affichent la vraie 404.
+      const protectedPrefixes = [
+        "/dashboard",
+        "/admin",
+        "/profil",
+        "/notifications",
+        "/candidats",
+        "/emploi/nouvelle-offre",
+        "/api/admin",
+        "/api/upload",
+        "/api/user-company",
+      ];
+      const isProtected = protectedPrefixes.some((prefix) => path.startsWith(prefix));
 
-      const isPublic =
-        path === "/" ||
-        path.startsWith("/annuaire") ||
-        path.startsWith("/emploi") ||
-        path.startsWith("/formations") ||
-        path.startsWith("/ressources") ||
-        path.startsWith("/independants") ||
-        path.startsWith("/association") ||
-        path.startsWith("/membres") ||
-        path.startsWith("/connexion") ||
-        path.startsWith("/inscription") ||
-        path.startsWith("/mot-de-passe-oublie") ||
-        path.startsWith("/reinitialiser-mot-de-passe") ||
-        path.startsWith("/onboarding") ||
-        path.startsWith("/sous-traitance") ||
-        path.startsWith("/mentions-legales") ||
-        path.startsWith("/cgu") ||
-        path.startsWith("/politique-confidentialite") ||
-        path.startsWith("/api/auth");
-
-      if (isPublic) return true;
+      if (!isProtected) return true;
       if (!isLoggedIn) return false;
 
-      if (path.startsWith("/admin")) {
+      if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
         return role === "admin" || role === "super_admin";
       }
 

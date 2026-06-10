@@ -6,9 +6,9 @@ import { AuthProvider } from "@/components/providers/session-provider";
 import { FlashToast } from "@/components/flash-toast";
 
 export const metadata: Metadata = {
-  title: "Club Propreté",
+  title: "Club Propreté — La boîte à outils des professionnels de la propreté",
   description:
-    "La boite a outils gratuite des professionnels du nettoyage : annuaire, emploi, formations, association et sous-traitance privee.",
+    "La boîte à outils gratuite des professionnels de la propreté : annuaire, emploi, formations, association et sous-traitance privée.",
 };
 
 export default function RootLayout({
@@ -29,7 +29,7 @@ export default function RootLayout({
                 <div>
                   <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">Club Propreté</h3>
                   <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
-                    La boite a outils gratuite des professionnels du nettoyage.
+                    La boîte à outils gratuite des professionnels de la propreté.
                   </p>
                 </div>
                 <div>
@@ -61,7 +61,7 @@ export default function RootLayout({
                 </div>
               </div>
               <div className="mt-8 border-t-2 border-slate-100 pt-4 text-center">
-                <p className="text-[11px] font-bold text-slate-400">© 2026 Club Propreté. Tous droits réservés. V1 production-ready.</p>
+                <p className="text-[11px] font-bold text-slate-400">© 2026 Club Propreté. Tous droits réservés.</p>
               </div>
             </div>
           </footer>

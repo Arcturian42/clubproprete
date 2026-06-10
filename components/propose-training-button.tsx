@@ -18,16 +18,7 @@ export function ProposeTrainingButton() {
       user.role === "admin" ||
       user.role === "super_admin");
 
-  if (status === "loading") {
-    return (
-      <button className="bento-btn" disabled>
-        <Plus size={16} className="mr-2" />
-        Chargement...
-      </button>
-    );
-  }
-
-  if (!user) {
+  if (status === "loading" || !user) {
     return (
       <Link href="/inscription?role=training_organization" className="bento-btn bento-btn-primary">
         <Plus size={16} className="mr-2" />

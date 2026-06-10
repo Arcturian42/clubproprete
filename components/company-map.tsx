@@ -44,8 +44,8 @@ function MapContent({ companies }: CompanyMapProps) {
 
   return (
     <MapContainer
-      center={[46.5, 2.5]}
-      zoom={5}
+      center={[46.8, 2.3]}
+      zoom={6}
       scrollWheelZoom={false}
       style={{ height: "500px", width: "100%", borderRadius: "20px" }}
       className="border-2 border-slate-900"

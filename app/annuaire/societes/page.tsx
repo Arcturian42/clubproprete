@@ -22,18 +22,26 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
   return (
     <PageShell
       eyebrow="Annuaire"
-      title="Societes de nettoyage"
-      description="Societes verifiees : trouvez un prestataire fiable par region et par specialite."
+      title="Sociétés de nettoyage"
+      description="Sociétés vérifiées : trouvez un prestataire fiable par région et par spécialité."
       actions={
         <Link href="/inscription?role=company_owner" className="bento-btn bento-btn-primary">
-          Referencer ma societe
+          Référencer ma société
         </Link>
       }
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Societes" value={String(total)} detail="Verifiees" />
-        <StatCard label="Regions" value="8" detail="Couvertes" />
-        <StatCard label="Specialites" value="12" detail="Services listes" />
+        <StatCard label="Sociétés" value={String(total)} detail="Vérifiées" />
+        <StatCard
+          label="Régions"
+          value={String(new Set(companies.map((c) => c.region).filter(Boolean)).size)}
+          detail="Couvertes"
+        />
+        <StatCard
+          label="Spécialités"
+          value={String(new Set(companies.flatMap((c) => c.services?.map((s) => s.serviceType) || [])).size)}
+          detail="Services listés"
+        />
       </div>
 
       <div className="mt-6">
@@ -75,8 +83,8 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
 
       {companies.length === 0 ? (
         <EmptyState
-          title="Aucune societe referencee"
-          description="Les societes de nettoyage verifiees apparaitront ici. Si vous etes prestataire, creez votre fiche."
+          title="Aucune société référencée pour le moment"
+          description="Les sociétés de nettoyage vérifiées apparaîtront ici. Vous êtes prestataire ? Soyez le premier à créer votre fiche."
         />
       ) : (
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
@@ -97,7 +105,7 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
               >
                 <div className="flex items-center justify-between gap-4">
                   <span className="inline-flex items-center gap-1 text-[12px] font-extrabold uppercase tracking-wide text-emerald-600">
-                    <Building2 size={14} /> Societe verifiee
+                    <Building2 size={14} /> Société vérifiée
                   </span>
                   <span className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
                     Voir la fiche →

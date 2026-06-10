@@ -6,16 +6,18 @@ import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { demoAccounts } from "@/lib/auth-demo";
 
+const showDemoAccounts = process.env.NODE_ENV === "development";
+
 export function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
-  const [email, setEmail] = useState(demoAccounts[0].email);
-  const [password, setPassword] = useState("demo");
+  const [email, setEmail] = useState(showDemoAccounts ? demoAccounts[0].email : "");
+  const [password, setPassword] = useState(showDemoAccounts ? "demo" : "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const selectedAccount = demoAccounts.find((account) => account.email === email) ?? demoAccounts[0];
+  const selectedAccount = demoAccounts.find((account) => account.email === email);
 
   async function login(e?: React.FormEvent) {
     e?.preventDefault();
@@ -49,13 +51,16 @@ export function LoginForm() {
       }
     }
 
-    const isAdminRole = selectedAccount.role === "admin" || selectedAccount.role === "super_admin";
+    const isAdminRole = selectedAccount?.role === "admin" || selectedAccount?.role === "super_admin";
     router.push(safeCallbackUrl || (isAdminRole ? "/admin" : "/dashboard"));
     router.refresh();
   }
 
   return (
-    <form onSubmit={login} className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+    <form
+      onSubmit={login}
+      className={showDemoAccounts ? "grid gap-6 lg:grid-cols-[0.9fr_1.1fr]" : "mx-auto w-full max-w-md"}
+    >
       <div className="surface p-6">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-3 text-white shadow-[3px_3px_0px_#0f172a]">
@@ -63,7 +68,9 @@ export function LoginForm() {
           </div>
           <div>
             <h2 className="text-xl font-black text-slate-900">Connexion</h2>
-            <p className="text-sm font-semibold text-slate-500">Mot de passe : demo</p>
+            <p className="text-sm font-semibold text-slate-500">
+              {showDemoAccounts ? "Mot de passe : demo" : "Accédez à votre espace Club Propreté"}
+            </p>
           </div>
         </div>
 
@@ -81,6 +88,7 @@ export function LoginForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             aria-label="Adresse email"
+            autoComplete="email"
             required
           />
         </label>
@@ -88,11 +96,11 @@ export function LoginForm() {
           Mot de passe
           <input
             className="bento-input"
-            placeholder="demo"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             aria-label="Mot de passe"
+            autoComplete="current-password"
             required
           />
         </label>
@@ -111,33 +119,35 @@ export function LoginForm() {
         </div>
       </div>
 
-      <div className="surface p-6">
-        <p className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">Comptes de test</p>
-        <div className="mt-4 grid gap-3">
-          {demoAccounts.map((account) => (
-            <button
-              key={account.id}
-              type="button"
-              className={`bento-card bento-card-interactive p-4 text-left ${
-                account.email === email ? "bg-indigo-50" : "bg-white"
-              }`}
-              onClick={() => {
-                setEmail(account.email);
-                setPassword("demo");
-              }}
-            >
-              <span className="block text-sm font-black text-slate-900">
-                {account.role === "candidate_profile"
-                  ? "Compte démo candidat"
-                  : `${account.firstName} ${account.lastName}`}
-              </span>
-              <span className="mt-1 block text-xs font-bold text-slate-500">
-                {account.email} · {account.profileType}
-              </span>
-            </button>
-          ))}
+      {showDemoAccounts && (
+        <div className="surface p-6">
+          <p className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">Comptes de test</p>
+          <div className="mt-4 grid gap-3">
+            {demoAccounts.map((account) => (
+              <button
+                key={account.id}
+                type="button"
+                className={`bento-card bento-card-interactive p-4 text-left ${
+                  account.email === email ? "bg-indigo-50" : "bg-white"
+                }`}
+                onClick={() => {
+                  setEmail(account.email);
+                  setPassword("demo");
+                }}
+              >
+                <span className="block text-sm font-black text-slate-900">
+                  {account.role === "candidate_profile"
+                    ? "Compte démo candidat"
+                    : `${account.firstName} ${account.lastName}`}
+                </span>
+                <span className="mt-1 block text-xs font-bold text-slate-500">
+                  {account.email} · {account.profileType}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </form>
   );
 }

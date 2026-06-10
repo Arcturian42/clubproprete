@@ -19,6 +19,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
   const { items: jobs, total, page: currentPage, totalPages } = await getPublishedJobs(search, page);
   const applicationsCount = jobs.reduce((total, job) => total + (job._count?.applications || 0), 0);
+  const companiesCount = new Set(jobs.map((job) => job.companyId).filter(Boolean)).size;
 
   return (
     <PageShell
@@ -29,7 +30,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Offres" value={String(total)} detail="Postes disponibles" />
-        <StatCard label="Entreprises" value="3" detail="Recrutent activement" />
+        <StatCard label="Entreprises" value={String(companiesCount)} detail="Recrutent activement" />
         <StatCard label="Candidatures" value={String(applicationsCount)} detail="Déjà postulées" />
       </div>
 
