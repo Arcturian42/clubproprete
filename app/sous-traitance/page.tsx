@@ -7,6 +7,12 @@ import { StatCard } from "@/components/stat-card";
 import { EmptyState } from "@/components/empty-state";
 import { getPublishedSubcontractingMissions } from "@/lib/actions/subcontracting";
 
+export const metadata = {
+  title: "Sous-traitance en propreté entre professionnels | Club Propreté",
+  description:
+    "L'espace de sous-traitance privé du Club Propreté : missions qualifiées entre membres de l'association.",
+};
+
 export default async function SubcontractingPage() {
   const session = await auth();
   const user = session?.user;

@@ -7,6 +7,12 @@ import { StatCard } from "@/components/stat-card";
 import { Pagination } from "@/components/pagination";
 import { getPublishedIndependents } from "@/lib/actions/independents";
 
+export const metadata = {
+  title: "Indépendants & sous-traitants en propreté | Club Propreté",
+  description:
+    "Annuaire des indépendants et auto-entrepreneurs du nettoyage disponibles pour des missions de sous-traitance.",
+};
+
 interface IndependentsPageProps {
   searchParams: Promise<{ page?: string; search?: string }>;
 }

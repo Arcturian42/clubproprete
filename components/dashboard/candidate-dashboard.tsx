@@ -45,6 +45,29 @@ const statusClassMap: Record<string, string> = {
   accepted: "border-emerald-400 bg-emerald-50 text-emerald-700",
 };
 
+export type CandidateProfileSummary = {
+  city: string | null;
+  desiredContracts: string | null;
+  experienceYears: number | null;
+  bio: string | null;
+  cvUrl: string | null;
+  mobilityRadius: number | null;
+};
+
+// Score de complétion calculé sur les champs réellement renseignés du profil
+// candidat (une seule source de vérité, pas de valeur factice).
+function computeProfileScore(profile: CandidateProfileSummary | null | undefined) {
+  if (!profile) return 0;
+  let score = 0;
+  if (profile.city) score += 15;
+  if (profile.desiredContracts) score += 15;
+  if (profile.experienceYears !== null) score += 15;
+  if (profile.bio) score += 25;
+  if (profile.cvUrl) score += 20;
+  if (profile.mobilityRadius !== null) score += 10;
+  return score;
+}
+
 function formatDate(value: Date | string) {
   return new Intl.DateTimeFormat("fr-FR", {
     day: "2-digit",
@@ -55,20 +78,25 @@ function formatDate(value: Date | string) {
 export function CandidateDashboard({
   user,
   applications,
+  candidateProfile,
   jobsCount,
   trainingsCount,
 }: {
   user: { id: string; firstName: string; lastName: string; organization: string | null; email: string; phone: string };
   applications?: ApplicationWithJob[];
+  candidateProfile?: CandidateProfileSummary | null;
   jobsCount?: number;
   trainingsCount?: number;
 }) {
   const realApplications = applications ?? [];
-  const candidateCity = user.organization || "Paris";
+  const candidateCity = candidateProfile?.city || user.organization || "";
   const responseCount = realApplications.filter((a) =>
     ["response_received", "interview", "rejected", "accepted"].includes(a.status)
   ).length;
-  const profileScore = 68;
+  const profileScore = computeProfileScore(candidateProfile);
+  const desiredContracts = candidateProfile?.desiredContracts
+    ? candidateProfile.desiredContracts.split(",").map((c) => c.trim()).filter(Boolean)
+    : [];
 
   return (
     <div className="grid gap-6">
@@ -83,7 +111,9 @@ export function CandidateDashboard({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <span className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">{candidateCity}</span>
+            {candidateCity && (
+              <span className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">{candidateCity}</span>
+            )}
             <span className="bento-tag border-slate-300 bg-slate-50 text-slate-700">Disponible</span>
           </div>
         </div>
@@ -92,17 +122,22 @@ export function CandidateDashboard({
           <StatCard label="Candidatures" value={String(realApplications.length)} detail="Suivi actif" />
           <StatCard label="Réponses" value={String(responseCount)} detail="Retours recruteurs" />
           <StatCard label="Formations" value={String(trainingsCount ?? 0)} detail="Disponibles" />
-          <StatCard label="Profil" value={`${profileScore}%`} detail="À améliorer" />
+          <StatCard label="Profil" value={`${profileScore}%`} detail={profileScore >= 80 ? "Complet" : "À compléter"} />
         </div>
 
         <div className="mt-6">
           <div className="h-4 overflow-hidden rounded-full border-2 border-slate-900 bg-white shadow-[2px_2px_0px_#0f172a]">
             <div className="h-full bg-indigo-600" style={{ width: `${profileScore}%` }} />
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">Bureaux</span>
-            <span className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">Copropriétés</span>
-          </div>
+          {desiredContracts.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {desiredContracts.map((contract) => (
+                <span key={contract} className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">
+                  {contract}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

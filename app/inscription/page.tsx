@@ -1,8 +1,21 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { SignupForm } from "@/components/auth/signup-form";
 import { PageShell } from "@/components/page-shell";
 
-export default function InscriptionPage() {
+export const metadata = {
+  title: "Inscription gratuite | Club Propreté",
+  description:
+    "Créez votre compte gratuit Club Propreté : annuaire, emploi, formations et réseau des professionnels de la propreté.",
+};
+
+export default async function InscriptionPage() {
+  const session = await auth();
+  if (session?.user) {
+    redirect("/dashboard");
+  }
+
   return (
     <PageShell
       eyebrow="Compte gratuit"

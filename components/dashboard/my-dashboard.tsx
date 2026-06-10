@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, ClipboardList, ShieldCheck, Building2, Briefcase, Shield, Mic, Package, GraduationCap, Hammer } from "lucide-react";
-import { CandidateDashboard } from "@/components/dashboard/candidate-dashboard";
+import { CandidateDashboard, type CandidateProfileSummary } from "@/components/dashboard/candidate-dashboard";
 import { EntityCard } from "@/components/entity-card";
 import { StatCard } from "@/components/stat-card";
 import { roleLabels } from "@/lib/auth-demo";
@@ -312,12 +312,14 @@ function MediaCard({
 export function MyDashboard({
   user,
   candidateApplications,
+  candidateProfile,
   jobsCount,
   trainingsCount,
   company,
 }: {
   user: { id: string; role: string; firstName: string; lastName: string; associationMember: boolean; organization: string | null; email: string; phone: string };
   candidateApplications?: Awaited<ReturnType<typeof import("@/lib/actions/jobs").getCandidateApplications>>;
+  candidateProfile?: CandidateProfileSummary | null;
   jobsCount?: number;
   trainingsCount?: number;
   company?: CompanyProfile;
@@ -326,7 +328,7 @@ export function MyDashboard({
   const primaryHref = getPrimaryHref(user.role as Role);
 
   if (user.role === "candidate_profile") {
-    return <CandidateDashboard user={user} applications={candidateApplications} jobsCount={jobsCount} trainingsCount={trainingsCount} />;
+    return <CandidateDashboard user={user} applications={candidateApplications} candidateProfile={candidateProfile} jobsCount={jobsCount} trainingsCount={trainingsCount} />;
   }
 
   if (user.role === "registered_user") {

@@ -31,6 +31,12 @@ import {
   Phone,
 } from "lucide-react";
 
+export const metadata = {
+  title: "L'association Club Propreté | Réseau privé des pros du nettoyage",
+  description:
+    "Rejoignez l'association Club Propreté : réseau privé, sous-traitance entre membres, entraide et événements.",
+};
+
 export default async function AssociationPage() {
   const session = await auth();
   const user = session?.user;

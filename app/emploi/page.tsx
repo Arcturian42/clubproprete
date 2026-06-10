@@ -8,6 +8,12 @@ import { PublishJobButton } from "@/components/publish-job-button";
 import { Pagination } from "@/components/pagination";
 import { getPublishedJobs } from "@/lib/actions/jobs";
 
+export const metadata = {
+  title: "Offres d'emploi dans la propreté | Club Propreté",
+  description:
+    "Le job board des métiers du nettoyage : agents, chefs d'équipe, encadrement. Postulez gratuitement.",
+};
+
 interface JobsPageProps {
   searchParams: Promise<{ page?: string; search?: string }>;
 }

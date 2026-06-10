@@ -13,6 +13,22 @@ type CompanyDetailPageProps = {
   }>;
 };
 
+
+export async function generateMetadata({ params }: CompanyDetailPageProps) {
+  const { id } = await params;
+  const company = await getCompanyById(id);
+  if (!company) {
+    return { title: "Société introuvable | Club Propreté" };
+  }
+  const location = [company.city, company.region].filter(Boolean).join(", ");
+  return {
+    title: `${company.name}${location ? ` — Nettoyage ${location}` : ""} | Club Propreté`,
+    description:
+      company.descriptionShort ||
+      `Fiche de ${company.name}, société de nettoyage${location ? ` basée à ${location}` : ""}, vérifiée par Club Propreté.`,
+  };
+}
+
 export default async function CompanyDetailPage({ params }: CompanyDetailPageProps) {
   const { id } = await params;
   const company = await getCompanyById(id);
@@ -29,7 +45,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
     },
   });
 
-  const members = await getEntityMembers("company", id);
+  const members = await getEntityMembers("company", company.id);
 
   const wants = [
     company.wantsRecruitment ? "Recrutement" : null,
@@ -42,7 +58,10 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
     <PageShell
       eyebrow="Fiche société"
       title={company.name}
-      description={`Entreprise de propreté basée à ${company.city || ""}, ${company.region || ""}. Cette fiche présente les services, besoins déclarés et signaux de confiance disponibles en V0.`}
+      description={
+        company.descriptionShort ||
+        `Entreprise de propreté basée à ${[company.city, company.region].filter(Boolean).join(", ")}.`
+      }
       actions={
         <>
           <Link href="/annuaire/societes" className="bento-btn">
@@ -50,7 +69,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
             Retour annuaire
           </Link>
           <Link href="/inscription?role=company_owner" className="bento-btn bento-btn-primary">
-            Revendiquer / compléter
+            C&apos;est ma société · Compléter ma fiche
           </Link>
         </>
       }
@@ -71,13 +90,22 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <StatCard label="Effectif" value={company.employeeCount || "Non précisé"} detail="Déclaratif V0" />
+            <StatCard label="Effectif" value={company.employeeCount || "Non précisé"} detail="Effectif déclaré" />
             <StatCard
               label="Association"
               value={company.associationMember ? "Membre" : "Non membre"}
               detail={company.associationMember ? "Accès sous-traitance" : "Adhésion possible"}
             />
           </div>
+
+          {company.descriptionLong && (
+            <div className="mt-6 border-t-2 border-slate-900 pt-5">
+              <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-900">À propos</p>
+              <p className="mt-3 text-sm font-medium leading-6 text-slate-600 whitespace-pre-line">
+                {company.descriptionLong}
+              </p>
+            </div>
+          )}
 
           <div className="mt-6 border-t-2 border-slate-900 pt-5">
             <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-900">Services proposés</p>
@@ -131,7 +159,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
       <div className="mt-8 grid gap-5 lg:grid-cols-2">
         <EntityCard
           title="Offres d'emploi liées"
-          subtitle={company.jobs.length > 0 ? `${company.jobs.length} offre(s) pour cette société.` : "Aucune offre publiée pour cette société."}
+          subtitle={company.jobs.length > 0 ? `${company.jobs.length} ${company.jobs.length > 1 ? "offres" : "offre"} pour cette société.` : "Aucune offre publiée pour cette société."}
           meta={company.jobs.map((job) => `${job.title} · ${job.contractType}`)}
         >
           <Link href="/emploi" className="inline-flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
@@ -141,7 +169,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
 
         <EntityCard
           title="Formations liées"
-          subtitle={companyTrainings.length > 0 ? `${companyTrainings.length} formation(s) référencée(s).` : "Aucune formation liée pour le moment."}
+          subtitle={companyTrainings.length > 0 ? `${companyTrainings.length} ${companyTrainings.length > 1 ? "formations référencées" : "formation référencée"}.` : "Aucune formation liée pour le moment."}
           meta={companyTrainings.map((training) => `${training.title} · ${training.format || ""}`)}
         >
           <Link href="/formations" className="inline-flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
@@ -159,7 +187,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
             <h2 className="text-xl font-black text-slate-900">Équipe</h2>
             <p className="mt-1 text-sm text-slate-500">
               {members.length > 0
-                ? `${members.length} membre(s) actif(s) dans cette société.`
+                ? `${members.length} ${members.length > 1 ? "membres actifs" : "membre actif"} dans cette société.`
                 : "Aucun membre public pour le moment."}
             </p>
           </div>
