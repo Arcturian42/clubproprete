@@ -29,7 +29,7 @@ test.describe('Authentification', () => {
     await page.getByRole('button', { name: /créer mon compte/i }).click();
 
     await page.waitForURL('/onboarding');
-    await expect(page.getByRole('heading', { name: /bienvenue/i })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: /bienvenue/i })).toBeVisible();
   });
 
   test('onboarding société : crée la fiche et élève le rôle', async ({ page }) => {
