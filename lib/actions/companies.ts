@@ -5,8 +5,9 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { PermissionError, requireEntityRole, requireUser } from "@/lib/permissions";
 import { optionalSiret } from "@/lib/validators";
+import { uniqueSlug } from "@/lib/slug";
 
-export async function getPublishedCompanies(search?: string, page?: number, limit = 12) {
+export async function getPublishedCompanies(search?: string, page?: number, limit = 12, region?: string) {
   const where: Record<string, unknown> = { verificationStatus: "approved", deletedAt: null };
   if (search) {
     where.OR = [
@@ -14,6 +15,9 @@ export async function getPublishedCompanies(search?: string, page?: number, limi
       { city: { contains: search } },
       { descriptionShort: { contains: search } },
     ];
+  }
+  if (region) {
+    where.region = region;
   }
 
   const currentPage = Math.max(1, page ?? 1);
@@ -109,9 +113,14 @@ export async function createCompanyProfile(data: CreateCompanyInput) {
 
     const { services, clients, foundedYear, logo, photos, ...rest } = parsed.data;
 
+    const slug = await uniqueSlug(rest.name, async (candidate) =>
+      Boolean(await prisma.company.findUnique({ where: { slug: candidate }, select: { id: true } })),
+    );
+
     const company = await prisma.company.create({
       data: {
         ...rest,
+        slug,
         ownerUserId: session.user.id,
         logoUrl: logo || null,
         photos: photos && photos.length > 0 ? JSON.stringify(photos) : null,

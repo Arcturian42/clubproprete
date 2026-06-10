@@ -18,6 +18,12 @@ import {
 } from "@/lib/supplier-taxonomy";
 import type { Supplier } from "@/lib/types";
 
+export const metadata = {
+  title: "Fournisseurs pour professionnels de la propreté | Club Propreté",
+  description:
+    "Produits, machines, EPI, logiciels : l'annuaire des fournisseurs vérifiés pour les entreprises de nettoyage.",
+};
+
 interface SuppliersPageProps {
   searchParams: Promise<{
     page?: string;
@@ -53,6 +59,7 @@ export default async function SuppliersPage({ searchParams }: SuppliersPageProps
 
     return {
       id: supplier.id,
+      slug: supplier.slug,
       name: supplier.name,
       category: offerTypeLabel ? `${familyLabel} · ${subCategoryLabel} · ${offerTypeLabel}` : `${familyLabel} · ${subCategoryLabel}`,
       family: supplier.family,
@@ -144,7 +151,7 @@ export default async function SuppliersPage({ searchParams }: SuppliersPageProps
         {approvedSuppliers.map((supplier) => (
           <Link
             key={supplier.id}
-            href={`/annuaire/fournisseurs/${supplier.id}`}
+            href={`/annuaire/fournisseurs/${supplier.slug ?? supplier.id}`}
             className="block focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300"
             aria-label={`Voir la fiche de ${supplier.name}`}
           >

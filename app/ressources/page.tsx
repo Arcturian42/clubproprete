@@ -6,6 +6,12 @@ import { Pagination } from "@/components/pagination";
 import { getPublishedArticles } from "@/lib/actions/articles";
 import { NewsletterForm } from "@/components/newsletter-form";
 
+export const metadata = {
+  title: "Blog & ressources des pros de la propreté | Club Propreté",
+  description:
+    "Guides, conseils et actualités pour piloter et développer votre activité de nettoyage.",
+};
+
 interface ResourcesPageProps {
   searchParams: Promise<{ page?: string; search?: string }>;
 }
@@ -90,7 +96,7 @@ export default async function ResourcesPage({ searchParams }: ResourcesPageProps
 
                   {/* Titre */}
                   <h3 className="text-lg font-bold text-slate-900">
-                    <Link href={`/ressources/${article.id}`} className="hover:text-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300">
+                    <Link href={`/ressources/${article.slug || article.id}`} className="hover:text-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300">
                       {article.title}
                     </Link>
                   </h3>
@@ -126,7 +132,7 @@ export default async function ResourcesPage({ searchParams }: ResourcesPageProps
 
                   <div className="mt-3">
                     <Link
-                      href={`/ressources/${article.id}`}
+                      href={`/ressources/${article.slug || article.id}`}
                       className="bento-btn text-xs"
                     >
                       Lire l'article →

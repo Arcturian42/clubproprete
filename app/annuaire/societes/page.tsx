@@ -8,16 +8,40 @@ import { Pagination } from "@/components/pagination";
 import CompanyMap from "@/components/company-map";
 import { getPublishedCompanies } from "@/lib/actions/companies";
 
+export const metadata = {
+  title: "Annuaire des sociétés de nettoyage en France | Club Propreté",
+  description:
+    "Trouvez une société de nettoyage vérifiée près de chez vous : annuaire gratuit des entreprises de propreté, par région et spécialité.",
+};
+
+const FRENCH_REGIONS = [
+  "Auvergne-Rhône-Alpes",
+  "Bourgogne-Franche-Comté",
+  "Bretagne",
+  "Centre-Val de Loire",
+  "Corse",
+  "Grand Est",
+  "Hauts-de-France",
+  "Île-de-France",
+  "Normandie",
+  "Nouvelle-Aquitaine",
+  "Occitanie",
+  "Pays de la Loire",
+  "Provence-Alpes-Côte d'Azur",
+  "Outre-mer",
+];
+
 interface CompaniesPageProps {
-  searchParams: Promise<{ page?: string; search?: string }>;
+  searchParams: Promise<{ page?: string; search?: string; region?: string }>;
 }
 
 export default async function CompaniesPage({ searchParams }: CompaniesPageProps) {
   const params = await searchParams;
   const page = params.page ? parseInt(params.page, 10) : 1;
   const search = params.search || undefined;
+  const region = params.region && FRENCH_REGIONS.includes(params.region) ? params.region : undefined;
 
-  const { items: companies, total, page: currentPage, totalPages } = await getPublishedCompanies(search, page);
+  const { items: companies, total, page: currentPage, totalPages } = await getPublishedCompanies(search, page, 12, region);
 
   return (
     <PageShell
@@ -60,21 +84,34 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
         </Link>
       </div>
 
-      <form method="GET" action="/annuaire/societes" className="mt-6 flex gap-2">
+      <form method="GET" action="/annuaire/societes" className="mt-6 flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             name="search"
             defaultValue={search || ""}
-            placeholder="Rechercher une société..."
+            placeholder="Rechercher une société, une ville..."
             className="bento-input w-full pl-9"
           />
         </div>
+        <select
+          name="region"
+          defaultValue={region || ""}
+          className="bento-input sm:w-64"
+          aria-label="Filtrer par région"
+        >
+          <option value="">Toutes les régions</option>
+          {FRENCH_REGIONS.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
         <button type="submit" className="bento-btn bento-btn-primary">
           Rechercher
         </button>
-        {search && (
+        {(search || region) && (
           <Link href="/annuaire/societes" className="bento-btn">
             Réinitialiser
           </Link>
@@ -91,7 +128,7 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
           {companies.map((company) => (
             <Link
               key={company.id}
-              href={`/annuaire/societes/${company.id}`}
+              href={`/annuaire/societes/${company.slug ?? company.id}`}
               className="block focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-300"
               aria-label={`Voir la fiche de ${company.name}`}
             >
@@ -117,7 +154,7 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
         </div>
       )}
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} basePath="/annuaire/societes" searchQuery={search} />
+      <Pagination currentPage={currentPage} totalPages={totalPages} basePath="/annuaire/societes" searchQuery={search} extraParams={{ region }} />
     </PageShell>
   );
 }

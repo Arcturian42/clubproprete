@@ -128,6 +128,7 @@ model Company {
   id                 String    @id @default(cuid())
   ownerUserId        String
   name               String
+  slug               String?   @unique
   legalName          String?
   siret              String?
   siren              String?
@@ -206,6 +207,7 @@ model Supplier {
   id                 String    @id @default(cuid())
   ownerUserId        String
   name               String
+  slug               String?   @unique
   legalName          String?
   siret              String?
   category           String

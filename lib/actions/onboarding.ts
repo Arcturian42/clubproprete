@@ -13,6 +13,7 @@ import {
   type OnboardingSituation,
 } from "@/lib/onboarding";
 import { SUPPLIER_TAXONOMY, isSupplierFamily } from "@/lib/supplier-taxonomy";
+import { uniqueSlug } from "@/lib/slug";
 
 const onboardingSchema = z
   .object({
@@ -186,10 +187,14 @@ export async function completeOnboarding(data: OnboardingInput) {
       });
 
       if (situations.includes("company") && input.company && user.companies.length === 0) {
+        const companySlug = await uniqueSlug(input.company.name, async (candidate) =>
+          Boolean(await tx.company.findUnique({ where: { slug: candidate }, select: { id: true } })),
+        );
         const company = await tx.company.create({
           data: {
             ownerUserId: userId,
             name: input.company.name.trim(),
+            slug: companySlug,
             legalName: input.company.name.trim(),
             siret: input.company.siret?.trim() || null,
             city: input.company.city?.trim() || city,
@@ -206,10 +211,14 @@ export async function completeOnboarding(data: OnboardingInput) {
       if (situations.includes("supplier") && input.supplier && user.suppliers.length === 0) {
         const family = isSupplierFamily(input.supplier.family) ? input.supplier.family : "materiel";
         const subCategory = SUPPLIER_TAXONOMY[family].subs[0];
+        const supplierSlug = await uniqueSlug(input.supplier.name, async (candidate) =>
+          Boolean(await tx.supplier.findUnique({ where: { slug: candidate }, select: { id: true } })),
+        );
         const supplier = await tx.supplier.create({
           data: {
             ownerUserId: userId,
             name: input.supplier.name.trim(),
+            slug: supplierSlug,
             legalName: input.supplier.name.trim(),
             category: subCategory,
             family,

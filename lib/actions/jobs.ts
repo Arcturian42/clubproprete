@@ -36,7 +36,7 @@ type JobWithEmployerFields = {
   companyId: string | null;
   employerType: string;
   employerEntityId: string | null;
-  company?: { id: string; name: string; verificationStatus?: string | null; owner?: { email: string | null } | null } | null;
+  company?: { id: string; slug?: string | null; name: string; verificationStatus?: string | null; owner?: { email: string | null } | null } | null;
 };
 
 async function resolveEmployerSummary(job: JobWithEmployerFields): Promise<EmployerSummary | null> {
@@ -51,7 +51,7 @@ async function resolveEmployerSummary(job: JobWithEmployerFields): Promise<Emplo
       type: "supplier",
       name: supplier.name,
       verificationStatus: supplier.verificationStatus,
-      href: `/annuaire/fournisseurs/${supplier.id}`,
+      href: `/annuaire/fournisseurs/${supplier.slug ?? supplier.id}`,
       ownerEmail: supplier.owner.email,
     };
   }
@@ -62,7 +62,7 @@ async function resolveEmployerSummary(job: JobWithEmployerFields): Promise<Emplo
       type: "company",
       name: job.company.name,
       verificationStatus: job.company.verificationStatus ?? "unknown",
-      href: `/annuaire/societes/${job.company.id}`,
+      href: `/annuaire/societes/${job.company.slug ?? job.company.id}`,
       ownerEmail: job.company.owner?.email,
     };
   }
@@ -79,7 +79,7 @@ async function resolveEmployerSummary(job: JobWithEmployerFields): Promise<Emplo
       type: "company",
       name: company.name,
       verificationStatus: company.verificationStatus,
-      href: `/annuaire/societes/${company.id}`,
+      href: `/annuaire/societes/${company.slug ?? company.id}`,
       ownerEmail: company.owner.email,
     };
   }
@@ -95,7 +95,7 @@ async function attachEmployerSummaries<T extends JobWithEmployerFields>(jobs: T[
   const suppliers = supplierIds.length
     ? await prisma.supplier.findMany({
         where: { id: { in: supplierIds }, deletedAt: null },
-        select: { id: true, name: true, verificationStatus: true },
+        select: { id: true, slug: true, name: true, verificationStatus: true },
       })
     : [];
   const supplierById = new Map(suppliers.map((supplier) => [supplier.id, supplier]));
@@ -108,7 +108,7 @@ async function attachEmployerSummaries<T extends JobWithEmployerFields>(jobs: T[
           type: "supplier" as const,
           name: supplier.name,
           verificationStatus: supplier.verificationStatus,
-          href: `/annuaire/fournisseurs/${supplier.id}`,
+          href: `/annuaire/fournisseurs/${supplier.slug ?? supplier.id}`,
         }
       : job.company
       ? {
@@ -116,7 +116,7 @@ async function attachEmployerSummaries<T extends JobWithEmployerFields>(jobs: T[
           type: "company" as const,
           name: job.company.name,
           verificationStatus: job.company.verificationStatus ?? "unknown",
-          href: `/annuaire/societes/${job.company.id}`,
+          href: `/annuaire/societes/${job.company.slug ?? job.company.id}`,
         }
       : null;
 
@@ -260,7 +260,7 @@ export async function getJobById(id: string) {
     ...job,
     employer,
     employerName: employer?.name ?? job.company?.name ?? "Entreprise",
-    employerHref: employer?.href ?? (job.company?.id ? `/annuaire/societes/${job.company.id}` : null),
+    employerHref: employer?.href ?? (job.company?.id ? `/annuaire/societes/${job.company.slug ?? job.company.id}` : null),
   };
 }
 

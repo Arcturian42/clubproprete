@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { uniqueSlug } from "@/lib/slug";
 import { PermissionError, requireEntityRole, requireUser } from "@/lib/permissions";
 import { isOfferType, isSupplierFamily, isSupplierSubCategory, SUPPLIER_TAXONOMY } from "@/lib/supplier-taxonomy";
 import type { OfferType, SupplierFamily } from "@/lib/supplier-taxonomy";
@@ -201,6 +202,9 @@ export async function upsertSupplierProfile(formData: FormData) {
       : await prisma.supplier.create({
           data: {
             ownerUserId: session.user.id,
+            slug: await uniqueSlug(supplierData.name, async (candidate) =>
+              Boolean(await prisma.supplier.findUnique({ where: { slug: candidate }, select: { id: true } })),
+            ),
             ...supplierData,
           },
         });
