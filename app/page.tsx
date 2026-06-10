@@ -19,6 +19,9 @@ import {
   subcontractingPerks,
 } from "@/lib/landing-content";
 
+// Les compteurs viennent de la base, indisponible au moment du build.
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [{ total: companiesCount }, { total: jobsCount }, { total: suppliersCount }, { total: trainingsCount }] =
     await Promise.all([

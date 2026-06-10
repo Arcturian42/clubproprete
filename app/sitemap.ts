@@ -1,10 +1,14 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://clubproprete.com";
+// Genere a la requete : le contenu depend de la base, qui n'est pas
+// disponible au build (Vercel) et evolue en continu.
+export const dynamic = "force-dynamic";
 
-  const [companies, suppliers, trainingOrganizations, jobs, trainings, articles] = await Promise.all([
+type EntityRows = Awaited<ReturnType<typeof fetchEntities>>;
+
+function fetchEntities() {
+  return Promise.all([
     prisma.company.findMany({
       where: { deletedAt: null, verificationStatus: "approved" },
       select: { id: true, updatedAt: true },
@@ -30,6 +34,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { id: true, updatedAt: true },
     }),
   ]);
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://clubproprete.com";
+
+  let entities: EntityRows = [[], [], [], [], [], []];
+  try {
+    entities = await fetchEntities();
+  } catch (error) {
+    console.error("sitemap: base indisponible, repli sur les routes statiques", error);
+  }
+  const [companies, suppliers, trainingOrganizations, jobs, trainings, articles] = entities;
 
   const staticRoutes = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: "daily" as const, priority: 1 },
