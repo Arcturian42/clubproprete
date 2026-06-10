@@ -14,24 +14,51 @@ test.describe('Authentification', () => {
     await expect(page.getByRole('heading', { name: /validation et modération/i })).toBeVisible();
   });
 
-  test('inscription nouvel utilisateur', async ({ page }) => {
+  test('inscription nouvel utilisateur sans choix de profil', async ({ page }) => {
     const timestamp = Date.now();
     await page.goto('/inscription');
 
-    // Sélectionner un profil (par défaut Société)
-    await page.getByRole('button', { name: 'Société de nettoyage' }).click();
-
+    // Le nouveau flow ne demande plus de profil : compte neutre puis onboarding.
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Jean');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Test');
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(`jean.test+${timestamp}@clubproprete.test`);
     await page.getByLabel('Mot de passe').fill('demo123');
-    await page.getByRole('textbox', { name: 'Téléphone', exact: true }).fill('0600000000');
-    await page.getByRole('textbox', { name: /Société \/ structure/i }).fill('Test Propreté');
+    await page.getByRole('textbox', { name: /Téléphone/i }).fill('0600000000');
 
     await page.getByRole('checkbox').check();
-    await page.getByRole('button', { name: /continuer l'onboarding/i }).click();
+    await page.getByRole('button', { name: /créer mon compte/i }).click();
 
     await page.waitForURL('/onboarding');
-    await expect(page.getByRole('heading', { name: /qualification/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /bienvenue/i })).toBeVisible();
+  });
+
+  test('onboarding société : crée la fiche et élève le rôle', async ({ page }) => {
+    const timestamp = Date.now();
+    const email = `jean.onboard+${timestamp}@clubproprete.test`;
+
+    await page.goto('/inscription');
+    await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Jean');
+    await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Onboard');
+    await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(email);
+    await page.getByLabel('Mot de passe').fill('demo123');
+    await page.getByRole('checkbox').check();
+    await page.getByRole('button', { name: /créer mon compte/i }).click();
+    await page.waitForURL('/onboarding');
+
+    // Étape coordonnées
+    await page.getByRole('button', { name: /continuer/i }).click();
+    // Étape situation : sélection société
+    await page.getByRole('button', { name: /je dirige une société de propreté/i }).click();
+    await page.getByRole('button', { name: /continuer/i }).click();
+    // Étape fiche société
+    await page.getByRole('textbox', { name: /nom de la société/i }).fill(`Onboard Propreté ${timestamp}`);
+    await page.getByRole('button', { name: /continuer/i }).click();
+    // Récapitulatif
+    await page.getByRole('button', { name: /valider et créer mon espace/i }).click();
+
+    await expect(page.getByRole('heading', { name: /c'est prêt/i })).toBeVisible();
+    await page.getByRole('link', { name: /ouvrir mon espace/i }).click();
+    await page.waitForURL('/dashboard');
+    await expect(page.getByRole('heading', { name: /optimiser ma fiche/i }).first()).toBeVisible();
   });
 });

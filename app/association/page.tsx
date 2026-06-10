@@ -165,6 +165,12 @@ export default async function AssociationPage() {
                       {mission.description || "Aucune description."}
                     </p>
                   </div>
+                  <Link
+                    href={`/membres/${mission.creator.id}`}
+                    className="mt-2 inline-block text-sm font-semibold text-indigo-600 hover:underline"
+                  >
+                    Publié par {`${mission.creator.firstName ?? ""} ${mission.creator.lastName ?? ""}`.trim() || "un membre"}
+                  </Link>
                   <div className="mt-3 flex items-center gap-2">
                     <Link
                       href={`/association/missions/${mission.id}`}

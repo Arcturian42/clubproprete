@@ -71,15 +71,22 @@ test.describe('Vérification de compte & rôles (régressions audit)', () => {
     const email = `qa-publish-${ts}@clubproprete.test`;
 
     await page.goto('/inscription');
-    await page.getByRole('button', { name: 'Société de nettoyage' }).click();
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Pub');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Lisher');
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(email);
     await page.getByLabel('Mot de passe').fill('demo123');
-    await page.getByRole('textbox', { name: /Société \/ structure/i }).fill('QA Publish Co');
     await page.getByRole('checkbox').check();
-    await page.getByRole('button', { name: /continuer l'onboarding/i }).click();
+    await page.getByRole('button', { name: /créer mon compte/i }).click();
     await page.waitForURL('/onboarding');
+
+    // Nouveau flow : la fiche société se crée via l'onboarding, plus à l'inscription.
+    await page.getByRole('button', { name: /continuer/i }).click();
+    await page.getByRole('button', { name: /je dirige une société de propreté/i }).click();
+    await page.getByRole('button', { name: /continuer/i }).click();
+    await page.getByRole('textbox', { name: /nom de la société/i }).fill('QA Publish Co');
+    await page.getByRole('button', { name: /continuer/i }).click();
+    await page.getByRole('button', { name: /valider et créer mon espace/i }).click();
+    await expect(page.getByRole('heading', { name: /c'est prêt/i })).toBeVisible();
 
     // PB-1 : le compte personnel est auto-vérifié à l'inscription (AUCUN patch DB).
     const user = await prisma.user.findUnique({ where: { email } });

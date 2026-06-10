@@ -5,9 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { signIn } from "@/auth";
 import { sendWelcomeEmail } from "@/lib/email";
-import { rateLimitByIp, rateLimitByEmail } from "@/lib/rate-limit";
+import { rateLimitByIp } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
-import { setFlash } from "@/lib/flash";
 
 const signupSchema = z.object({
   email: z.string().email("Veuillez saisir un email valide."),
@@ -15,14 +14,6 @@ const signupSchema = z.object({
   firstName: z.string().min(1, "Le prénom est obligatoire."),
   lastName: z.string().min(1, "Le nom est obligatoire."),
   phone: z.string().optional(),
-  organization: z.string().optional(),
-  role: z.enum([
-    "company_owner",
-    "supplier_owner",
-    "independent_profile",
-    "candidate_profile",
-    "training_organization",
-  ]),
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: "Vous devez accepter les conditions." }),
   }),
@@ -30,6 +21,10 @@ const signupSchema = z.object({
 
 export type SignupInput = z.infer<typeof signupSchema>;
 
+// L'inscription crée uniquement un compte utilisateur neutre. Le choix des
+// fonctionnalités (fiche société, fiche fournisseur, centre de formation,
+// profil candidat/indépendant) se fait ensuite dans l'onboarding : un même
+// compte peut cumuler plusieurs fiches par-dessus son profil utilisateur.
 export async function registerUser(data: SignupInput) {
   try {
     const ip = await getClientIp();
@@ -43,8 +38,7 @@ export async function registerUser(data: SignupInput) {
       return { success: false, errors: parsed.error.flatten().fieldErrors };
     }
 
-    const { email, password, firstName, lastName, phone, organization, role } = parsed.data;
-    const organizationName = organization?.trim() || `${firstName} ${lastName}`.trim();
+    const { email, password, firstName, lastName, phone } = parsed.data;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -61,7 +55,7 @@ export async function registerUser(data: SignupInput) {
           firstName,
           lastName,
           phone: phone || null,
-          mainRole: role,
+          mainRole: "registered_user",
           // Le compte personnel est auto-vérifié à l'inscription : il n'existe pas de
           // parcours de double opt-in. La validation métier reste portée par la modération
           // admin de l'entité (société/fournisseur/centre). Sans cela, isVerifiedPersonalAccount
@@ -74,103 +68,13 @@ export async function registerUser(data: SignupInput) {
       await tx.userProfile.create({
         data: {
           userId: createdUser.id,
-          profileType: role,
-          completionScore: role === "candidate_profile" ? 35 : 30,
-          verificationStatus: role === "candidate_profile" ? "draft" : "pending",
-          associationStatus:
-            role === "company_owner" || role === "independent_profile" ? "draft" : "not_applicable",
-          visibility: role === "candidate_profile" ? "private" : "public",
-          primaryGoal: organizationName || null,
+          profileType: "registered_user",
+          completionScore: 15,
+          verificationStatus: "draft",
+          associationStatus: "not_applicable",
+          visibility: "private",
         },
       });
-
-      if (role === "company_owner") {
-        const company = await tx.company.create({
-          data: {
-            ownerUserId: createdUser.id,
-            name: organizationName,
-            legalName: organizationName,
-            email,
-            phone: phone || null,
-            verificationStatus: "pending",
-          },
-        });
-        await tx.entityMember.create({
-          data: {
-            userId: createdUser.id,
-            entityType: "company",
-            entityId: company.id,
-            role: "owner",
-          },
-        });
-      } else if (role === "supplier_owner") {
-        const supplier = await tx.supplier.create({
-          data: {
-            ownerUserId: createdUser.id,
-            name: organizationName,
-            legalName: organizationName,
-            category: "materiel",
-            family: "materiel",
-            subCategory: "chariots_menage",
-            email,
-            phone: phone || null,
-            contactName: `${firstName} ${lastName}`.trim(),
-            verificationStatus: "pending",
-          },
-        });
-        await tx.entityMember.create({
-          data: {
-            userId: createdUser.id,
-            entityType: "supplier",
-            entityId: supplier.id,
-            role: "owner",
-          },
-        });
-      } else if (role === "candidate_profile") {
-        await tx.candidateProfile.create({
-          data: {
-            userId: createdUser.id,
-            firstName,
-            lastName,
-            email,
-            phone: phone || null,
-            city: organization?.trim() || null,
-          },
-        });
-      } else if (role === "independent_profile") {
-        await tx.independentProfile.create({
-          data: {
-            userId: createdUser.id,
-            displayName: `${firstName} ${lastName.charAt(0)}.`,
-            businessName: organizationName,
-            email,
-            phone: phone || null,
-            city: organization?.trim() || null,
-            verificationStatus: "pending",
-            associationStatus: "draft",
-          },
-        });
-      } else if (role === "training_organization") {
-        const trainingOrganization = await tx.trainingOrganization.create({
-          data: {
-            ownerUserId: createdUser.id,
-            name: organizationName,
-            legalName: organizationName,
-            email,
-            phone: phone || null,
-            contactName: `${firstName} ${lastName}`.trim(),
-            verificationStatus: "pending",
-          },
-        });
-        await tx.entityMember.create({
-          data: {
-            userId: createdUser.id,
-            entityType: "training_organization",
-            entityId: trainingOrganization.id,
-            role: "owner",
-          },
-        });
-      }
 
       return createdUser;
     });

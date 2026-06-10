@@ -1,61 +1,63 @@
 "use client";
 
-import { ArrowRight, CheckCircle2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Building2, CheckCircle2, GraduationCap, Package, Sparkles, UserRound } from "lucide-react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { profileOptions } from "@/lib/auth-demo";
-import type { Role } from "@/lib/types";
 import { registerUser } from "@/lib/actions/auth";
-
-type SignupFormProps = {
-  defaultRole?: Role;
-};
+import type { OnboardingIntent } from "@/lib/onboarding";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const rolesWithRequiredStructure: Role[] = ["company_owner", "supplier_owner", "training_organization"];
 
-function getStructureLabel(role: Role) {
-  if (role === "candidate_profile") return "Ville / zone de recherche";
-  if (role === "independent_profile") return "Ville / nom commercial";
-  if (role === "author") return "Spécialité / média";
-  if (role === "supplier_owner") return "Nom du fournisseur";
-  if (role === "training_organization") return "Nom de l'organisme";
-  return "Société / structure";
-}
+// Compatibilité avec les anciens liens "/inscription?role=..." dispersés sur le
+// site : on les convertit en intention d'onboarding au lieu de figer un profil.
+const roleToIntent: Record<string, OnboardingIntent> = {
+  company_owner: "company",
+  supplier_owner: "supplier",
+  independent_profile: "independent",
+  candidate_profile: "job_seeker",
+  training_organization: "training",
+};
 
-function getDemoStructure(role: Role) {
-  if (role === "candidate_profile") return "Paris";
-  if (role === "independent_profile") return "Karim Services Propreté";
-  if (role === "supplier_owner") return "EcoMatériel QA";
-  if (role === "training_organization") return "Institut Hygiène QA";
-  if (role === "author") return "Ressources terrain";
-  return "Nouvelle Propreté QA";
-}
+const unlockedFeatures = [
+  {
+    icon: Building2,
+    title: "Fiche société",
+    description: "Visibilité annuaire, recrutement, sous-traitance pour votre entreprise de propreté.",
+  },
+  {
+    icon: Package,
+    title: "Fiche fournisseur",
+    description: "Présentez vos produits, machines ou logiciels aux professionnels du secteur.",
+  },
+  {
+    icon: GraduationCap,
+    title: "Centre de formation",
+    description: "Référencez votre organisme et proposez vos formations.",
+  },
+  {
+    icon: UserRound,
+    title: "Profil candidat / indépendant",
+    description: "CV vivant, candidatures, missions de sous-traitance pour les auto-entrepreneurs.",
+  },
+];
 
-export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
+export function SignupForm() {
   const router = useRouter();
-  const [role, setRole] = useState<Role>(defaultRole);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [organization, setOrganization] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-
-  const selectedProfile = useMemo(
-    () => profileOptions.find((option) => option.role === role) ?? profileOptions[0],
-    [role]
-  );
-  const requiresStructure = rolesWithRequiredStructure.includes(role);
+  const [intent, setIntent] = useState<OnboardingIntent | null>(null);
 
   useEffect(() => {
-    const queryRole = new URLSearchParams(window.location.search).get("role") as Role | null;
-    if (queryRole && profileOptions.some((option) => option.role === queryRole)) {
-      setRole(queryRole);
+    const queryRole = new URLSearchParams(window.location.search).get("role");
+    if (queryRole && roleToIntent[queryRole]) {
+      setIntent(roleToIntent[queryRole]);
     }
   }, []);
 
@@ -71,9 +73,6 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
     if (!password || password.length < 6) {
       nextErrors.pwdError = "Saisissez au moins 6 caractères.";
     }
-    if (requiresStructure && !organization.trim()) {
-      nextErrors.organization = "La structure est obligatoire pour ce profil.";
-    }
     if (!termsAccepted) nextErrors.terms = "Vous devez accepter les conditions.";
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -83,10 +82,9 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
     const timestamp = Date.now();
     setFirstName("Camille");
     setLastName("Dupont");
-    setEmail(`qa-${role}-${timestamp}@clubproprete.test`);
+    setEmail(`qa-user-${timestamp}@clubproprete.test`);
     setPassword("demo123");
     setPhone("0600000000");
-    setOrganization(getDemoStructure(role));
     setTermsAccepted(true);
     setErrors({});
   }
@@ -101,8 +99,6 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
       firstName,
       lastName,
       phone,
-      organization,
-      role: role as "company_owner" | "supplier_owner" | "independent_profile" | "candidate_profile" | "training_organization",
       termsAccepted: termsAccepted as true,
     });
 
@@ -136,7 +132,7 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
     }
 
     setLoading(false);
-    router.push("/onboarding");
+    router.push(intent ? `/onboarding?intent=${intent}` : "/onboarding");
     router.refresh();
   }
 
@@ -145,41 +141,41 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
     lastName.trim() &&
     emailRegex.test(email) &&
     password.length >= 6 &&
-    termsAccepted &&
-    (!requiresStructure || organization.trim());
+    termsAccepted;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
       <div className="surface p-6">
         <p className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">Créer un compte gratuit</p>
-        <h2 className="mt-3 text-2xl font-black text-slate-900">Choisissez votre profil principal</h2>
+        <h2 className="mt-3 text-2xl font-black text-slate-900">Un seul compte, toutes les fonctionnalités</h2>
         <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
-          Créez votre compte sécurisé. Vos données sont stockées en base de données.
+          Pas besoin de choisir un profil maintenant : créez votre compte, répondez à quelques questions et
+          activez les fonctionnalités adaptées à votre activité. Vous pourrez cumuler plusieurs fiches
+          (par exemple une fiche société et votre profil personnel).
         </p>
         <div className="mt-4 rounded-[16px] border-2 border-indigo-200 bg-indigo-50 p-4">
-          <p className="text-sm font-bold text-slate-700">
-            Profil sélectionné : <span className="text-indigo-700">{selectedProfile.label}</span>
-          </p>
-          <p className="mt-1 text-xs font-semibold text-slate-500">
-            Après création, vous serez connecté automatiquement puis redirigé vers l'onboarding.
+          <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+            <Sparkles size={16} className="text-indigo-600" aria-hidden="true" />
+            Après l&apos;inscription, un onboarding rapide personnalise votre espace.
           </p>
         </div>
         <div className="mt-5 grid gap-3">
-          {profileOptions.map((option) => (
-            <button
-              key={option.role}
-              type="button"
-              className={`bento-card bento-card-interactive p-4 text-left ${
-                role === option.role ? "bg-indigo-50" : "bg-white"
-              }`}
-              onClick={() => setRole(option.role)}
-            >
-              <span className="text-sm font-black text-slate-900">{option.label}</span>
-              <span className="mt-1 block text-xs font-bold text-slate-500">
-                {option.associationEligible ? "Éligible association" : "Profil public / validation admin"}
-              </span>
-            </button>
-          ))}
+          {unlockedFeatures.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <div key={feature.title} className="bento-card p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-[12px] border-2 border-slate-900 bg-indigo-50 p-2 text-indigo-700">
+                    <Icon size={18} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <span className="text-sm font-black text-slate-900">{feature.title}</span>
+                    <span className="mt-1 block text-xs font-bold text-slate-500">{feature.description}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -220,7 +216,7 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
               type="email"
               className={`bento-input ${errors.email ? "border-red-500 shadow-[2px_2px_0_#ef4444]" : ""}`}
               value={email}
-              placeholder="email@entreprise.fr"
+              placeholder="email@exemple.fr"
               onChange={(event) => { setEmail(event.target.value); setErrors((e) => ({ ...e, email: "" })); }}
               aria-invalid={errors.email ? "true" : "false"}
               aria-describedby={errors.email ? "error-email" : undefined}
@@ -240,8 +236,8 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
             />
             {errors.pwdError && <span id="error-password" className="text-[11px] font-bold text-red-500 normal-case">{errors.pwdError}</span>}
           </label>
-          <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
-            Téléphone
+          <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600 sm:col-span-2">
+            Téléphone (facultatif)
             <input
               type="tel"
               className="bento-input"
@@ -249,18 +245,6 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
               placeholder="0600000000"
               onChange={(event) => setPhone(event.target.value)}
             />
-          </label>
-          <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600 sm:col-span-2">
-            {getStructureLabel(role)} {requiresStructure ? "*" : ""}
-            <input
-              className={`bento-input ${errors.organization ? "border-red-500 shadow-[2px_2px_0_#ef4444]" : ""}`}
-              value={organization}
-              placeholder={getDemoStructure(role)}
-              onChange={(event) => { setOrganization(event.target.value); setErrors((e) => ({ ...e, organization: "" })); }}
-              aria-invalid={errors.organization ? "true" : "false"}
-              aria-describedby={errors.organization ? "error-organization" : undefined}
-            />
-            {errors.organization && <span id="error-organization" className="text-[11px] font-bold text-red-500 normal-case">{errors.organization}</span>}
           </label>
         </div>
 
@@ -274,7 +258,7 @@ export function SignupForm({ defaultRole = "company_owner" }: SignupFormProps) {
             aria-describedby={errors.terms ? "error-terms" : undefined}
           />
           <span>
-            J'accepte la collecte de ces informations pour créer mon profil Club Propreté, conformément à la{" "}
+            J&apos;accepte la collecte de ces informations pour créer mon profil Club Propreté, conformément à la{" "}
             <a href="/politique-confidentialite" target="_blank" rel="noopener" className="text-indigo-600 underline hover:text-indigo-800">
               politique de confidentialité
             </a>

@@ -101,7 +101,15 @@ export default async function JobApplicationsPage({
                       </div>
                       <div>
                         <h3 className="text-lg font-black text-slate-900">
-                          {user?.firstName} {user?.lastName}
+                          {user?.id ? (
+                            <Link href={`/membres/${user.id}`} className="hover:text-indigo-600 hover:underline">
+                              {user.firstName} {user.lastName}
+                            </Link>
+                          ) : (
+                            <>
+                              {user?.firstName} {user?.lastName}
+                            </>
+                          )}
                         </h3>
                         <div className="flex flex-wrap gap-3 text-sm text-slate-600">
                           {user?.city && (
