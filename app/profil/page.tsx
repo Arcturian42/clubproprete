@@ -1,34 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   ArrowLeft,
   Building2,
-  Mail,
-  Phone,
-  UserRound,
-  LogOut,
-  Briefcase,
-  Package,
-  GraduationCap,
-  BadgeCheck,
   Camera,
-  Edit3,
-  Save,
-  X,
+  CheckCircle2,
   Eye,
-  MapPin,
-  Globe,
-  FileText,
+  EyeOff,
+  GraduationCap,
+  Package,
   Plus,
+  Save,
   Trash2,
+  UserRound,
+  Briefcase,
+  ExternalLink,
 } from "lucide-react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { PageShell } from "@/components/page-shell";
-import { StatCard } from "@/components/stat-card";
-import { EntityCard } from "@/components/entity-card";
 import { roleLabels } from "@/lib/auth-demo";
 import { updateUserProfile, getUserProfile } from "@/lib/actions/profile";
 
@@ -46,87 +37,71 @@ type EditableProfile = {
   visibility: "public" | "private";
 };
 
-function getProfileType(role: string) {
-  const map: Record<string, string> = {
-    company_owner: "Société de nettoyage",
-    verified_company: "Société vérifiée",
-    supplier_owner: "Fournisseur",
-    verified_supplier: "Fournisseur vérifié",
-    independent_profile: "Indépendant",
-    candidate_profile: "Candidat",
-    training_organization: "Organisme de formation",
-    author: "Auteur",
-    admin: "Admin",
-    super_admin: "Super Admin",
-  };
-  return map[role] || "Profil";
-}
+const emptyProfile: EditableProfile = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  bio: "",
+  address: "",
+  city: "",
+  website: "",
+  avatar: null,
+  photos: [],
+  visibility: "private",
+};
 
 export default function ProfilPage() {
-  const router = useRouter();
   const { data: session, status } = useSession();
-  const [isEditing, setIsEditing] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
-  const [saving, setSaving] = useState(false);
-
   const user = session?.user;
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  const [profile, setProfile] = useState<EditableProfile>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    bio: "Décrivez votre parcours professionnel...",
-    address: "",
-    city: "",
-    website: "",
-    avatar: null,
-    photos: [],
-    visibility: "private",
-  });
+  const [profile, setProfile] = useState<EditableProfile>(emptyProfile);
+  const [savedProfile, setSavedProfile] = useState<EditableProfile>(emptyProfile);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const isDirty = JSON.stringify(profile) !== JSON.stringify(savedProfile);
+
+  const loadProfile = useCallback(async () => {
+    if (!user) return;
+    const base: EditableProfile = {
+      ...emptyProfile,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+      phone: user.phone || "",
+    };
+    const data = await getUserProfile(user.id);
+    const loaded: EditableProfile = data
+      ? {
+          firstName: data.firstName || base.firstName,
+          lastName: data.lastName || base.lastName,
+          email: data.email || base.email,
+          phone: data.phone || base.phone,
+          bio: data.bio || "",
+          address: data.address || "",
+          city: data.city || "",
+          website: data.companies?.[0]?.website || "",
+          avatar: data.avatarUrl || null,
+          photos: data.photos ? JSON.parse(data.photos) : [],
+          visibility: data.profile?.visibility === "public" ? "public" : "private",
+        }
+      : base;
+    setProfile(loaded);
+    setSavedProfile(loaded);
+  }, [user]);
 
   useEffect(() => {
-    if (user) {
-      setProfile({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        bio: "Décrivez votre parcours professionnel...",
-        address: "",
-        city: user.organization ? "Paris" : "",
-        website: "",
-        avatar: null,
-        photos: [],
-        visibility: "private",
-      });
-      getUserProfile(user.id).then((data) => {
-        if (data) {
-          setProfile((prev) => ({
-            ...prev,
-            firstName: data.firstName || prev.firstName,
-            lastName: data.lastName || prev.lastName,
-            email: data.email || prev.email,
-            phone: data.phone || prev.phone,
-            bio: data.bio || prev.bio,
-            address: data.address || prev.address,
-            city: data.city || prev.city,
-            avatar: data.avatarUrl || prev.avatar,
-            photos: data.photos ? JSON.parse(data.photos) : [],
-            website: data.companies?.[0]?.website || prev.website,
-            visibility: data.profile?.visibility === "public" ? "public" : "private",
-          }));
-        }
-      });
-    }
-  }, [user]);
+    loadProfile();
+  }, [loadProfile]);
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
+    setSaveMessage(null);
     const result = await updateUserProfile({
       userId: user.id,
       firstName: profile.firstName,
@@ -142,64 +117,25 @@ export default function ProfilPage() {
       visibility: profile.visibility,
     });
     if (result.success) {
-      setIsEditing(false);
+      setSavedProfile(profile);
+      setSaveMessage({ type: "success", text: "Profil enregistré." });
+    } else {
+      setSaveMessage({
+        type: "error",
+        text: result.message || "Impossible d'enregistrer. Vérifiez les champs et réessayez.",
+      });
     }
     setSaving(false);
   };
 
   const handleCancel = () => {
-    if (!user) return;
-    setProfile({
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-      email: user.email || "",
-      phone: user.phone || "",
-      bio: "Décrivez votre parcours professionnel...",
-      address: "",
-      city: user.organization ? "Paris" : "",
-      website: "",
-      avatar: null,
-      photos: [],
-      visibility: "private",
-    });
-    getUserProfile(user.id).then((data) => {
-      if (data) {
-        setProfile((prev) => ({
-          ...prev,
-          firstName: data.firstName || prev.firstName,
-          lastName: data.lastName || prev.lastName,
-          email: data.email || prev.email,
-          phone: data.phone || prev.phone,
-          bio: data.bio || prev.bio,
-          address: data.address || prev.address,
-          city: data.city || prev.city,
-          avatar: data.avatarUrl || prev.avatar,
-          photos: data.photos ? JSON.parse(data.photos) : [],
-          website: data.companies?.[0]?.website || prev.website,
-          visibility: data.profile?.visibility === "public" ? "public" : "private",
-        }));
-      }
-    });
-    setIsEditing(false);
+    setProfile(savedProfile);
+    setSaveMessage(null);
   };
 
   const handleChange = (field: keyof EditableProfile, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddPhoto = () => {
-    photoInputRef.current?.click();
-  };
-
-  const handleRemovePhoto = (index: number) => {
-    setProfile((prev) => ({
-      ...prev,
-      photos: prev.photos.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleAvatarChange = () => {
-    avatarInputRef.current?.click();
+    setSaveMessage(null);
   };
 
   const uploadFile = async (file: File): Promise<string | null> => {
@@ -231,13 +167,16 @@ export default function ProfilPage() {
     e.target.value = "";
   };
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: "/" });
+  const handleRemovePhoto = (index: number) => {
+    setProfile((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index),
+    }));
   };
 
   if (status === "loading") {
     return (
-      <PageShell eyebrow="Profil" title="Chargement..." description="">
+      <PageShell eyebrow="Mon compte" title="Mon profil" description="">
         <div className="surface p-6 text-center">
           <p className="text-slate-600">Chargement de votre profil...</p>
         </div>
@@ -248,7 +187,7 @@ export default function ProfilPage() {
   if (!user) {
     return (
       <PageShell
-        eyebrow="Profil"
+        eyebrow="Mon compte"
         title="Non connecté"
         description="Connectez-vous pour accéder à votre profil."
         actions={
@@ -272,375 +211,302 @@ export default function ProfilPage() {
     "training_organization",
   ].includes(user.role);
 
-  const getProfileTitle = () => {
+  const organizationLabel = (() => {
     switch (user.role) {
       case "company_owner":
       case "verified_company":
-        return "Profil entreprise";
+        return { label: "fiche société", icon: Building2 };
       case "supplier_owner":
       case "verified_supplier":
-        return "Profil fournisseur";
+        return { label: "fiche fournisseur", icon: Package };
       case "training_organization":
-        return "Profil organisme";
+        return { label: "fiche organisme de formation", icon: GraduationCap };
       default:
-        return "Profil professionnel";
+        return { label: "fiche", icon: Briefcase };
     }
-  };
-
-  const getProfileIcon = () => {
-    switch (user.role) {
-      case "company_owner":
-      case "verified_company":
-        return <Building2 className="text-indigo-600" size={24} />;
-      case "supplier_owner":
-      case "verified_supplier":
-        return <Package className="text-indigo-600" size={24} />;
-      case "training_organization":
-        return <GraduationCap className="text-indigo-600" size={24} />;
-      default:
-        return <Briefcase className="text-indigo-600" size={24} />;
-    }
-  };
-
-  if (showPreview) {
-    return (
-      <PageShell
-        eyebrow="Aperçu"
-        title="Votre profil public"
-        description="Voici comment les autres utilisateurs voient votre profil."
-        actions={
-          <>
-            <button onClick={() => setShowPreview(false)} className="bento-btn">
-              <Edit3 size={16} /> Modifier
-            </button>
-            <Link href="/dashboard" className="bento-btn bento-btn-primary">
-              Retour
-            </Link>
-          </>
-        }
-      >
-        <div className="max-w-3xl mx-auto">
-          <div className="surface p-8">
-            <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
-              <div className="relative">
-                {profile.avatar ? (
-                  <img
-                    src={profile.avatar}
-                    alt={`${profile.firstName} ${profile.lastName}`}
-                    className="w-32 h-32 rounded-[20px] border-4 border-slate-900 object-cover shadow-[4px_4px_0px_#0f172a]"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-[20px] border-4 border-slate-900 bg-indigo-100 flex items-center justify-center shadow-[4px_4px_0px_#0f172a]">
-                    <UserRound size={48} className="text-indigo-600" />
-                  </div>
-                )}
-              </div>
-              <div className="text-center sm:text-left">
-                <h2 className="text-3xl font-black text-slate-900">
-                  {profile.firstName} {profile.lastName}
-                </h2>
-                <p className="text-lg text-slate-500 mt-1">{roleLabels[user.role as keyof typeof roleLabels] || user.role}</p>
-                {user.organization && <p className="text-indigo-600 font-bold mt-2">{user.organization}</p>}
-                <div className="flex items-center justify-center sm:justify-start gap-2 mt-3">
-                  <BadgeCheck className="text-emerald-500" size={20} />
-                  <span className="text-emerald-600 font-bold">Profil vérifié</span>
-                </div>
-              </div>
-            </div>
-
-            {profile.bio && (
-              <div className="mb-8">
-                <h3 className="text-lg font-black text-slate-900 mb-3">À propos</h3>
-                <p className="text-slate-600 leading-relaxed">{profile.bio}</p>
-              </div>
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-2 mb-8">
-              {profile.city && (
-                <div className="flex items-center gap-3">
-                  <MapPin className="text-indigo-600" size={20} />
-                  <span className="text-slate-700">{profile.city}</span>
-                </div>
-              )}
-              {profile.email && (
-                <div className="flex items-center gap-3">
-                  <Mail className="text-indigo-600" size={20} />
-                  <a href={`mailto:${encodeURIComponent(profile.email)}`} className="text-slate-700 hover:text-indigo-600">
-                    {profile.email}
-                  </a>
-                </div>
-              )}
-              {profile.phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="text-indigo-600" size={20} />
-                  <a href={`tel:${encodeURIComponent(profile.phone.replace(/\s/g, ""))}`} className="text-slate-700 hover:text-indigo-600">
-                    {profile.phone}
-                  </a>
-                </div>
-              )}
-              {profile.website && (
-                <div className="flex items-center gap-3">
-                  <Globe className="text-indigo-600" size={20} />
-                  <a
-                    href={`https://${profile.website.replace(/^https?:\/\//, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-slate-700 hover:text-indigo-600"
-                  >
-                    {profile.website}
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {profile.photos.length > 0 && (
-              <div>
-                <h3 className="text-lg font-black text-slate-900 mb-4">Galerie</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {profile.photos.map((photo, index) => (
-                    <img
-                      key={index}
-                      src={photo}
-                      alt={`Photo ${index + 1}`}
-                      className="w-full h-40 object-cover rounded-[14px] border-2 border-slate-900"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </PageShell>
-    );
-  }
+  })();
+  const OrganizationIcon = organizationLabel.icon;
 
   return (
     <PageShell
       eyebrow="Mon compte"
-      title={`Bonjour, ${profile.firstName}`}
-      description="Gérez vos informations personnelles et votre profil professionnel."
+      title="Mon profil"
+      description="Ces informations alimentent votre profil membre. Vous choisissez ce qui est visible publiquement."
       actions={
         <>
-          <button onClick={() => setShowPreview(true)} className="bento-btn">
-            <Eye size={16} /> Aperçu
-          </button>
-          {!isEditing ? (
-            <button onClick={() => setIsEditing(true)} className="bento-btn bento-btn-primary">
-              <Edit3 size={16} /> Modifier
-            </button>
-          ) : (
-            <button onClick={handleLogout} className="bento-btn">
-              <LogOut size={16} /> Déconnexion
-            </button>
-          )}
+          <Link href="/dashboard" className="bento-btn">
+            <ArrowLeft size={16} /> Dashboard
+          </Link>
+          <Link href={`/membres/${user.id}`} className="bento-btn bento-btn-primary">
+            <Eye size={16} /> Voir mon profil public
+          </Link>
         </>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="Profil" value={roleLabels[user.role as keyof typeof roleLabels] || user.role} detail={getProfileType(user.role)} />
-        <StatCard label="Association" value={user.associationMember ? "Membre" : "Non membre"} detail={user.associationMember ? "Accès complet" : "Adhésion possible"} />
-        <StatCard label="Visibilité" value={profile.visibility === "public" ? "Public" : "Privé"} detail="Profil membre" />
-        <StatCard label="Photos" value={String(profile.photos.length)} detail="Dans la galerie" />
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1fr]">
-        <div className="space-y-6">
-          <div className="surface p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-3 text-white shadow-[3px_3px_0px_#0f172a]">
-                <Camera size={22} />
-              </div>
-              <h2 className="text-xl font-black text-slate-900">Photo de profil</h2>
-            </div>
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                {profile.avatar ? (
-                  <img
-                    src={profile.avatar}
-                    alt={`${profile.firstName} ${profile.lastName}`}
-                    className="w-32 h-32 rounded-[20px] border-4 border-slate-900 object-cover shadow-[4px_4px_0px_#0f172a]"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-[20px] border-4 border-slate-900 bg-indigo-100 flex items-center justify-center shadow-[4px_4px_0px_#0f172a]">
-                    <UserRound size={48} className="text-indigo-600" />
-                  </div>
-                )}
-                {isEditing && (
-                  <button onClick={handleAvatarChange} className="absolute -bottom-2 -right-2 bento-btn bento-btn-primary p-2">
-                    <Camera size={16} />
-                  </button>
-                )}
-              </div>
-              {isEditing && <p className="text-sm text-slate-500 text-center">Cliquez sur l'icône pour changer votre photo</p>}
-            </div>
-          </div>
-
-          <div className="surface p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-3 text-white shadow-[3px_3px_0px_#0f172a]">
-                <UserRound size={22} />
-              </div>
-              <h2 className="text-xl font-black text-slate-900">Informations personnelles</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">Prénom</label>
-                  <input className="bento-input w-full" value={profile.firstName} onChange={(e) => handleChange("firstName", e.target.value)} disabled={!isEditing} />
+      <div className="mx-auto max-w-3xl space-y-6 pb-28">
+        {/* Identité & coordonnées */}
+        <section className="surface p-6">
+          <div className="flex items-center gap-5">
+            <div className="relative shrink-0">
+              {profile.avatar ? (
+                <img
+                  src={profile.avatar}
+                  alt={`${profile.firstName} ${profile.lastName}`}
+                  className="h-20 w-20 rounded-[16px] border-2 border-slate-900 object-cover"
+                />
+              ) : (
+                <div className="flex h-20 w-20 items-center justify-center rounded-[16px] border-2 border-slate-900 bg-indigo-100">
+                  <UserRound size={32} className="text-indigo-600" />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">Nom</label>
-                  <input className="bento-input w-full" value={profile.lastName} onChange={(e) => handleChange("lastName", e.target.value)} disabled={!isEditing} />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">
-                  <Mail size={12} className="inline mr-1" /> Email
-                </label>
-                <input className="bento-input w-full" value={profile.email} onChange={(e) => handleChange("email", e.target.value)} disabled={!isEditing} />
-              </div>
-              <div>
-                <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">
-                  <Phone size={12} className="inline mr-1" /> Téléphone
-                </label>
-                <input className="bento-input w-full" value={profile.phone} onChange={(e) => handleChange("phone", e.target.value)} disabled={!isEditing} placeholder="Votre numéro de téléphone" />
-              </div>
-              <div>
-                <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">
-                  <MapPin size={12} className="inline mr-1" /> Ville
-                </label>
-                <input className="bento-input w-full" value={profile.city} onChange={(e) => handleChange("city", e.target.value)} disabled={!isEditing} placeholder="Votre ville" />
-              </div>
-              <div>
-                <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">
-                  <Globe size={12} className="inline mr-1" /> Site web
-                </label>
-                <input className="bento-input w-full" value={profile.website} onChange={(e) => handleChange("website", e.target.value)} disabled={!isEditing} placeholder="www.votresite.com" />
-              </div>
-              <div>
-                <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">
-                  <Eye size={12} className="inline mr-1" /> Visibilité du profil
-                </label>
-                <select
-                  className="bento-input w-full"
-                  value={profile.visibility}
-                  onChange={(e) => handleChange("visibility", e.target.value)}
-                  disabled={!isEditing}
-                >
-                  <option value="public">Public</option>
-                  <option value="private">Privé</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="surface p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="rounded-[14px] border-2 border-slate-900 bg-emerald-500 p-3 text-white shadow-[3px_3px_0px_#0f172a]">
-                <FileText size={22} />
-              </div>
-              <h2 className="text-xl font-black text-slate-900">Biographie</h2>
-            </div>
-            <textarea
-              className="bento-input w-full min-h-[150px] resize-none"
-              value={profile.bio}
-              onChange={(e) => handleChange("bio", e.target.value)}
-              disabled={!isEditing}
-              placeholder="Décrivez votre parcours, vos compétences et ce que vous proposez..."
-            />
-          </div>
-
-          <div className="surface p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="rounded-[14px] border-2 border-slate-900 bg-amber-400 p-3 text-slate-900 shadow-[3px_3px_0px_#0f172a]">
-                  <Camera size={22} />
-                </div>
-                <h2 className="text-xl font-black text-slate-900">Galerie photos</h2>
-              </div>
-              {isEditing && (
-                <button onClick={handleAddPhoto} className="bento-btn bento-btn-primary p-2">
-                  <Plus size={16} />
-                </button>
               )}
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="absolute -bottom-2 -right-2 rounded-full border-2 border-slate-900 bg-white p-1.5 text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-indigo-50"
+                aria-label="Changer ma photo de profil"
+                title="Changer ma photo de profil"
+              >
+                <Camera size={14} />
+              </button>
             </div>
-            {profile.photos.length === 0 ? (
-              <div className="text-center py-8 border-2 border-dashed border-slate-300 rounded-[14px]">
-                <Camera size={32} className="text-slate-400 mx-auto mb-2" />
-                <p className="text-slate-500">Aucune photo pour le moment</p>
-                {isEditing && (
-                  <button onClick={handleAddPhoto} className="bento-btn bento-btn-primary mt-4">
-                    <Plus size={16} className="mr-2" /> Ajouter une photo
-                  </button>
-                )}
+            <div className="min-w-0">
+              <h2 className="truncate text-xl font-black text-slate-900">
+                {profile.firstName || "Prénom"} {profile.lastName || "Nom"}
+              </h2>
+              <p className="mt-1 text-sm font-semibold text-slate-500">
+                {roleLabels[user.role as keyof typeof roleLabels] || user.role}
+                {user.organization ? ` · ${user.organization}` : ""}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="profil-firstname" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+                Prénom
+              </label>
+              <input
+                id="profil-firstname"
+                className="bento-input w-full"
+                value={profile.firstName}
+                onChange={(e) => handleChange("firstName", e.target.value)}
+                autoComplete="given-name"
+              />
+            </div>
+            <div>
+              <label htmlFor="profil-lastname" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+                Nom
+              </label>
+              <input
+                id="profil-lastname"
+                className="bento-input w-full"
+                value={profile.lastName}
+                onChange={(e) => handleChange("lastName", e.target.value)}
+                autoComplete="family-name"
+              />
+            </div>
+            <div>
+              <label htmlFor="profil-email" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+                Email
+              </label>
+              <input
+                id="profil-email"
+                type="email"
+                className="bento-input w-full"
+                value={profile.email}
+                onChange={(e) => handleChange("email", e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <label htmlFor="profil-phone" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+                Téléphone
+              </label>
+              <input
+                id="profil-phone"
+                type="tel"
+                className="bento-input w-full"
+                value={profile.phone}
+                onChange={(e) => handleChange("phone", e.target.value)}
+                placeholder="06 12 34 56 78"
+                autoComplete="tel"
+              />
+            </div>
+            <div>
+              <label htmlFor="profil-city" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+                Ville
+              </label>
+              <input
+                id="profil-city"
+                className="bento-input w-full"
+                value={profile.city}
+                onChange={(e) => handleChange("city", e.target.value)}
+                placeholder="Votre ville"
+                autoComplete="address-level2"
+              />
+            </div>
+            <div>
+              <label htmlFor="profil-website" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+                Site web
+              </label>
+              <input
+                id="profil-website"
+                className="bento-input w-full"
+                value={profile.website}
+                onChange={(e) => handleChange("website", e.target.value)}
+                placeholder="www.votresite.fr"
+                autoComplete="url"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Présentation */}
+        <section className="surface p-6">
+          <h2 className="text-lg font-black text-slate-900">Présentation</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Quelques lignes sur votre parcours et ce que vous proposez. C&apos;est la première chose que les
+            autres professionnels lisent.
+          </p>
+          <textarea
+            id="profil-bio"
+            className="bento-input mt-4 min-h-[140px] w-full resize-none"
+            value={profile.bio}
+            onChange={(e) => handleChange("bio", e.target.value)}
+            placeholder="Exemple : Gérant d'une société de nettoyage tertiaire depuis 8 ans, spécialisé bureaux et copropriétés sur la région lyonnaise."
+          />
+
+          <div className="mt-6 border-t-2 border-slate-100 pt-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-black text-slate-900">Photos</h3>
+                <p className="mt-1 text-sm text-slate-500">Chantiers, équipe, matériel… (facultatif)</p>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <button type="button" onClick={() => photoInputRef.current?.click()} className="bento-btn min-h-0 px-3 py-2">
+                <Plus size={14} /> Ajouter
+              </button>
+            </div>
+            {profile.photos.length > 0 && (
+              <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
                 {profile.photos.map((photo, index) => (
-                  <div key={index} className="relative group">
-                    <img src={photo} alt={`Photo ${index + 1}`} className="w-full h-32 object-cover rounded-[14px] border-2 border-slate-900" />
-                    {isEditing && (
-                      <button onClick={() => handleRemovePhoto(index)} className="absolute -top-2 -right-2 bento-btn bg-red-500 text-white p-1 border-red-600 shadow-[2px_2px_0px_#991b1b]">
-                        <Trash2 size={14} />
-                      </button>
-                    )}
+                  <div key={index} className="group relative">
+                    <img
+                      src={photo}
+                      alt={`Photo ${index + 1}`}
+                      className="h-24 w-full rounded-[12px] border-2 border-slate-900 object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePhoto(index)}
+                      className="absolute -right-2 -top-2 rounded-full border-2 border-red-700 bg-red-500 p-1 text-white shadow-[2px_2px_0px_#991b1b]"
+                      aria-label={`Supprimer la photo ${index + 1}`}
+                    >
+                      <Trash2 size={12} />
+                    </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
+        </section>
 
-          {hasOrganizationProfile && user.organization && (
-            <EntityCard title={getProfileTitle()} subtitle={user.organization} meta={[user.associationMember ? "✓ Membre vérifié" : "Profil actif"]}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-emerald-600">
-                  <BadgeCheck size={16} />
-                  <span className="text-sm font-bold">Profil vérifié</span>
-                </div>
-                {getProfileIcon()}
+        {/* Visibilité */}
+        <section className="surface p-6">
+          <h2 className="text-lg font-black text-slate-900">Visibilité du profil</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => handleChange("visibility", "public")}
+              className={`rounded-[14px] border-2 p-4 text-left transition-colors ${
+                profile.visibility === "public"
+                  ? "border-indigo-600 bg-indigo-50"
+                  : "border-slate-200 bg-white hover:border-slate-400"
+              }`}
+              aria-pressed={profile.visibility === "public"}
+            >
+              <span className="flex items-center gap-2 font-black text-slate-900">
+                <Eye size={16} className="text-indigo-600" /> Public
+              </span>
+              <span className="mt-1 block text-sm text-slate-500">
+                Votre profil apparaît dans l&apos;annuaire des membres et sur les fiches auxquelles vous êtes
+                rattaché.
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleChange("visibility", "private")}
+              className={`rounded-[14px] border-2 p-4 text-left transition-colors ${
+                profile.visibility === "private"
+                  ? "border-indigo-600 bg-indigo-50"
+                  : "border-slate-200 bg-white hover:border-slate-400"
+              }`}
+              aria-pressed={profile.visibility === "private"}
+            >
+              <span className="flex items-center gap-2 font-black text-slate-900">
+                <EyeOff size={16} className="text-slate-500" /> Privé
+              </span>
+              <span className="mt-1 block text-sm text-slate-500">
+                Seul vous (et les recruteurs que vous autorisez) pouvez voir votre profil.
+              </span>
+            </button>
+          </div>
+        </section>
+
+        {/* Fiche organisation */}
+        {hasOrganizationProfile && user.organization && (
+          <section className="surface flex items-center justify-between gap-4 p-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[14px] border-2 border-slate-900 bg-indigo-50">
+                <OrganizationIcon size={22} className="text-indigo-600" />
               </div>
-              <Link href="/dashboard/entreprise" className="bento-btn bento-btn-primary w-full mt-4 block text-center">
-                Gérer mon {getProfileTitle().toLowerCase()}
-              </Link>
-            </EntityCard>
-          )}
-
-          {isEditing && (
-            <div className="flex gap-3">
-              <button onClick={handleSave} disabled={saving} className="bento-btn bento-btn-primary flex-1">
-                <Save size={16} className="mr-2" /> {saving ? "Sauvegarde..." : "Sauvegarder"}
-              </button>
-              <button onClick={handleCancel} className="bento-btn flex-1">
-                <X size={16} className="mr-2" /> Annuler
-              </button>
+              <div>
+                <h2 className="text-base font-black text-slate-900">{user.organization}</h2>
+                <p className="text-sm text-slate-500">Votre {organizationLabel.label} se gère séparément.</p>
+              </div>
             </div>
-          )}
-        </div>
+            <Link href="/dashboard/entreprise" className="bento-btn shrink-0">
+              Gérer <ExternalLink size={14} />
+            </Link>
+          </section>
+        )}
       </div>
 
-      <input
-        type="file"
-        accept="image/*"
-        hidden
-        ref={avatarInputRef}
-        onChange={handleAvatarFileChange}
-      />
-      <input
-        type="file"
-        accept="image/*"
-        hidden
-        ref={photoInputRef}
-        onChange={handlePhotoFileChange}
-      />
+      <input type="file" accept="image/*" hidden ref={avatarInputRef} onChange={handleAvatarFileChange} />
+      <input type="file" accept="image/*" hidden ref={photoInputRef} onChange={handlePhotoFileChange} />
 
-      {!isEditing && (
-        <div className="mt-8 flex justify-start">
-          <Link href="/dashboard" className="bento-btn">
-            <ArrowLeft size={16} />
-            Retour au dashboard
-          </Link>
+      {/* Barre de sauvegarde */}
+      {(isDirty || saveMessage) && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-slate-900 bg-white/95 backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            {saveMessage ? (
+              <p
+                className={`flex items-center gap-2 text-sm font-bold ${
+                  saveMessage.type === "success" ? "text-emerald-600" : "text-red-600"
+                }`}
+                role="status"
+              >
+                {saveMessage.type === "success" && <CheckCircle2 size={16} />}
+                {saveMessage.text}
+              </p>
+            ) : (
+              <p className="text-sm font-bold text-slate-500">Modifications non enregistrées</p>
+            )}
+            {isDirty && (
+              <div className="flex shrink-0 gap-2">
+                <button type="button" onClick={handleCancel} className="bento-btn min-h-0 px-3 py-2">
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bento-btn bento-btn-primary min-h-0 px-4 py-2"
+                >
+                  <Save size={14} /> {saving ? "Enregistrement..." : "Enregistrer"}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </PageShell>
