@@ -11,8 +11,23 @@ jobs:
     name: Typecheck, Prisma, Unit, Build
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clubproprete
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
-      DATABASE_URL: file:./dev.db
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/clubproprete
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/clubproprete
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       AUTH_SECRET: ci-auth-secret-with-at-least-32-characters
       AUTH_TRUST_HOST: "true"
@@ -55,8 +70,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: quality
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clubproprete
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
-      DATABASE_URL: file:./dev.db
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/clubproprete
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/clubproprete
       NEXT_PUBLIC_APP_URL: http://localhost:4567
       AUTH_SECRET: ci-auth-secret-with-at-least-32-characters
       AUTH_TRUST_HOST: "true"

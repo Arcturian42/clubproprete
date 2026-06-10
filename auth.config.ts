@@ -1,7 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 
 export const authConfig = {
-  trustHost: process.env.AUTH_TRUST_HOST === "true",
+  trustHost: process.env.AUTH_TRUST_HOST !== "false",
   pages: {
     signIn: "/connexion",
   },
