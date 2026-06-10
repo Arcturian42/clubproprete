@@ -3,6 +3,19 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// Le seed crée des comptes de démonstration (mot de passe "demo", dont un
+// admin) : il ne doit JAMAIS tourner contre une base distante/production.
+const databaseUrl = process.env.DATABASE_URL ?? "";
+const isLocalDatabase = /localhost|127\.0\.0\.1/.test(databaseUrl);
+if (!isLocalDatabase && process.env.SEED_ALLOW_REMOTE !== "true") {
+  console.error(
+    "❌ Seed refusé : DATABASE_URL ne pointe pas vers une base locale. " +
+      "Les comptes de démo (mot de passe \"demo\", rôle admin inclus) ne doivent pas être créés en production. " +
+      "Pour forcer en connaissance de cause : SEED_ALLOW_REMOTE=true."
+  );
+  process.exit(1);
+}
+
 async function main() {
   const passwordHash = await bcrypt.hash("demo", 10);
 

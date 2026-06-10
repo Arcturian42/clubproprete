@@ -1,14 +1,3 @@
-export type PersonaKey =
-  | "visitor"
-  | "company"
-  | "supplier"
-  | "independent"
-  | "candidate"
-  | "training"
-  | "trainer"
-  | "author"
-  | "admin";
-
 export type Role =
   | "public"
   | "registered_user"
@@ -48,16 +37,6 @@ export const ADMIN_ENTITY_TYPES = [
 ] as const;
 
 export type AdminEntityType = (typeof ADMIN_ENTITY_TYPES)[number];
-
-export type Persona = {
-  key: PersonaKey;
-  name: string;
-  role: Role;
-  goal: string;
-  workflow: string;
-  cta: string;
-  href: string;
-};
 
 export type Company = {
   id: string;

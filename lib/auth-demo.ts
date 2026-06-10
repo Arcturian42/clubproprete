@@ -105,10 +105,3 @@ export const demoAccounts: DemoAccount[] = [
   },
 ];
 
-export const profileOptions: Array<{ label: string; role: Role; associationEligible: boolean }> = [
-  { label: "Société de nettoyage", role: "company_owner", associationEligible: true },
-  { label: "Fournisseur", role: "supplier_owner", associationEligible: false },
-  { label: "Indépendant / sous-traitant", role: "independent_profile", associationEligible: true },
-  { label: "Candidat emploi", role: "candidate_profile", associationEligible: false },
-  { label: "Organisme de formation", role: "training_organization", associationEligible: false },
-];

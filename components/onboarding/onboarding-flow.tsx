@@ -25,6 +25,7 @@ import {
   type OnboardingSituation,
 } from "@/lib/onboarding";
 import { SUPPLIER_TAXONOMY, SUPPLIER_FAMILIES } from "@/lib/supplier-taxonomy";
+import { SiretSearch } from "@/components/onboarding/siret-search";
 
 const situationIcons: Record<OnboardingSituation, typeof Building2> = {
   company: Building2,
@@ -319,6 +320,17 @@ export function OnboardingFlow({
               d&apos;intervention) pour gagner en visibilité.
             </p>
             <div className="mt-5 grid gap-4">
+              <SiretSearch
+                label="Retrouver votre société (annuaire officiel)"
+                placeholder="Nom de la société ou n° SIRET"
+                onSelect={(suggestion) =>
+                  setCompany({
+                    name: suggestion.name,
+                    siret: suggestion.siret,
+                    city: suggestion.city,
+                  })
+                }
+              />
               <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
                 Nom de la société *
                 <input
@@ -465,6 +477,17 @@ export function OnboardingFlow({
               </fieldset>
               {independent.hasBusiness === true && (
                 <>
+                  <SiretSearch
+                    label="Retrouver votre auto-entreprise (annuaire officiel)"
+                    placeholder="Votre nom, nom commercial ou n° SIRET"
+                    onSelect={(suggestion) =>
+                      setIndependent((prev) => ({
+                        ...prev,
+                        businessName: suggestion.name,
+                        siret: suggestion.siret,
+                      }))
+                    }
+                  />
                   <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
                     Nom commercial
                     <input
