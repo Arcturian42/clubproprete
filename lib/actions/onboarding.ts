@@ -12,8 +12,9 @@ import {
   EXPERIENCE_LEVELS,
   type OnboardingSituation,
 } from "@/lib/onboarding";
-import { SUPPLIER_TAXONOMY, isSupplierFamily } from "@/lib/supplier-taxonomy";
+import { SUPPLIER_TAXONOMY, isSupplierFamily, isOfferType, getOfferTypeLabel } from "@/lib/supplier-taxonomy";
 import { uniqueSlug } from "@/lib/slug";
+import { fetchWebsiteSummary, normalizeWebsiteUrl, type WebsiteSummary } from "@/lib/website-summary";
 
 const onboardingSchema = z
   .object({
@@ -36,6 +37,9 @@ const onboardingSchema = z
       .object({
         name: z.string().min(1, "Le nom du fournisseur est obligatoire."),
         family: z.string().optional(),
+        offerType: z.string().max(30).optional(),
+        sells: z.string().max(1000).optional(),
+        website: z.string().max(300).optional(),
       })
       .optional(),
     training: z
@@ -79,6 +83,33 @@ export type OnboardingInput = z.infer<typeof onboardingSchema>;
 
 function experienceYears(level?: string) {
   return EXPERIENCE_LEVELS.find((item) => item.value === level)?.years ?? null;
+}
+
+// Note de synthèse de la fiche fournisseur : assemble les réponses de
+// l'onboarding et les métadonnées publiques du site en une description
+// immédiatement présentable dans l'annuaire (modifiable ensuite).
+function buildSupplierSynthesis(params: {
+  name: string;
+  familyLabel: string;
+  offerType?: string | null;
+  sells?: string | null;
+  summary: WebsiteSummary | null;
+}): string | null {
+  const offerLabel = getOfferTypeLabel(params.offerType);
+  const lines = [
+    `${params.name} est un fournisseur spécialisé : ${params.familyLabel.toLowerCase()}${
+      offerLabel ? ` (${offerLabel.toLowerCase()})` : ""
+    }.`,
+  ];
+  if (params.sells?.trim()) {
+    lines.push(`Produits et services proposés : ${params.sells.trim()}`);
+  }
+  if (params.summary?.description) {
+    lines.push(`À propos (extrait du site) : ${params.summary.description}`);
+  } else if (params.summary?.title) {
+    lines.push(`Site : ${params.summary.title}`);
+  }
+  return lines.length > 0 ? lines.join("\n\n") : null;
 }
 
 // Rôles plateforme qu'on ne rétrograde jamais via l'onboarding.
@@ -148,6 +179,14 @@ export async function completeOnboarding(data: OnboardingInput) {
     if (linkedinUrl) completionScore += 15;
     if (situations.length > 0) completionScore += 25;
 
+    // Collecte best-effort des métadonnées publiques du site fournisseur
+    // (titre, description) avant la transaction : un site lent ou inaccessible
+    // ne doit ni bloquer ni retarder l'écriture en base.
+    let supplierWebsiteSummary: WebsiteSummary | null = null;
+    if (situations.includes("supplier") && input.supplier?.website?.trim()) {
+      supplierWebsiteSummary = await fetchWebsiteSummary(input.supplier.website);
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
@@ -213,6 +252,7 @@ export async function completeOnboarding(data: OnboardingInput) {
       if (situations.includes("supplier") && input.supplier && user.suppliers.length === 0) {
         const family = isSupplierFamily(input.supplier.family) ? input.supplier.family : "materiel";
         const subCategory = SUPPLIER_TAXONOMY[family].subs[0];
+        const offerType = isOfferType(input.supplier.offerType) ? input.supplier.offerType : null;
         const supplierSlug = await uniqueSlug(input.supplier.name, async (candidate) =>
           Boolean(await tx.supplier.findUnique({ where: { slug: candidate }, select: { id: true } })),
         );
@@ -225,6 +265,17 @@ export async function completeOnboarding(data: OnboardingInput) {
             category: subCategory,
             family,
             subCategory,
+            offerType,
+            website: input.supplier.website?.trim()
+              ? normalizeWebsiteUrl(input.supplier.website)
+              : null,
+            description: buildSupplierSynthesis({
+              name: input.supplier.name.trim(),
+              familyLabel: SUPPLIER_TAXONOMY[family].label,
+              offerType,
+              sells: input.supplier.sells,
+              summary: supplierWebsiteSummary,
+            }),
             email: user.email,
             phone,
             contactName: fullName,

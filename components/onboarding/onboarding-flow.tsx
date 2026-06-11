@@ -53,7 +53,13 @@ export type OnboardingInitialData = {
 type StepId = "contact" | "situation" | OnboardingSituation | "recap";
 
 type CompanyData = { name: string; siret: string; city: string };
-type SupplierData = { name: string; family: string };
+type SupplierData = {
+  name: string;
+  family: string;
+  offerType: string;
+  sells: string;
+  website: string;
+};
 type TrainingData = { name: string; siret: string; declarationNumber: string; qualiopi: boolean };
 type IndependentData = {
   hasBusiness: boolean | null;
@@ -83,7 +89,13 @@ export function OnboardingFlow({
   const [situations, setSituations] = useState<OnboardingSituation[]>(intent ? [intent] : []);
 
   const [company, setCompany] = useState<CompanyData>({ name: "", siret: "", city: "" });
-  const [supplier, setSupplier] = useState<SupplierData>({ name: "", family: "materiel" });
+  const [supplier, setSupplier] = useState<SupplierData>({
+    name: "",
+    family: "materiel",
+    offerType: "",
+    sells: "",
+    website: "",
+  });
   const [training, setTraining] = useState<TrainingData>({
     name: "",
     siret: "",
@@ -366,8 +378,8 @@ export function OnboardingFlow({
           <div>
             <h2 className="text-2xl font-black text-slate-900">Votre activité de fournisseur</h2>
             <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
-              On crée votre fiche fournisseur. Vous préciserez votre catalogue (produits, services) après
-              l&apos;onboarding.
+              On crée votre fiche fournisseur avec une première description automatique à partir de vos
+              réponses et de votre site. Vous pourrez tout affiner ensuite.
             </p>
             <div className="mt-5 grid gap-4">
               <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
@@ -379,19 +391,57 @@ export function OnboardingFlow({
                   onChange={(event) => setSupplier((prev) => ({ ...prev, name: event.target.value }))}
                 />
               </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
+                  Famille principale
+                  <select
+                    className="bento-input"
+                    value={supplier.family}
+                    onChange={(event) => setSupplier((prev) => ({ ...prev, family: event.target.value }))}
+                  >
+                    {SUPPLIER_FAMILIES.map((family) => (
+                      <option key={family} value={family}>
+                        {SUPPLIER_TAXONOMY[family].label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
+                  Vente ou location ?
+                  <select
+                    className="bento-input"
+                    value={supplier.offerType}
+                    onChange={(event) => setSupplier((prev) => ({ ...prev, offerType: event.target.value }))}
+                  >
+                    <option value="">Non concerné</option>
+                    <option value="vente">Vente</option>
+                    <option value="location">Location</option>
+                    <option value="les_deux">Vente et location</option>
+                  </select>
+                </label>
+              </div>
               <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
-                Famille principale
-                <select
+                Que vendez-vous ? (produits, services, marques…)
+                <textarea
+                  className="bento-input min-h-[90px] resize-none normal-case font-medium"
+                  value={supplier.sells}
+                  placeholder="Ex : autolaveuses et monobrosses (Kärcher, Numatic), consommables d'hygiène, contrats d'entretien machines…"
+                  maxLength={1000}
+                  onChange={(event) => setSupplier((prev) => ({ ...prev, sells: event.target.value }))}
+                />
+              </label>
+              <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
+                Site web
+                <input
                   className="bento-input"
-                  value={supplier.family}
-                  onChange={(event) => setSupplier((prev) => ({ ...prev, family: event.target.value }))}
-                >
-                  {SUPPLIER_FAMILIES.map((family) => (
-                    <option key={family} value={family}>
-                      {SUPPLIER_TAXONOMY[family].label}
-                    </option>
-                  ))}
-                </select>
+                  value={supplier.website}
+                  placeholder="www.votresite.fr"
+                  onChange={(event) => setSupplier((prev) => ({ ...prev, website: event.target.value }))}
+                />
+                <span className="text-[11px] font-semibold normal-case tracking-normal text-slate-400">
+                  On récupère automatiquement la présentation publique de votre site pour pré-remplir votre
+                  fiche.
+                </span>
               </label>
             </div>
           </div>

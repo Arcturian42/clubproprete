@@ -129,7 +129,7 @@ test.describe('Vérification de compte & rôles (régressions audit)', () => {
 
     // Le dashboard reflète immédiatement la nouvelle capacité (vue entreprise), sans reconnexion.
     await page.goto('/dashboard');
-    await expect(page.getByRole('heading', { name: /optimiser ma fiche/i }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /gérer ma fiche entreprise/i }).first()).toBeVisible();
   });
 
   test('PB-2 — l’approbation d’adhésion se reflète sur le dashboard sans reconnexion', async ({ page }) => {

@@ -5,7 +5,7 @@ test.describe('Authentification', () => {
   test('connexion compte démo société', async ({ page }) => {
     await loginAs(page, 'societe@clubproprete.test');
     await page.waitForURL('/dashboard');
-    await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /mon espace/i })).toBeVisible();
   });
 
   test('connexion compte démo admin', async ({ page }) => {
@@ -59,6 +59,6 @@ test.describe('Authentification', () => {
     await expect(page.getByRole('heading', { name: /c'est prêt/i })).toBeVisible();
     await page.getByRole('link', { name: /ouvrir mon espace/i }).click();
     await page.waitForURL('/dashboard');
-    await expect(page.getByRole('heading', { name: /optimiser ma fiche/i }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /gérer ma fiche entreprise/i }).first()).toBeVisible();
   });
 });
