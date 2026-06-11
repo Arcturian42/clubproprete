@@ -51,6 +51,7 @@ model User {
   analyticsEvents         AnalyticsEvent[]
   passwordResetTokens     PasswordResetToken[]
   notifications           Notification[]
+  verificationRequests    VerificationRequest[] @relation("VerificationRequester")
 }
 
 model PasswordResetToken {
@@ -602,6 +603,34 @@ model AnalyticsEvent {
   createdAt  DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+// Demande de vérification d'une fiche (société, etc.). La fiche est publiée
+// dès sa création ; la vérification est un parcours volontaire : prise de
+// rendez-vous avec Club Propreté + questionnaire, puis validation admin qui
+// donne le badge « Fiche vérifiée ».
+model VerificationRequest {
+  id              String    @id @default(cuid())
+  entityType      String
+  entityId        String
+  requestedBy     String
+  yearsInBusiness String?
+  employeeCount   String?
+  mainClients     String?
+  additionalInfo  String?
+  preferredSlot   String?
+  contactPhone    String?
+  status          String    @default("pending")
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  requester User @relation("VerificationRequester", fields: [requestedBy], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([status])
 }
 
 model Recommendation {

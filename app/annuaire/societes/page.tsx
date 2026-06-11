@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Search } from "lucide-react";
+import { BadgeCheck, Building2, Search } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
@@ -47,7 +47,7 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
     <PageShell
       eyebrow="Annuaire"
       title="Sociétés de nettoyage"
-      description="Sociétés vérifiées : trouvez un prestataire fiable par région et par spécialité."
+      description="Trouvez un prestataire par région et par spécialité. Le badge « Fiche vérifiée » signale les sociétés contrôlées par Club Propreté."
       actions={
         <Link href="/inscription?role=company_owner" className="bento-btn bento-btn-primary">
           Référencer ma société
@@ -55,7 +55,7 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
       }
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Sociétés" value={String(total)} detail="Vérifiées" />
+        <StatCard label="Sociétés" value={String(total)} detail="Référencées" />
         <StatCard
           label="Régions"
           value={String(new Set(companies.map((c) => c.region).filter(Boolean)).size)}
@@ -137,7 +137,7 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
         ) : (
           <EmptyState
             title="Aucune société référencée pour le moment"
-            description="Les sociétés de nettoyage vérifiées apparaîtront ici. Vous êtes prestataire ? Soyez le premier à créer votre fiche."
+            description="Les sociétés de nettoyage apparaîtront ici dès leur inscription. Vous êtes prestataire ? Soyez le premier à créer votre fiche."
             actionLabel="Référencer ma société"
             actionHref="/inscription?role=company_owner"
           />
@@ -160,9 +160,15 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
                 ].filter(Boolean)}
               >
                 <div className="flex items-center justify-between gap-4">
-                  <span className="inline-flex items-center gap-1 text-[12px] font-extrabold uppercase tracking-wide text-emerald-600">
-                    <Building2 size={14} /> Société vérifiée
-                  </span>
+                  {company.verificationStatus === "approved" ? (
+                    <span className="inline-flex items-center gap-1 text-[12px] font-extrabold uppercase tracking-wide text-emerald-600">
+                      <BadgeCheck size={14} /> Fiche vérifiée
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[12px] font-extrabold uppercase tracking-wide text-slate-400">
+                      <Building2 size={14} /> Société
+                    </span>
+                  )}
                   <span className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
                     Voir la fiche →
                   </span>

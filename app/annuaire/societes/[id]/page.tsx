@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: CompanyDetailPageProps) {
     title: `${company.name}${location ? ` — Nettoyage ${location}` : ""} | Club Propreté`,
     description:
       company.descriptionShort ||
-      `Fiche de ${company.name}, société de nettoyage${location ? ` basée à ${location}` : ""}, vérifiée par Club Propreté.`,
+      `Fiche de ${company.name}, société de nettoyage${location ? ` basée à ${location}` : ""}, référencée sur Club Propreté.`,
   };
 }
 
@@ -51,7 +51,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
   const { id } = await params;
   const company = await getCompanyById(id);
 
-  if (!company || company.verificationStatus !== "approved") {
+  if (!company) {
     notFound();
   }
 
@@ -148,10 +148,12 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
               )}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="bento-tag border-emerald-200 bg-emerald-50 text-emerald-700">
-                <BadgeCheck size={14} aria-hidden="true" />
-                Fiche vérifiée
-              </span>
+              {company.verificationStatus === "approved" && (
+                <span className="bento-tag border-emerald-200 bg-emerald-50 text-emerald-700">
+                  <BadgeCheck size={14} aria-hidden="true" />
+                  Fiche vérifiée
+                </span>
+              )}
               {company.associationMember && (
                 <span className="bento-tag border-amber-200 bg-amber-50 text-amber-700">
                   <ShieldCheck size={14} aria-hidden="true" />

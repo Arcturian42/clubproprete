@@ -3,10 +3,11 @@
 import { prisma } from "@/lib/prisma";
 
 export async function getCompanyById(idOrSlug: string) {
+  // Les fiches sociétés sont publiées dès leur création ; le statut de
+  // vérification ne conditionne que le badge « Fiche vérifiée ».
   return prisma.company.findFirst({
     where: {
       deletedAt: null,
-      verificationStatus: "approved",
       OR: [{ id: idOrSlug }, { slug: idOrSlug }],
     },
     include: {

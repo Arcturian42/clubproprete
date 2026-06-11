@@ -200,7 +200,9 @@ export async function completeOnboarding(data: OnboardingInput) {
             city: input.company.city?.trim() || city,
             email: user.email,
             phone,
-            verificationStatus: "pending",
+            // Fiche publiée immédiatement ; la vérification (badge) se
+            // demande ensuite depuis le dashboard entreprise.
+            verificationStatus: "draft",
           },
         });
         await tx.entityMember.create({

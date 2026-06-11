@@ -11,7 +11,8 @@ type EntityRows = Awaited<ReturnType<typeof fetchEntities>>;
 function fetchEntities() {
   return Promise.all([
     prisma.company.findMany({
-      where: { deletedAt: null, verificationStatus: "approved" },
+      // Les fiches sociétés sont publiques dès leur création (badge à part).
+      where: { deletedAt: null },
       select: { id: true, slug: true, updatedAt: true },
     }),
     prisma.supplier.findMany({
