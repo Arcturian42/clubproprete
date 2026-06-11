@@ -11,17 +11,18 @@ export async function getPublishedCompanies(search?: string, page?: number, limi
   const where: Record<string, unknown> = { verificationStatus: "approved", deletedAt: null };
   if (search) {
     where.OR = [
-      { name: { contains: search } },
-      { city: { contains: search } },
-      { descriptionShort: { contains: search } },
+      { name: { contains: search, mode: "insensitive" } },
+      { city: { contains: search, mode: "insensitive" } },
+      { descriptionShort: { contains: search, mode: "insensitive" } },
     ];
   }
   if (region) {
     where.region = region;
   }
 
+  const safeLimit = Math.min(Math.max(1, limit), 50);
   const currentPage = Math.max(1, page ?? 1);
-  const skip = (currentPage - 1) * limit;
+  const skip = (currentPage - 1) * safeLimit;
 
   const [items, total] = await Promise.all([
     prisma.company.findMany({
@@ -29,12 +30,12 @@ export async function getPublishedCompanies(search?: string, page?: number, limi
       include: { services: true, _count: { select: { jobs: true } } },
       orderBy: { createdAt: "desc" },
       skip,
-      take: limit,
+      take: safeLimit,
     }),
     prisma.company.count({ where }),
   ]);
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / safeLimit);
   return { items, total, page: currentPage, totalPages };
 }
 
@@ -79,6 +80,7 @@ const updateCompanySchema = z.object({
   email: z.string().optional(),
   phone: z.string().optional(),
   website: z.string().optional(),
+  linkedin: z.string().max(300).optional(),
   address: z.string().optional(),
   city: z.string().optional(),
   postalCode: z.string().optional(),
@@ -126,6 +128,8 @@ export async function createCompanyProfile(data: CreateCompanyInput) {
         photos: photos && photos.length > 0 ? JSON.stringify(photos) : null,
         foundedAt: foundedYear ? new Date(`${foundedYear}-01-01`) : null,
         verificationStatus: "pending",
+        // La fiche est créée par son propriétaire : elle est réclamée d'office.
+        claimedStatus: "claimed",
       },
     });
 

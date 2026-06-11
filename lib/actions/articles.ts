@@ -47,9 +47,9 @@ export async function getPublishedArticles(search?: string, page?: number, limit
   const where: Record<string, unknown> = { status: "published", deletedAt: null };
   if (search) {
     where.OR = [
-      { title: { contains: search } },
-      { excerpt: { contains: search } },
-      { category: { contains: search } },
+      { title: { contains: search, mode: "insensitive" } },
+      { excerpt: { contains: search, mode: "insensitive" } },
+      { category: { contains: search, mode: "insensitive" } },
     ];
   }
 

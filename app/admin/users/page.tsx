@@ -118,7 +118,7 @@ export default async function AdminUsersPage() {
                     <div className="flex flex-wrap gap-1">
                       {user._count.companies > 0 && (
                         <span className="bento-tag border-slate-300 bg-slate-50 text-slate-600 text-[9px]">
-                          {user._count.companies} société(s)
+                          {user._count.companies} {user._count.companies > 1 ? "sociétés" : "société"}
                         </span>
                       )}
                       {user._count.suppliers > 0 && (
@@ -128,7 +128,7 @@ export default async function AdminUsersPage() {
                       )}
                       {user._count.jobs > 0 && (
                         <span className="bento-tag border-slate-300 bg-slate-50 text-slate-600 text-[9px]">
-                          {user._count.jobs} offre(s)
+                          {user._count.jobs} {user._count.jobs > 1 ? "offres" : "offre"}
                         </span>
                       )}
                       {user._count.trainings > 0 && (
@@ -138,7 +138,7 @@ export default async function AdminUsersPage() {
                       )}
                       {user._count.articles > 0 && (
                         <span className="bento-tag border-slate-300 bg-slate-50 text-slate-600 text-[9px]">
-                          {user._count.articles} article(s)
+                          {user._count.articles} {user._count.articles > 1 ? "articles" : "article"}
                         </span>
                       )}
                     </div>

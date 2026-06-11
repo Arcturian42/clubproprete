@@ -31,9 +31,9 @@ export async function getPublishedTrainings(search?: string, page?: number, limi
   if (search) {
     and.push({
       OR: [
-        { title: { contains: search } },
-        { category: { contains: search } },
-        { city: { contains: search } },
+        { title: { contains: search, mode: "insensitive" } },
+        { category: { contains: search, mode: "insensitive" } },
+        { city: { contains: search, mode: "insensitive" } },
       ],
     });
   }

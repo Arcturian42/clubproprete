@@ -26,6 +26,32 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+function parsePhotos(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const profile = await getPublicProfile(id);
+  if (!profile) {
+    return { title: "Profil membre | Club Propreté" };
+  }
+  const fullName = `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || "Membre";
+  return {
+    title: `${fullName} | Club Propreté`,
+    description:
+      profile.profile?.headline ||
+      profile.bio?.slice(0, 160) ||
+      `Profil de ${fullName}, membre du réseau Club Propreté.`,
+  };
+}
+
 export default async function PublicProfilePage({ params }: Props) {
   const { id } = await params;
   const session = await auth();
@@ -92,6 +118,9 @@ export default async function PublicProfilePage({ params }: Props) {
   const primaryRole = primaryMembership
     ? `${roleLabel(primaryMembership.role)} chez ${primaryMembership.entityName}`
     : null;
+  // Le titre saisi par le membre prime sur le rôle déduit (façon LinkedIn).
+  const headline = profile.profile?.headline || primaryRole;
+  const photos = parsePhotos(profile.photos);
 
   return (
     <PageShell
@@ -124,8 +153,8 @@ export default async function PublicProfilePage({ params }: Props) {
               <h1 className="text-3xl font-black text-slate-900">
                 {profile.firstName || ""} {profile.lastName || ""}
               </h1>
-              {primaryRole && (
-                <p className="mt-1 text-lg font-semibold text-slate-700">{primaryRole}</p>
+              {headline && (
+                <p className="mt-1 text-lg font-semibold text-slate-700">{headline}</p>
               )}
               {profile.city && (
                 <p className="mt-1 flex items-center gap-2 text-slate-500">
@@ -214,6 +243,24 @@ export default async function PublicProfilePage({ params }: Props) {
                     <p className="text-sm text-slate-500">{roleLabel(membership.role)}</p>
                   </div>
                 </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Photos */}
+        {photos.length > 0 && (
+          <div className="surface p-6 mb-6">
+            <h3 className="text-lg font-black text-slate-900 mb-3">Photos</h3>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {photos.map((photo, index) => (
+                <img
+                  key={photo}
+                  src={photo}
+                  alt={`Photo ${index + 1} de ${profile.firstName || "ce membre"}`}
+                  className="h-32 w-full rounded-[12px] border-2 border-slate-900 object-cover"
+                  loading="lazy"
+                />
               ))}
             </div>
           </div>

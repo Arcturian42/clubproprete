@@ -24,6 +24,7 @@ import {
   Briefcase,
   FileText,
   CheckCircle2,
+  Linkedin,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { PageShell } from "@/components/page-shell";
@@ -41,6 +42,7 @@ type CompanyProfile = {
   email: string;
   phone: string;
   website: string;
+  linkedin: string;
   address: string;
   city: string;
   postalCode: string;
@@ -58,6 +60,16 @@ const serviceOptions = [
 ];
 
 const employeeOptions = ["1-10", "11-50", "51-200", "201-500", "500+"];
+
+function parsePhotos(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function EntrepriseProfilePage() {
   const router = useRouter();
@@ -85,6 +97,7 @@ export default function EntrepriseProfilePage() {
     email: "",
     phone: "",
     website: "",
+    linkedin: "",
     address: "",
     city: "",
     postalCode: "",
@@ -115,13 +128,14 @@ export default function EntrepriseProfilePage() {
           email: company.email || "",
           phone: company.phone || "",
           website: company.website || "",
+          linkedin: company.linkedin || "",
           address: company.address || "",
           city: company.city || "",
           postalCode: company.postalCode || "",
           employeeCount: company.employeeCount || "11-50",
           services: company.services.map((s) => s.serviceType),
           logo: company.logoUrl || null,
-          photos: company.photos ? JSON.parse(company.photos) : [],
+          photos: parsePhotos(company.photos),
           foundedYear: company.foundedAt ? String(company.foundedAt.getFullYear()) : "",
           clients: company.clientTypes.map((c) => c.clientType),
         });
@@ -135,6 +149,7 @@ export default function EntrepriseProfilePage() {
           email: user.email || "",
           phone: "",
           website: "",
+          linkedin: "",
           address: "",
           city: "",
           postalCode: "",
@@ -174,6 +189,7 @@ export default function EntrepriseProfilePage() {
       email: profile.email,
       phone: profile.phone,
       website: profile.website,
+      linkedin: profile.linkedin,
       address: profile.address,
       city: profile.city,
       postalCode: profile.postalCode,
@@ -209,13 +225,14 @@ export default function EntrepriseProfilePage() {
         email: company.email || "",
         phone: company.phone || "",
         website: company.website || "",
+        linkedin: company.linkedin || "",
         address: company.address || "",
         city: company.city || "",
         postalCode: company.postalCode || "",
         employeeCount: company.employeeCount || "11-50",
         services: company.services.map((s) => s.serviceType),
         logo: company.logoUrl || null,
-        photos: company.photos ? JSON.parse(company.photos) : [],
+        photos: parsePhotos(company.photos),
         foundedYear: company.foundedAt ? String(company.foundedAt.getFullYear()) : "",
         clients: company.clientTypes.map((c) => c.clientType),
       });
@@ -397,6 +414,7 @@ export default function EntrepriseProfilePage() {
                   {profile.email && <a href={`mailto:${encodeURIComponent(profile.email)}`} className="flex items-center gap-2 text-slate-600 hover:text-indigo-600"><Mail size={18} /> {profile.email}</a>}
                   {profile.phone && <a href={`tel:${encodeURIComponent(profile.phone.replace(/\s/g, ""))}`} className="flex items-center gap-2 text-slate-600 hover:text-indigo-600"><Phone size={18} /> {profile.phone}</a>}
                   {profile.website && <a href={`https://${profile.website.replace(/^https?:\/\//, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-indigo-600"><Globe size={18} /> {profile.website}</a>}
+                  {profile.linkedin && <a href={`https://${profile.linkedin.replace(/^https?:\/\//, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-600 hover:text-indigo-600"><Linkedin size={18} /> LinkedIn</a>}
                   {profile.address && <p className="flex items-center gap-2 text-slate-600"><MapPin size={18} /> {profile.address}, {profile.postalCode} {profile.city}</p>}
                 </div>
               </div>
@@ -564,6 +582,10 @@ export default function EntrepriseProfilePage() {
               <div>
                 <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">Site web</label>
                 <input className="bento-input w-full" value={profile.website} onChange={(e) => handleChange("website", e.target.value)} disabled={!isEditing} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase tracking-wide text-slate-500 mb-2">Page LinkedIn</label>
+                <input className="bento-input w-full" value={profile.linkedin} onChange={(e) => handleChange("linkedin", e.target.value)} disabled={!isEditing} placeholder="https://www.linkedin.com/company/votre-societe" />
               </div>
             </div>
           </div>
