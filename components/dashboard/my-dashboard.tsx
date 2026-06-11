@@ -176,6 +176,23 @@ type CompanyProfile = {
   photos: string | null;
 } | null;
 
+function computeCompanyScore(company: NonNullable<CompanyProfile>) {
+  const photos = company.photos ? (JSON.parse(company.photos) as string[]) : [];
+  let score = 0;
+  const missing: string[] = [];
+
+  if (company.logoUrl) score += 20; else missing.push("Logo");
+  if (company.descriptionShort) score += 15; else missing.push("Description courte");
+  if (company.descriptionLong) score += 15; else missing.push("Description longue");
+  if (company.services.length > 0) score += 15; else missing.push("Services");
+  if (company.website) score += 10; else missing.push("Site web");
+  if (company.city) score += 10; else missing.push("Ville");
+  if (company.phone) score += 10; else missing.push("Téléphone");
+  if (photos.length > 0) score += 5; else missing.push("Photos");
+
+  return { score, missing };
+}
+
 function ProfileCompletionBanner({
   company,
 }: {
@@ -201,20 +218,7 @@ function ProfileCompletionBanner({
     );
   }
 
-  const photos = company.photos ? (JSON.parse(company.photos) as string[]) : [];
-
-  let score = 0;
-  const missing: string[] = [];
-
-  if (company.logoUrl) score += 20; else missing.push("Logo");
-  if (company.descriptionShort) score += 15; else missing.push("Description courte");
-  if (company.descriptionLong) score += 15; else missing.push("Description longue");
-  if (company.services.length > 0) score += 15; else missing.push("Services");
-  if (company.website) score += 10; else missing.push("Site web");
-  if (company.city) score += 10; else missing.push("Ville");
-  if (company.phone) score += 10; else missing.push("Téléphone");
-  if (photos.length > 0) score += 5; else missing.push("Photos");
-
+  const { score, missing } = computeCompanyScore(company);
   const recommendations = missing.slice(0, 3);
 
   return (
@@ -391,6 +395,17 @@ export function MyDashboard({
   const isCompanyRole = user.role === "company_owner" || user.role === "verified_company";
 
   if (isCompanyRole) {
+    // Aligne les métriques de démo sur les vraies données : même score que la
+    // bannière de complétion, vrai statut d'adhésion.
+    const realScore = company ? computeCompanyScore(company).score : 0;
+    const companyMetrics = dashboard.metrics.map((metric) => {
+      if (metric.label === "Score profil") return { ...metric, value: `${realScore}%` };
+      if (metric.label === "Statut association") {
+        return { ...metric, value: user.associationMember ? "Validée" : "Non membre" };
+      }
+      return metric;
+    });
+
     return (
       <div className="grid gap-6">
         <ProfileCompletionBanner company={company ?? null} />
@@ -425,7 +440,7 @@ export function MyDashboard({
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {dashboard.metrics.map((metric) => (
+            {companyMetrics.map((metric) => (
               <StatCard key={metric.label} label={metric.label} value={metric.value} />
             ))}
           </div>

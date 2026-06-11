@@ -206,8 +206,8 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[1.4fr_0.6fr]">
         <div className="grid gap-5">
-          {/* À propos */}
-          {company.descriptionLong && (
+          {/* À propos — masqué si vide ou si le texte est resté le placeholder du formulaire */}
+          {company.descriptionLong && !company.descriptionLong.startsWith("Description de votre entreprise") && (
             <section className="surface p-6">
               <h3 className="text-lg font-black text-slate-900">À propos</h3>
               <p className="mt-3 text-sm font-medium leading-6 text-slate-600 whitespace-pre-line">

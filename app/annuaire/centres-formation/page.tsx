@@ -63,8 +63,14 @@ export default async function TrainingCentersPage({ searchParams }: TrainingCent
 
       {items.length === 0 ? (
         <EmptyState
-          title="Aucun centre référencé"
-          description="Les centres de formation validés apparaîtront ici."
+          title={search ? "Aucun centre ne correspond à votre recherche" : "Soyez le premier centre référencé"}
+          description={
+            search
+              ? "Essayez avec un autre nom ou réinitialisez la recherche."
+              : "L'annuaire des centres de formation ouvre tout juste. Vous êtes un organisme de formation spécialisé dans la propreté ? Référencez-vous gratuitement et soyez visible auprès des entreprises et candidats du secteur."
+          }
+          actionLabel={search ? "Réinitialiser la recherche" : "Référencer mon centre gratuitement"}
+          actionHref={search ? "/annuaire/centres-formation" : "/dashboard/centre-formation"}
         />
       ) : (
         <div className="mt-6 grid gap-5 lg:grid-cols-2">

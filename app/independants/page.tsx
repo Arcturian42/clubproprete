@@ -6,6 +6,7 @@ import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
 import { Pagination } from "@/components/pagination";
 import { getPublishedIndependents } from "@/lib/actions/independents";
+import { getAvailabilityLabel } from "@/lib/labels";
 
 export const metadata = {
   title: "Indépendants & sous-traitants en propreté | Club Propreté",
@@ -73,7 +74,7 @@ export default async function IndependentsPage({ searchParams }: IndependentsPag
             <EntityCard
               key={profile.id}
               title={profile.displayName}
-              subtitle={`${profile.city || ""} · ${profile.availabilityStatus || "Disponible"}`}
+              subtitle={`${profile.city || ""} · ${getAvailabilityLabel(profile.availabilityStatus)}`}
               meta={["✓ Vérifié", profile.equipmentOwned || ""].filter(Boolean)}
             >
               <div className="flex items-center justify-between gap-4">
