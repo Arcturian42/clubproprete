@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { put } from "@vercel/blob";
 import { auth } from "@/auth";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
@@ -17,6 +18,9 @@ const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".pdf"]);
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOW_LOCAL_UPLOADS_IN_PROD = process.env.ALLOW_LOCAL_UPLOADS === "true";
+// En production (Vercel), le disque est éphémère : les fichiers partent sur
+// Vercel Blob dès que le store est configuré (BLOB_READ_WRITE_TOKEN présent).
+const HAS_BLOB_STORAGE = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 
 /**
  * Vérifie la signature binaire (magic bytes) du fichier au lieu de se fier au
@@ -58,9 +62,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: "Non authentifié." }, { status: 401 });
   }
 
-  if (process.env.NODE_ENV === "production" && !ALLOW_LOCAL_UPLOADS_IN_PROD) {
+  if (process.env.NODE_ENV === "production" && !HAS_BLOB_STORAGE && !ALLOW_LOCAL_UPLOADS_IN_PROD) {
     return NextResponse.json(
-      { success: false, error: "Le stockage des fichiers n'est pas configuré en production." },
+      {
+        success: false,
+        error:
+          "Le stockage des fichiers n'est pas encore activé sur la plateforme. Réessayez plus tard ou contactez le support.",
+      },
       { status: 503 }
     );
   }
@@ -105,6 +113,14 @@ export async function POST(request: NextRequest) {
     }
 
     const fileName = `${session.user.id}-${randomUUID()}${ext}`;
+
+    if (HAS_BLOB_STORAGE) {
+      const blob = await put(`uploads/${fileName}`, buffer, {
+        access: "public",
+        contentType: detectedType,
+      });
+      return NextResponse.json({ success: true, url: blob.url });
+    }
 
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
     await mkdir(uploadsDir, { recursive: true });

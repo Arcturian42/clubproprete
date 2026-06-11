@@ -44,6 +44,24 @@ function CategoryLinks({ category, onNavigate }: { category: ResourceCategory; o
 export function ResourcesMegaMenu() {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Un léger délai avant fermeture permet de traverser l'espace entre le
+  // bouton et le panneau (padding du header) sans que le menu se referme.
+  const cancelClose = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimerRef.current = setTimeout(() => setOpen(false), 200);
+  };
+
+  useEffect(() => {
+    return () => cancelClose();
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -68,15 +86,18 @@ export function ResourcesMegaMenu() {
   return (
     <div
       ref={wrapperRef}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={() => {
+        cancelClose();
+        setOpen(true);
+      }}
+      onMouseLeave={scheduleClose}
     >
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-haspopup="true"
-        className={`flex items-center gap-1 rounded-[12px] px-2 py-2 hover:bg-white hover:text-slate-900 ${
+        className={`flex items-center gap-1 rounded-[12px] px-2 py-2 uppercase tracking-wide hover:bg-white hover:text-slate-900 ${
           open ? "bg-white text-slate-900" : ""
         }`}
       >
@@ -148,7 +169,7 @@ export function ResourcesMobileMenu({ onNavigate }: { onNavigate: () => void }) 
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between rounded-[12px] px-3 py-2 hover:bg-indigo-50 hover:text-slate-900"
+        className="flex w-full items-center justify-between rounded-[12px] px-3 py-2 uppercase tracking-wide hover:bg-indigo-50 hover:text-slate-900"
       >
         Ressources
         <ChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
@@ -164,7 +185,7 @@ export function ResourcesMobileMenu({ onNavigate }: { onNavigate: () => void }) 
                   type="button"
                   onClick={() => setOpenCategory(isOpen ? null : category.slug)}
                   aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between rounded-[10px] px-2 py-1.5 text-left hover:bg-indigo-50"
+                  className="flex w-full items-center justify-between rounded-[10px] px-2 py-1.5 text-left uppercase tracking-wide hover:bg-indigo-50"
                 >
                   {category.title}
                   <ChevronDown

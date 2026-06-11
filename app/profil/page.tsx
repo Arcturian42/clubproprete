@@ -163,8 +163,12 @@ export default function ProfilPage() {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (data.success) return data.url;
+      // Affiche la raison du refus (taille, type, stockage indisponible…)
+      // au lieu d'échouer silencieusement.
+      setSaveMessage({ type: "error", text: data.error || "L'envoi du fichier a échoué." });
       return null;
     } catch {
+      setSaveMessage({ type: "error", text: "L'envoi du fichier a échoué. Vérifiez votre connexion et réessayez." });
       return null;
     }
   };

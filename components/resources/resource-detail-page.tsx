@@ -8,11 +8,13 @@ import {
   getResource,
   getResourceById,
   getResourceCategory,
+  getResourceHref,
   getResourcesByCategory,
   regulatoryDisclaimer,
   type Resource,
   type ResourceCategorySlug,
 } from "@/lib/resources";
+import { getResourceContent, type ResourceContent } from "@/lib/resources-content";
 
 export function resourceDetailMetadata(categorySlug: ResourceCategorySlug, slug: string) {
   const resource = getResource(categorySlug, slug);
@@ -107,9 +109,52 @@ export async function ResourceDetailPage({
     .filter((r): r is Resource => Boolean(r));
 
   const isComparison = resource.type === "Comparatif";
+  const content = getResourceContent(resource.id);
+
+  // Données structurées (SEO/GEO) : Article + FAQ + fil d'Ariane.
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://clubproprete.com";
+  const pageUrl = `${baseUrl}${getResourceHref(resource)}`;
+  const jsonLd: Record<string, unknown>[] = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: resource.seoTitle,
+      description: resource.seoDescription,
+      inLanguage: "fr-FR",
+      dateModified: resource.updatedAt,
+      mainEntityOfPage: pageUrl,
+      author: { "@type": "Organization", name: "Club Propreté", url: baseUrl },
+      publisher: { "@type": "Organization", name: "Club Propreté", url: baseUrl },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Accueil", item: baseUrl },
+        { "@type": "ListItem", position: 2, name: "Ressources", item: `${baseUrl}/ressources` },
+        { "@type": "ListItem", position: 3, name: category.title, item: `${baseUrl}/ressources/${category.slug}` },
+        { "@type": "ListItem", position: 4, name: resource.title, item: pageUrl },
+      ],
+    },
+  ];
+  if (content?.faq && content.faq.length > 0) {
+    jsonLd.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: content.faq.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: item.a },
+      })),
+    });
+  }
 
   return (
     <PageShell eyebrow={category.title} title={resource.title} description={resource.description}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Breadcrumb
         items={[
           { label: "Accueil", href: "/" },
@@ -151,7 +196,83 @@ export async function ResourceDetailPage({
             </section>
           )}
 
-          {/* Aperçu du contenu */}
+          {/* Contenu rédactionnel complet (ressource publiée) */}
+          {content && (
+            <>
+              <section className="surface p-6">
+                <p className="text-base font-medium leading-8 text-slate-700">{content.intro}</p>
+              </section>
+              {content.sections.map((section) => (
+                <section key={section.heading} className="surface p-6">
+                  <h2 className="text-lg font-black text-slate-900">{section.heading}</h2>
+                  {section.paragraphs?.map((paragraph) => (
+                    <p key={paragraph.slice(0, 40)} className="mt-3 text-sm font-medium leading-7 text-slate-600">
+                      {paragraph}
+                    </p>
+                  ))}
+                  {section.bullets && (
+                    <ul className="mt-3 space-y-2">
+                      {section.bullets.map((bullet) => (
+                        <li
+                          key={bullet.slice(0, 40)}
+                          className="flex items-start gap-2 text-sm font-medium leading-6 text-slate-600"
+                        >
+                          <CheckCircle2 size={15} className="mt-1 shrink-0 text-indigo-500" aria-hidden="true" />
+                          {bullet}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {section.table && (
+                    <div className="mt-4 overflow-x-auto">
+                      <table className="w-full min-w-[520px] border-collapse text-left text-sm">
+                        <caption className="sr-only">{section.table.caption}</caption>
+                        <thead>
+                          <tr className="border-b-2 border-slate-900 text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+                            {section.table.headers.map((header) => (
+                              <th key={header} className="py-2 pr-4">
+                                {header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {section.table.rows.map((row) => (
+                            <tr key={row[0]} className="border-b border-slate-100 align-top">
+                              {row.map((cell, index) => (
+                                <td
+                                  key={cell}
+                                  className={`py-2 pr-4 ${index === 0 ? "font-bold text-slate-700" : "text-slate-600"}`}
+                                >
+                                  {cell}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
+              ))}
+              {content.faq && content.faq.length > 0 && (
+                <section className="surface p-6">
+                  <h2 className="text-lg font-black text-slate-900">Questions fréquentes</h2>
+                  <div className="mt-3 space-y-4">
+                    {content.faq.map((item) => (
+                      <div key={item.q}>
+                        <h3 className="text-sm font-black text-slate-900">{item.q}</h3>
+                        <p className="mt-1 text-sm font-medium leading-6 text-slate-600">{item.a}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
+          )}
+
+          {/* Aperçu du contenu (ressource non encore rédigée) */}
+          {!content && (
           <section className="surface p-6">
             <h2 className="text-lg font-black text-slate-900">Ce que couvre cette ressource</h2>
             <p className="mt-3 text-sm font-medium leading-7 text-slate-600">{resource.description}</p>
@@ -191,8 +312,14 @@ export async function ResourceDetailPage({
               </div>
             )}
           </section>
+          )}
 
-          <ComingSoonBlock resource={resource} />
+          {/* Le bloc téléchargement (modèles) et le placeholder outil restent
+              affichés même quand l'article est rédigé ; le bloc générique
+              « en cours de rédaction » disparaît dès que le contenu existe. */}
+          {(!content || resource.type === "Modèle" || resource.type === "Outil") && (
+            <ComingSoonBlock resource={resource} />
+          )}
 
           {categorySlug === "reglementation" && (
             <p className="text-xs font-semibold leading-5 text-slate-400">{regulatoryDisclaimer}</p>
