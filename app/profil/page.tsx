@@ -28,6 +28,8 @@ type EditableProfile = {
   lastName: string;
   email: string;
   phone: string;
+  headline: string;
+  linkedinUrl: string;
   bio: string;
   address: string;
   city: string;
@@ -42,6 +44,8 @@ const emptyProfile: EditableProfile = {
   lastName: "",
   email: "",
   phone: "",
+  headline: "",
+  linkedinUrl: "",
   bio: "",
   address: "",
   city: "",
@@ -50,6 +54,16 @@ const emptyProfile: EditableProfile = {
   photos: [],
   visibility: "private",
 };
+
+function parsePhotos(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function ProfilPage() {
   const { data: session, status } = useSession();
@@ -81,12 +95,14 @@ export default function ProfilPage() {
           lastName: data.lastName || base.lastName,
           email: data.email || base.email,
           phone: data.phone || base.phone,
+          headline: data.profile?.headline || "",
+          linkedinUrl: data.profile?.linkedinUrl || "",
           bio: data.bio || "",
           address: data.address || "",
           city: data.city || "",
           website: data.companies?.[0]?.website || "",
           avatar: data.avatarUrl || null,
-          photos: data.photos ? JSON.parse(data.photos) : [],
+          photos: parsePhotos(data.photos),
           visibility: data.profile?.visibility === "public" ? "public" : "private",
         }
       : base;
@@ -110,6 +126,8 @@ export default function ProfilPage() {
       phone: profile.phone,
       city: profile.city,
       website: profile.website,
+      headline: profile.headline,
+      linkedinUrl: profile.linkedinUrl.trim(),
       bio: profile.bio,
       address: profile.address,
       avatar: profile.avatar || undefined,
@@ -280,6 +298,23 @@ export default function ProfilPage() {
             </div>
           </div>
 
+          <div className="mt-6">
+            <label htmlFor="profil-headline" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+              Titre professionnel
+            </label>
+            <input
+              id="profil-headline"
+              className="bento-input w-full"
+              value={profile.headline}
+              onChange={(e) => handleChange("headline", e.target.value)}
+              placeholder="Ex : Gérant · Nettoyage tertiaire & copropriétés — Lyon"
+              maxLength={120}
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              Affiché sous votre nom sur votre profil public, comme sur LinkedIn.
+            </p>
+          </div>
+
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="profil-firstname" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
@@ -355,6 +390,20 @@ export default function ProfilPage() {
                 value={profile.website}
                 onChange={(e) => handleChange("website", e.target.value)}
                 placeholder="www.votresite.fr"
+                autoComplete="url"
+              />
+            </div>
+            <div>
+              <label htmlFor="profil-linkedin" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+                Profil LinkedIn
+              </label>
+              <input
+                id="profil-linkedin"
+                type="url"
+                className="bento-input w-full"
+                value={profile.linkedinUrl}
+                onChange={(e) => handleChange("linkedinUrl", e.target.value)}
+                placeholder="https://www.linkedin.com/in/votre-profil"
                 autoComplete="url"
               />
             </div>

@@ -4,16 +4,20 @@ import { auth } from "@/auth";
 import { PageShell } from "@/components/page-shell";
 import { EntityCard } from "@/components/entity-card";
 import { createSubcontractingMission } from "@/lib/actions/subcontracting";
+import { hasApprovedAssociationMembership } from "@/lib/actions/memberships";
 import { ArrowLeft, Briefcase, MapPin, Calendar, Clock, Zap, Users, FileText, Save } from "lucide-react";
 
 export default async function NewMissionPage() {
   const session = await auth();
   const user = session?.user;
 
+  // Le JWT peut être périmé (adhésion validée après connexion) : on vérifie aussi en base.
+  const dbMembershipApproved = user?.id ? await hasApprovedAssociationMembership(user.id) : false;
   const isAuthorized =
     user?.role === "admin" ||
     user?.role === "super_admin" ||
-    user?.associationMember === true;
+    user?.associationMember === true ||
+    dbMembershipApproved;
 
   if (!isAuthorized) {
     redirect("/association");

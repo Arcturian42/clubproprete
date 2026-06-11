@@ -9,16 +9,23 @@ import { PermissionError, requireUser } from "@/lib/permissions";
 
 const updateProfileSchema = z.object({
   userId: z.string(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  email: z.string().email(),
-  phone: z.string().optional(),
-  city: z.string().optional(),
-  website: z.string().optional(),
-  bio: z.string().optional(),
-  address: z.string().optional(),
-  avatar: z.string().optional(),
-  photos: z.array(z.string()).optional(),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email().max(255),
+  phone: z.string().max(30).optional(),
+  city: z.string().max(120).optional(),
+  website: z.string().max(300).optional(),
+  headline: z.string().max(120).optional(),
+  linkedinUrl: z
+    .string()
+    .max(300)
+    .url("Le lien LinkedIn doit être une URL valide (https://...).")
+    .optional()
+    .or(z.literal("")),
+  bio: z.string().max(5000).optional(),
+  address: z.string().max(300).optional(),
+  avatar: z.string().max(1000).optional(),
+  photos: z.array(z.string().max(1000)).max(12).optional(),
   visibility: z.enum(["public", "private"]).optional(),
 });
 
@@ -38,8 +45,22 @@ export async function updateUserProfile(data: UpdateProfileInput) {
       return { success: false, errors: parsed.error.flatten().fieldErrors };
     }
 
-    const { userId, firstName, lastName, email, phone, city, website, bio, address, avatar, photos, visibility } =
-      parsed.data;
+    const {
+      userId,
+      firstName,
+      lastName,
+      email,
+      phone,
+      city,
+      website,
+      headline,
+      linkedinUrl,
+      bio,
+      address,
+      avatar,
+      photos,
+      visibility,
+    } = parsed.data;
 
     const session = await requireUser();
     if (session.user.id !== userId) {
@@ -70,15 +91,20 @@ export async function updateUserProfile(data: UpdateProfileInput) {
       },
     });
 
-    if (visibility) {
+    if (visibility || headline !== undefined || linkedinUrl !== undefined) {
+      const profileFields = {
+        ...(visibility ? { visibility } : {}),
+        ...(headline !== undefined ? { headline: headline.trim() || null } : {}),
+        ...(linkedinUrl !== undefined ? { linkedinUrl: linkedinUrl.trim() || null } : {}),
+      };
       await prisma.userProfile.upsert({
         where: { userId },
         create: {
           userId,
           profileType: session.user.role || "registered_user",
-          visibility,
+          ...profileFields,
         },
-        update: { visibility },
+        update: profileFields,
       });
     }
 
@@ -95,6 +121,7 @@ export async function updateUserProfile(data: UpdateProfileInput) {
 
     revalidatePath("/profil");
     revalidatePath("/dashboard");
+    revalidatePath(`/membres/${userId}`);
     return { success: true };
   } catch (err) {
     if (err instanceof PermissionError) {
@@ -113,7 +140,7 @@ export async function getUserProfile(userId: string) {
     throw new PermissionError("FORBIDDEN", "Vous n'avez pas accès à ce profil.");
   }
 
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
       profile: true,
@@ -123,4 +150,10 @@ export async function getUserProfile(userId: string) {
       trainingOrganizations: { where: { deletedAt: null } },
     },
   });
+
+  if (!user) return null;
+
+  // Ne jamais renvoyer le hash du mot de passe côté client.
+  const { passwordHash: _passwordHash, ...safeUser } = user;
+  return safeUser;
 }

@@ -222,9 +222,9 @@ export async function getPublishedJobs(search?: string, page?: number, limit = 1
   const where: Record<string, unknown> = { status: "published", deletedAt: null };
   if (search) {
     where.OR = [
-      { title: { contains: search } },
-      { description: { contains: search } },
-      { city: { contains: search } },
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+      { city: { contains: search, mode: "insensitive" } },
     ];
   }
 

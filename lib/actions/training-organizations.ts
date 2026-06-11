@@ -10,9 +10,9 @@ export async function getPublishedTrainingOrganizations(search?: string, page?: 
   const where: Record<string, unknown> = { verificationStatus: "approved", deletedAt: null };
   if (search) {
     where.OR = [
-      { name: { contains: search } },
-      { description: { contains: search } },
-      { declarationNumber: { contains: search } },
+      { name: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+      { declarationNumber: { contains: search, mode: "insensitive" } },
     ];
   }
 

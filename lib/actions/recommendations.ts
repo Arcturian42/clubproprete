@@ -49,7 +49,7 @@ export async function requestRecommendation(formData: FormData) {
         candidateUserId,
         OR: [
           { authorUserId: session.user.id },
-          { authorEmail: authorEmail ?? "" },
+          ...(authorEmail ? [{ authorEmail }] : []),
         ],
         status: { not: "declined" },
       },

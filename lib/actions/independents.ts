@@ -6,9 +6,9 @@ export async function getPublishedIndependents(search?: string, page?: number, l
   const where: Record<string, unknown> = { verificationStatus: "approved", deletedAt: null };
   if (search) {
     where.OR = [
-      { displayName: { contains: search } },
-      { city: { contains: search } },
-      { bio: { contains: search } },
+      { displayName: { contains: search, mode: "insensitive" } },
+      { city: { contains: search, mode: "insensitive" } },
+      { bio: { contains: search, mode: "insensitive" } },
     ];
   }
 

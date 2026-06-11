@@ -29,8 +29,8 @@ export default async function ResourcesPage({ searchParams }: ResourcesPageProps
       title="Blog & Ressources"
       description="Articles, guides et actualités vérifiées pour les professionnels de la propreté."
       actions={
-        <Link href="/dashboard" className="bento-btn bento-btn-primary">
-          S'inscrire newsletter
+        <Link href="#newsletter" className="bento-btn bento-btn-primary">
+          S'inscrire à la newsletter
         </Link>
       }
     >
@@ -148,7 +148,7 @@ export default async function ResourcesPage({ searchParams }: ResourcesPageProps
       <Pagination currentPage={currentPage} totalPages={totalPages} basePath="/ressources" searchQuery={search} />
 
       {/* Newsletter */}
-      <div className="surface mt-10 p-6">
+      <div id="newsletter" className="surface mt-10 scroll-mt-24 p-6">
         <div className="flex items-start gap-4">
           <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-3 text-white shadow-[3px_3px_0px_#0f172a]">
             <MailPlus size={22} aria-hidden="true" />
