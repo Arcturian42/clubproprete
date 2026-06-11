@@ -48,6 +48,7 @@ export default function RootLayout({
                     <li><Link href="/annuaire/societes" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Sociétés</Link></li>
                     <li><Link href="/annuaire/fournisseurs" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Fournisseurs</Link></li>
                     <li><Link href="/annuaire/centres-formation" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Centres de formation</Link></li>
+                    <li><Link href="/membres" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Membres</Link></li>
                     <li><Link href="/inscription?role=candidate_profile" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Profil candidat</Link></li>
                     <li><Link href="/independants" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Indépendants</Link></li>
                   </ul>
