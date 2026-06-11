@@ -14,6 +14,7 @@ import {
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
+import { auth } from "@/auth";
 import { getSupplierById, getEntityMembers } from "@/lib/actions/public";
 import {
   getOfferTypeLabel,
@@ -25,15 +26,31 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
-export default async function SupplierDetailPage({ params }: Props) {
+
+export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const supplier = await getSupplierById(id);
+  if (!supplier) {
+    return { title: "Fournisseur introuvable | Club Propreté" };
+  }
+  return {
+    title: `${supplier.name} — Fournisseur propreté | Club Propreté`,
+    description:
+      supplier.description ||
+      `Fiche de ${supplier.name}, fournisseur vérifié pour les professionnels du nettoyage.`,
+  };
+}
+
+export default async function SupplierDetailPage({ params }: Props) {
+  const { id } = await params;
+  const [supplier, session] = await Promise.all([getSupplierById(id), auth()]);
+  const isLoggedIn = Boolean(session?.user);
 
   if (!supplier || supplier.verificationStatus !== "approved") {
     notFound();
   }
 
-  const members = await getEntityMembers("supplier", id);
+  const members = await getEntityMembers("supplier", supplier.id);
 
   const specialties = supplier.services.map((s) => s.title);
   const coverage = supplier.nationalCoverage ? "National" : supplier.deliveryAreas || "Local";
@@ -130,6 +147,16 @@ export default async function SupplierDetailPage({ params }: Props) {
           {/* Contact */}
           <article className="surface p-6">
             <h2 className="text-lg font-black text-slate-900 mb-4">Contact</h2>
+            {!isLoggedIn ? (
+              <div>
+                <p className="text-sm text-slate-600">
+                  Les coordonnées des fournisseurs sont réservées aux membres connectés.
+                </p>
+                <Link href="/connexion" className="bento-btn bento-btn-primary mt-4 w-full block text-center">
+                  Se connecter pour voir les coordonnées
+                </Link>
+              </div>
+            ) : (
             <div className="space-y-3">
               {supplier.email ? (
                 <a href={`mailto:${encodeURIComponent(supplier.email)}`} className="flex items-center gap-3 text-slate-600 hover:text-indigo-600 transition-colors">
@@ -154,6 +181,7 @@ export default async function SupplierDetailPage({ params }: Props) {
                 </div>
               )}
             </div>
+            )}
           </article>
 
           {/* CTA */}
@@ -179,7 +207,7 @@ export default async function SupplierDetailPage({ params }: Props) {
             <h2 className="text-xl font-black text-slate-900">Équipe</h2>
             <p className="mt-1 text-sm text-slate-500">
               {members.length > 0
-                ? `${members.length} membre(s) actif(s) chez ce fournisseur.`
+                ? `${members.length} ${members.length > 1 ? "membres actifs" : "membre actif"} chez ce fournisseur.`
                 : "Aucun membre public pour le moment."}
             </p>
           </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Crown, FileText, Handshake, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, Crown, FileText, Handshake, Rocket, Sparkles } from "lucide-react";
 import { getPublishedCompanies } from "@/lib/actions/companies";
 import { getPublishedJobs } from "@/lib/actions/jobs";
 import { getPublishedSuppliers } from "@/lib/actions/suppliers";
@@ -67,12 +67,32 @@ export default async function HomePage() {
               )}
             </ul>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <StatTile value={String(companiesCount)} label="Sociétés référencées" />
-            <StatTile value={String(suppliersCount)} label="Fournisseurs" />
-            <StatTile value={String(jobsCount)} label="Offres d'emploi" />
-            <StatTile value={String(trainingsCount)} label="Formations" />
-          </div>
+          {companiesCount >= 10 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <StatTile value={String(companiesCount)} label="Sociétés référencées" />
+              <StatTile value={String(suppliersCount)} label="Fournisseurs" />
+              <StatTile value={String(jobsCount)} label="Offres d'emploi" />
+              <StatTile value={String(trainingsCount)} label="Formations" />
+            </div>
+          ) : (
+            <div className="bento-card p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-slate-900 bg-amber-50">
+                <Rocket size={22} className="text-slate-900" aria-hidden="true" />
+              </div>
+              <h2 className="mt-4 text-xl font-black text-slate-900">La plateforme ouvre ses portes</h2>
+              <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+                Club Propreté est en phase de lancement : les premières sociétés, fournisseurs et organismes de
+                formation rejoignent l&apos;annuaire en ce moment.
+              </p>
+              <p className="mt-3 text-sm font-bold text-slate-900">
+                Inscrivez-vous maintenant pour faire partie des membres fondateurs et profiter d&apos;une
+                visibilité maximale dès l&apos;ouverture.
+              </p>
+              <Link href="/inscription" className="bento-btn bento-btn-accent mt-5">
+                Devenir membre fondateur <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -345,9 +365,9 @@ export default async function HomePage() {
             <details key={q} className="bento-card group p-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-black text-slate-900">
                 {q}
-                <ArrowRight
+                <ChevronDown
                   size={18}
-                  className="shrink-0 text-indigo-600 transition-transform group-open:rotate-90"
+                  className="shrink-0 text-indigo-600 transition-transform group-open:rotate-180"
                   aria-hidden="true"
                 />
               </summary>

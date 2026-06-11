@@ -20,6 +20,19 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const job = await getJobById(id);
+  if (!job) {
+    return { title: "Offre introuvable | Club Propreté" };
+  }
+  return {
+    title: `${job.title}${job.city ? ` — ${job.city}` : ""} (${job.contractType}) | Club Propreté`,
+    description: `Offre d'emploi propreté : ${job.title}${job.city ? ` à ${job.city}` : ""}. Postulez gratuitement sur Club Propreté.`,
+  };
+}
+
 export default async function JobDetailPage({ params }: Props) {
   const { id } = await params;
   const [job, session] = await Promise.all([getJobById(id), auth()]);

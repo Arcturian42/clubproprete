@@ -5,9 +5,10 @@ interface PaginationProps {
   totalPages: number;
   basePath: string;
   searchQuery?: string;
+  extraParams?: Record<string, string | undefined>;
 }
 
-export function Pagination({ currentPage, totalPages, basePath, searchQuery }: PaginationProps) {
+export function Pagination({ currentPage, totalPages, basePath, searchQuery, extraParams }: PaginationProps) {
   if (totalPages <= 1) return null;
 
   const pages: (number | string)[] = [];
@@ -29,6 +30,9 @@ export function Pagination({ currentPage, totalPages, basePath, searchQuery }: P
     const params = new URLSearchParams();
     params.set("page", String(p));
     if (searchQuery) params.set("search", searchQuery);
+    for (const [key, value] of Object.entries(extraParams ?? {})) {
+      if (value) params.set(key, value);
+    }
     return `${basePath}?${params.toString()}`;
   };
 

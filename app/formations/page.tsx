@@ -8,6 +8,12 @@ import { ProposeTrainingButton } from "@/components/propose-training-button";
 import { Pagination } from "@/components/pagination";
 import { getPublishedTrainings } from "@/lib/actions/trainings";
 
+export const metadata = {
+  title: "Formations aux métiers de la propreté | Club Propreté",
+  description:
+    "Formations techniques, sécurité et management pour les professionnels du nettoyage.",
+};
+
 interface TrainingsPageProps {
   searchParams: Promise<{ page?: string; search?: string }>;
 }

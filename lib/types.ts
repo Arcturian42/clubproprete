@@ -52,6 +52,7 @@ export type Company = {
 
 export type Supplier = {
   id: string;
+  slug?: string | null;
   name: string;
   category: string;
   family?: string | null;

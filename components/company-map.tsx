@@ -7,6 +7,7 @@ import "leaflet/dist/leaflet.css";
 interface CompanyMapProps {
   companies: Array<{
     id: string;
+    slug?: string | null;
     name: string;
     city: string | null;
     latitude: number | null;
@@ -42,10 +43,20 @@ function MapContent({ companies }: CompanyMapProps) {
       c.latitude !== null && c.longitude !== null
   );
 
+  // Centre la carte sur les societes geolocalisees plutot que sur la France entiere.
+  const center: [number, number] =
+    companiesWithCoords.length > 0
+      ? [
+          companiesWithCoords.reduce((sum, c) => sum + c.latitude, 0) / companiesWithCoords.length,
+          companiesWithCoords.reduce((sum, c) => sum + c.longitude, 0) / companiesWithCoords.length,
+        ]
+      : [46.8, 2.3];
+  const zoom = companiesWithCoords.length === 1 ? 9 : 6;
+
   return (
     <MapContainer
-      center={[46.8, 2.3]}
-      zoom={6}
+      center={center}
+      zoom={zoom}
       scrollWheelZoom={false}
       style={{ height: "500px", width: "100%", borderRadius: "20px" }}
       className="border-2 border-slate-900"
@@ -66,7 +77,7 @@ function MapContent({ companies }: CompanyMapProps) {
                 <p className="text-sm text-slate-500">{company.city}</p>
               )}
               <Link
-                href={`/annuaire/societes/${company.id}`}
+                href={`/annuaire/societes/${company.slug ?? company.id}`}
                 className="text-indigo-600 text-sm font-bold inline-block mt-1"
               >
                 Voir la fiche →

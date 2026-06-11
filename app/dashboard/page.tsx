@@ -27,12 +27,13 @@ export default async function DashboardPage() {
   const user = { ...session.user, role, associationMember };
 
   let candidateApplications: Awaited<ReturnType<typeof getCandidateApplications>> | undefined;
+  let candidateProfile: Awaited<ReturnType<typeof prisma.candidateProfile.findFirst>> = null;
   let jobsCount = 0;
   let trainingsCount = 0;
   let company: Awaited<ReturnType<typeof getCompanyByOwner>> | undefined;
 
   if (role === "candidate_profile") {
-    const candidateProfile = await prisma.candidateProfile.findFirst({
+    candidateProfile = await prisma.candidateProfile.findFirst({
       where: { userId: user.id, deletedAt: null },
     });
     if (candidateProfile) {
@@ -58,7 +59,7 @@ export default async function DashboardPage() {
       title="Mon espace"
       description="Bienvenue dans votre espace personnel Club Propreté."
     >
-      <MyDashboard user={user} candidateApplications={candidateApplications} jobsCount={jobsCount} trainingsCount={trainingsCount} company={company} />
+      <MyDashboard user={user} candidateApplications={candidateApplications} candidateProfile={candidateProfile} jobsCount={jobsCount} trainingsCount={trainingsCount} company={company} />
     </PageShell>
   );
 }

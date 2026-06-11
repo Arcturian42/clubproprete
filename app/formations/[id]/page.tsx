@@ -28,6 +28,21 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const training = await getTrainingById(id);
+  if (!training) {
+    return { title: "Formation introuvable | Club Propreté" };
+  }
+  return {
+    title: `${training.title} — Formation propreté | Club Propreté`,
+    description:
+      training.description ||
+      `Formation ${training.title} pour les professionnels du nettoyage.`,
+  };
+}
+
 export default async function TrainingDetailPage({ params }: Props) {
   const { id } = await params;
   const training = await getTrainingById(id);
@@ -44,12 +59,12 @@ export default async function TrainingDetailPage({ params }: Props) {
       const company = await prisma.company.findUnique({ where: { id: training.creatorEntityId } });
       creatorName = company?.name || "";
       creatorTypeLabel = "Société de nettoyage";
-      creatorHref = company ? `/annuaire/societes/${company.id}` : null;
+      creatorHref = company ? `/annuaire/societes/${company.slug ?? company.id}` : null;
     } else if (training.creatorType === "supplier") {
       const supplier = await prisma.supplier.findUnique({ where: { id: training.creatorEntityId } });
       creatorName = supplier?.name || "";
       creatorTypeLabel = "Fournisseur";
-      creatorHref = supplier ? `/annuaire/fournisseurs/${supplier.id}` : null;
+      creatorHref = supplier ? `/annuaire/fournisseurs/${supplier.slug ?? supplier.id}` : null;
     } else {
       const org = await prisma.trainingOrganization.findUnique({
         where: { id: training.creatorEntityId },

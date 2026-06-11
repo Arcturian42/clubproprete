@@ -202,7 +202,7 @@ export function AuthorDashboard({
                   <StatusPill status={article.status} />
                 </div>
                 {article.status === "published" && (
-                  <Link href={`/ressources/${article.id}`} className="mt-3 inline-flex text-xs font-extrabold uppercase tracking-wide text-indigo-600">
+                  <Link href={`/ressources/${article.slug || article.id}`} className="mt-3 inline-flex text-xs font-extrabold uppercase tracking-wide text-indigo-600">
                     Voir l'article
                   </Link>
                 )}

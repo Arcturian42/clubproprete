@@ -11,11 +11,11 @@ function fetchEntities() {
   return Promise.all([
     prisma.company.findMany({
       where: { deletedAt: null, verificationStatus: "approved" },
-      select: { id: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     }),
     prisma.supplier.findMany({
       where: { deletedAt: null, verificationStatus: "approved" },
-      select: { id: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     }),
     prisma.trainingOrganization.findMany({
       where: { deletedAt: null, verificationStatus: "approved" },
@@ -31,7 +31,7 @@ function fetchEntities() {
     }),
     prisma.article.findMany({
       where: { deletedAt: null, status: "published" },
-      select: { id: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     }),
   ]);
 }
@@ -65,13 +65,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const dynamicRoutes = [
     ...companies.map((c) => ({
-      url: `${baseUrl}/annuaire/societes/${c.id}`,
+      url: `${baseUrl}/annuaire/societes/${c.slug ?? c.id}`,
       lastModified: c.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.6,
     })),
     ...suppliers.map((s) => ({
-      url: `${baseUrl}/annuaire/fournisseurs/${s.id}`,
+      url: `${baseUrl}/annuaire/fournisseurs/${s.slug ?? s.id}`,
       lastModified: s.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.6,
@@ -95,7 +95,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     })),
     ...articles.map((a) => ({
-      url: `${baseUrl}/ressources/${a.id}`,
+      url: `${baseUrl}/ressources/${a.slug ?? a.id}`,
       lastModified: a.updatedAt,
       changeFrequency: "monthly" as const,
       priority: 0.5,

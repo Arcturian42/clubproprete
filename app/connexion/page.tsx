@@ -1,9 +1,21 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { LoginForm } from "@/components/auth/login-form";
 import { PageShell } from "@/components/page-shell";
 
-export default function ConnexionPage() {
+export const metadata = {
+  title: "Connexion | Club Propreté",
+  description: "Connectez-vous à votre espace Club Propreté.",
+};
+
+export default async function ConnexionPage() {
+  const session = await auth();
+  if (session?.user) {
+    redirect("/dashboard");
+  }
+
   return (
     <PageShell
       eyebrow="Espace membre"

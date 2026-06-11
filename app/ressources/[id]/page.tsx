@@ -16,6 +16,19 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const article = await getArticleById(id);
+  if (!article) {
+    return { title: "Article introuvable | Club Propreté" };
+  }
+  return {
+    title: `${article.title} | Club Propreté`,
+    description: article.excerpt || `${article.title} — un article du média Club Propreté.`,
+  };
+}
+
 export default async function ArticleDetailPage({ params }: Props) {
   const { id } = await params;
   const article = await getArticleById(id);

@@ -2,9 +2,13 @@
 
 import { prisma } from "@/lib/prisma";
 
-export async function getCompanyById(id: string) {
-  return prisma.company.findUnique({
-    where: { id, deletedAt: null, verificationStatus: "approved" },
+export async function getCompanyById(idOrSlug: string) {
+  return prisma.company.findFirst({
+    where: {
+      deletedAt: null,
+      verificationStatus: "approved",
+      OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+    },
     include: {
       services: true,
       clientTypes: true,
@@ -42,9 +46,13 @@ export async function getArticleById(id: string) {
   });
 }
 
-export async function getSupplierById(id: string) {
-  return prisma.supplier.findUnique({
-    where: { id, deletedAt: null, verificationStatus: "approved" },
+export async function getSupplierById(idOrSlug: string) {
+  return prisma.supplier.findFirst({
+    where: {
+      deletedAt: null,
+      verificationStatus: "approved",
+      OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+    },
     include: {
       services: true,
       owner: {
