@@ -32,6 +32,7 @@ import { StatCard } from "@/components/stat-card";
 import { EntityCard } from "@/components/entity-card";
 import { createCompanyProfile, getCompanyByOwner, updateCompanyProfile } from "@/lib/actions/companies";
 import { getApplicationsForCompany } from "@/lib/actions/jobs";
+import { parsePhotos } from "@/lib/photos";
 
 type CompanyProfile = {
   name: string;
@@ -60,16 +61,6 @@ const serviceOptions = [
 ];
 
 const employeeOptions = ["1-10", "11-50", "51-200", "201-500", "500+"];
-
-function parsePhotos(raw: string | null | undefined): string[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === "string") : [];
-  } catch {
-    return [];
-  }
-}
 
 export default function EntrepriseProfilePage() {
   const router = useRouter();

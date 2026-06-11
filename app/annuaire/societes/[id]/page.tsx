@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { PageShell } from "@/components/page-shell";
 import { getCompanyById, getEntityMembers } from "@/lib/actions/public";
+import { parsePhotos } from "@/lib/photos";
 import { prisma } from "@/lib/prisma";
 
 type CompanyDetailPageProps = {
@@ -26,16 +27,6 @@ type CompanyDetailPageProps = {
     id: string;
   }>;
 };
-
-function parsePhotos(raw: string | null | undefined): string[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === "string") : [];
-  } catch {
-    return [];
-  }
-}
 
 function externalUrl(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;

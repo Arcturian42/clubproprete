@@ -72,7 +72,10 @@ export async function registerUser(data: SignupInput) {
           completionScore: 15,
           verificationStatus: "draft",
           associationStatus: "not_applicable",
-          visibility: "private",
+          // Profil membre visible par défaut : chaque inscrit a une page
+          // /membres/[id] consultable. L'onboarding repasse les chercheurs
+          // d'emploi en privé, et le réglage reste modifiable dans /profil.
+          visibility: "public",
         },
       });
 

@@ -74,6 +74,8 @@ export async function getPublicProfile(userId: string, options?: { includePrivat
       avatarUrl: true,
       photos: true,
       email: true,
+      phone: true,
+      createdAt: true,
       profile: {
         select: {
           visibility: true,
@@ -81,6 +83,7 @@ export async function getPublicProfile(userId: string, options?: { includePrivat
           associationStatus: true,
           headline: true,
           linkedinUrl: true,
+          region: true,
         },
       },
     },
@@ -130,6 +133,7 @@ export async function getPublicProfile(userId: string, options?: { includePrivat
   return {
     ...user,
     email: options?.includePrivate ? user.email : null,
+    phone: options?.includePrivate ? user.phone : null,
     memberships: memberships.map((m) => ({
       ...m,
       entityName:
@@ -139,6 +143,48 @@ export async function getPublicProfile(userId: string, options?: { includePrivat
         "Entité",
     })),
   };
+}
+
+/**
+ * Annuaire des membres : tous les utilisateurs dont le profil est public.
+ * C'est la liste promise par le réglage de visibilité dans /profil.
+ */
+export async function getPublicMembers(options?: { query?: string }) {
+  const query = options?.query?.trim();
+
+  return prisma.user.findMany({
+    where: {
+      deletedAt: null,
+      profile: { visibility: "public", deletedAt: null },
+      ...(query
+        ? {
+            OR: [
+              { firstName: { contains: query, mode: "insensitive" } },
+              { lastName: { contains: query, mode: "insensitive" } },
+              { city: { contains: query, mode: "insensitive" } },
+              { profile: { headline: { contains: query, mode: "insensitive" } } },
+            ],
+          }
+        : {}),
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      city: true,
+      avatarUrl: true,
+      createdAt: true,
+      profile: {
+        select: {
+          headline: true,
+          verificationStatus: true,
+          associationStatus: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 120,
+  });
 }
 
 export async function getEntityMembers(entityType: "company" | "supplier" | "training_organization", entityId: string) {
