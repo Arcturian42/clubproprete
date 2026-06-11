@@ -5,7 +5,6 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { FlashToast } from "@/components/flash-toast";
-import { FounderCard } from "@/components/founder-card";
 
 export const metadata: Metadata = {
   title: "Club Propreté — La boîte à outils des professionnels de la propreté",
@@ -60,6 +59,7 @@ export default function RootLayout({
                     <li><Link href="/formations" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Formations</Link></li>
                     <li><Link href="/association" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Association</Link></li>
                     <li><Link href="/ressources" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Ressources</Link></li>
+                    <li><Link href="/a-propos" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">À propos</Link></li>
                   </ul>
                 </div>
                 <div>
@@ -71,31 +71,7 @@ export default function RootLayout({
                   </ul>
                 </div>
               </div>
-              <div className="mt-8 border-t-2 border-slate-100 pt-6">
-                <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">À propos</h3>
-                <div className="mt-3 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
-                  <p className="text-xs font-semibold leading-5 text-slate-500">
-                    Club Propreté est une association portée par des professionnels du secteur, fondée par
-                    Farid Cherif et Olivier Lerendu pour connecter sociétés de nettoyage, indépendants,
-                    fournisseurs et organismes de formation.
-                  </p>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-                    <FounderCard
-                      name="Farid Cherif"
-                      role="Co-fondateur de l'association"
-                      photoSrc="/founders/farid-cherif.jpg"
-                      linkedinUrl="https://www.linkedin.com/in/farid-cherif/"
-                    />
-                    <FounderCard
-                      name="Olivier Lerendu"
-                      role="Co-fondateur de l'association"
-                      photoSrc="/founders/olivier-lerendu.jpg"
-                      linkedinUrl="https://www.linkedin.com/in/lerenduolivier/"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 border-t-2 border-slate-100 pt-4 text-center">
+              <div className="mt-8 border-t-2 border-slate-100 pt-4 text-center">
                 <p className="text-[11px] font-bold text-slate-400">© 2026 Club Propreté. Tous droits réservés.</p>
               </div>
             </div>
