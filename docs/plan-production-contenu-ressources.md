@@ -2,15 +2,15 @@
 
 **Date :** 11 juin 2026 · **Périmètre :** méga menu Ressources (7 rubriques, 82 pages) + articles média
 
-## 1. État des lieux
+## 1. État des lieux (mis à jour)
 
 | Statut | Pages | Détail |
 |---|---|---|
-| ✅ Publiées (contenu complet + FAQ + JSON-LD) | 11 | Voir tableau P0 ci-dessous |
-| 🟡 Placeholder enrichi (description, tags, CTA, ressources liées) | 71 | Toutes les autres pages détail |
+| ✅ Publiées (contenu complet + FAQ + JSON-LD) | 43 | **Les 42 pages visibles dans le méga menu** + analyses marché |
+| 🟡 Placeholder enrichi (description, tags, CTA, ressources liées) | 39 | Pages hors menu (longue traîne des rubriques) |
 | Infrastructure | — | Hub, 7 pages catégories, méga menu, sitemap, données structurées |
 
-Toutes les pages existent déjà (aucun lien mort) : la production consiste à **remplacer les placeholders par du contenu complet** dans `lib/resources-content.ts`, sans toucher aux routes.
+Toutes les pages existent déjà (aucun lien mort) : la production consiste à **remplacer les placeholders par du contenu complet** dans `lib/resources-content/` (un fichier par rubrique), sans toucher aux routes.
 
 ## 2. Pages publiées (vague P0 — faite)
 
@@ -33,26 +33,23 @@ Toutes les pages existent déjà (aucun lien mort) : la production consiste à *
 Cadence soutenable : **2 à 3 pages/semaine** (rédaction + relecture métier). Prioriser par
 intention commerciale puis par volume.
 
-### Vague P1 (semaines 1–4) — intention commerciale forte
-1. `modeles/contrat-prestation-nettoyage` — complète le trio devis/contrat/cahier des charges
-2. `guides/sous-traitance-nettoyage` — maillage fort avec l'espace association
-3. `appels-offres/rediger-memoire-technique-nettoyage` + `modeles/memoire-technique-nettoyage` (paire)
-4. `comparatifs/louer-ou-acheter-autolaveuse` — intention d'achat, CTA annuaire fournisseurs
-5. `comparatifs/logiciels-entreprises-nettoyage` — fort volume, connecte les fournisseurs logiciels
-6. `outils/calculateur-marge-chantier` + `outils/calculateur-cout-horaire-agent` (méthodes, en attendant les outils interactifs)
-7. `reglementation/sous-traitance-obligations-legales` + `reglementation/documents-demander-sous-traitant` (paire vigilance)
-8. `guides/recruter-agents-entretien` + `modeles/fiche-poste-agent-entretien` (paire RH)
+### ✅ Vagues P0 + P1 faites — tout le méga menu est publié
+Les 42 pages accessibles depuis le méga menu (6 par rubrique × 7 rubriques) ont leur contenu
+complet : intro-réponse, sections H2, tableaux le cas échéant, FAQ et JSON-LD.
 
-### Vague P2 (semaines 5–10) — couverture des spécialités
-- Guides spécialités : `nettoyage-bureaux`, `nettoyage-copropriete`, `nettoyage-fin-de-chantier`, `nettoyage-industriel`, `nettoyage-ecologique`, `developper-entreprise-nettoyage`
-- Appels d'offres : `comprendre-appels-offres-nettoyage`, `preparer-dossier-appel-offres`, `analyser-cahier-des-charges-nettoyage`, `erreurs-appels-offres-nettoyage`, `marches-publics-nettoyage`, `marches-prives-nettoyage`
-- Réglementation : `securite-travail-proprete`, `epi-obligatoires-nettoyage`, `produits-chimiques-fds`, `duerp-entreprise-nettoyage`
-- Modèles restants : `planning-agents-nettoyage`, `rapport-intervention-nettoyage`, `fiche-controle-qualite`, `relance-client-nettoyage`, `email-prospection-nettoyage`, `grille-tarifaire-nettoyage`
+### Vague P2 (à produire) — longue traîne des rubriques (39 pages hors menu)
+- Guides spécialités : `nettoyage-bureaux`, `nettoyage-copropriete`, `nettoyage-fin-de-chantier`, `nettoyage-industriel`, `nettoyage-ecologique`, `sous-traitance-nettoyage`
+- Modèles restants : `planning-agents-nettoyage`, `fiche-controle-qualite`, `relance-client-nettoyage`, `email-prospection-nettoyage`, `grille-tarifaire-nettoyage`, `memoire-technique-nettoyage`
+- Outils restants : `calculateur-temps-intervention`, `simulateur-devis-fin-chantier`, `generateur-fiche-poste`, `generateur-email-prospection`, `score-maturite-digitale-nettoyage`, `calculateur-rentabilite-contrat`
+- Comparatifs restants : `machines-nettoyage-professionnel`, `fournisseurs-consommables-nettoyage`, `epi-nettoyage`, `materiel-nettoyage-bureaux`, `produits-sanitaires-professionnels`, `logiciels-planning-agents-nettoyage`
+- Réglementation restante : `documents-demander-sous-traitant`, `travail-nuit-proprete`, `normes-hygiene-nettoyage`, `prevention-risques-agent-entretien`, `affichages-obligatoires-entreprise`, `duerp-entreprise-nettoyage`
+- Appels d'offres restants : `marches-publics-nettoyage`, `marches-prives-nettoyage`, `dossier-candidature-nettoyage`, `criteres-selection-prestataire-nettoyage`, `prix-appel-offres-nettoyage`, `suivi-opportunites-marches`
+- Média restant : `sous-traitance-nettoyage` (rubrique), `portraits-entreprises-nettoyage`, `conseils-business-nettoyage`, `tendances` déjà fait — voir inventaire dans `lib/resources.ts`
 
-### Vague P3 (continu) — média & longue traîne
+### Vague P3 (continu) — média & outils interactifs
 - Rubriques média : 1 à 2 articles/semaine via l'espace auteur (les pages rubriques `/ressources/media/*` servent de hubs)
-- Comparatifs restants, réglementation longue traîne, pages restantes appels d'offres
 - Développement des **vrais outils interactifs** (calculateur de prix en premier : la page méthode publiée capte déjà la requête, l'outil convertira)
+- Versions téléchargeables des modèles (PDF/DOCX) derrière la création de compte
 
 ## 4. Template éditorial par type de page
 
