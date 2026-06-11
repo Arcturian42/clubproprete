@@ -6,9 +6,12 @@ import { revalidatePath } from "next/cache";
 import { PermissionError, requireEntityRole, requireUser } from "@/lib/permissions";
 import { optionalSiret } from "@/lib/validators";
 import { uniqueSlug } from "@/lib/slug";
+import { notifyUser } from "@/lib/notifications";
 
 export async function getPublishedCompanies(search?: string, page?: number, limit = 12, region?: string) {
-  const where: Record<string, unknown> = { verificationStatus: "approved", deletedAt: null };
+  // Publication immédiate : toute fiche créée est visible. La vérification
+  // (badge) est un parcours séparé, à la demande du propriétaire.
+  const where: Record<string, unknown> = { deletedAt: null };
   if (search) {
     where.OR = [
       { name: { contains: search, mode: "insensitive" } },
@@ -127,7 +130,9 @@ export async function createCompanyProfile(data: CreateCompanyInput) {
         logoUrl: logo || null,
         photos: photos && photos.length > 0 ? JSON.stringify(photos) : null,
         foundedAt: foundedYear ? new Date(`${foundedYear}-01-01`) : null,
-        verificationStatus: "pending",
+        // Publiée immédiatement, non vérifiée : le badge s'obtient via une
+        // demande de vérification (RDV + questionnaire) validée par l'admin.
+        verificationStatus: "draft",
         // La fiche est créée par son propriétaire : elle est réclamée d'office.
         claimedStatus: "claimed",
       },
@@ -212,7 +217,8 @@ export async function updateCompanyProfile(data: UpdateCompanyInput) {
         logoUrl: logo || null,
         photos: photos && photos.length > 0 ? JSON.stringify(photos) : null,
         foundedAt: foundedYear ? new Date(`${foundedYear}-01-01`) : null,
-        verificationStatus: "pending",
+        // Modifier sa fiche ne touche pas au statut de vérification : une
+        // fiche vérifiée garde son badge, une fiche non vérifiée reste visible.
       },
     });
 
@@ -250,5 +256,119 @@ export async function updateCompanyProfile(data: UpdateCompanyInput) {
 
     console.error("updateCompanyProfile error:", err);
     return { success: false, message: "Une erreur est survenue. Veuillez réessayer." };
+  }
+}
+
+const requestVerificationSchema = z.object({
+  companyId: z.string(),
+  yearsInBusiness: z.string().min(1, "Indiquez depuis combien de temps vous exercez.").max(120),
+  employeeCount: z.string().min(1, "Indiquez votre effectif.").max(60),
+  mainClients: z.string().max(500).optional(),
+  additionalInfo: z.string().max(2000).optional(),
+  preferredSlot: z.string().min(1, "Indiquez vos disponibilités pour le rendez-vous.").max(300),
+  contactPhone: z.string().min(1, "Indiquez un numéro pour être recontacté.").max(30),
+});
+
+/**
+ * Le propriétaire d'une fiche demande sa vérification : questionnaire +
+ * créneau de rendez-vous avec Club Propreté. La fiche passe en "pending"
+ * (toujours visible) jusqu'à la décision de l'admin après l'entretien.
+ */
+export async function requestCompanyVerification(formData: FormData) {
+  try {
+    const session = await requireUser();
+    const raw = Object.fromEntries(formData.entries());
+    const parsed = requestVerificationSchema.safeParse(raw);
+
+    if (!parsed.success) {
+      return { success: false, errors: parsed.error.flatten().fieldErrors };
+    }
+
+    const { companyId, ...answers } = parsed.data;
+
+    await requireEntityRole(session.user.id, "company", companyId, ["owner", "admin"]);
+
+    const company = await prisma.company.findFirst({
+      where: { id: companyId, deletedAt: null },
+      select: { id: true, name: true, verificationStatus: true },
+    });
+    if (!company) {
+      return { success: false, message: "Fiche introuvable." };
+    }
+    if (company.verificationStatus === "approved") {
+      return { success: false, message: "Cette fiche est déjà vérifiée." };
+    }
+
+    const existing = await prisma.verificationRequest.findFirst({
+      where: { entityType: "company", entityId: companyId, status: "pending" },
+    });
+    if (existing) {
+      return { success: false, message: "Une demande de vérification est déjà en cours pour cette fiche." };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.verificationRequest.create({
+        data: {
+          entityType: "company",
+          entityId: companyId,
+          requestedBy: session.user.id,
+          yearsInBusiness: answers.yearsInBusiness,
+          employeeCount: answers.employeeCount,
+          mainClients: answers.mainClients || null,
+          additionalInfo: answers.additionalInfo || null,
+          preferredSlot: answers.preferredSlot,
+          contactPhone: answers.contactPhone,
+        },
+      });
+      await tx.company.update({
+        where: { id: companyId },
+        data: { verificationStatus: "pending" },
+      });
+    });
+
+    // Prévient les admins qu'un rendez-vous de vérification est à planifier.
+    const admins = await prisma.user.findMany({
+      where: { mainRole: { in: ["admin", "super_admin"] }, deletedAt: null },
+      select: { id: true },
+    });
+    await Promise.all(
+      admins.map((admin) =>
+        notifyUser({
+          userId: admin.id,
+          type: "verification_request",
+          title: "Nouvelle demande de vérification",
+          body: `La société « ${company.name} » demande la vérification de sa fiche. Créneau souhaité : ${answers.preferredSlot}.`,
+          link: "/admin",
+        })
+      )
+    );
+
+    revalidatePath("/dashboard/entreprise");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
+    console.error("requestCompanyVerification error:", err);
+    return { success: false, message: "Une erreur est survenue. Veuillez réessayer." };
+  }
+}
+
+/**
+ * Dernière demande de vérification d'une fiche, pour afficher l'état du
+ * parcours dans le dashboard du propriétaire.
+ */
+export async function getCompanyVerificationRequest(companyId: string) {
+  try {
+    const session = await requireUser();
+    await requireEntityRole(session.user.id, "company", companyId, ["owner", "admin"]);
+
+    return prisma.verificationRequest.findFirst({
+      where: { entityType: "company", entityId: companyId },
+      orderBy: { createdAt: "desc" },
+    });
+  } catch {
+    return null;
   }
 }

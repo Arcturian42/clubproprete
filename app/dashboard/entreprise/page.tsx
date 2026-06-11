@@ -33,6 +33,7 @@ import { EntityCard } from "@/components/entity-card";
 import { createCompanyProfile, getCompanyByOwner, updateCompanyProfile } from "@/lib/actions/companies";
 import { getApplicationsForCompany } from "@/lib/actions/jobs";
 import { parsePhotos } from "@/lib/photos";
+import { CompanyVerificationCard } from "@/components/dashboard/company-verification-card";
 
 type CompanyProfile = {
   name: string;
@@ -72,6 +73,7 @@ export default function EntrepriseProfilePage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [newClient, setNewClient] = useState("");
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<string>("draft");
   const [applications, setApplications] = useState<Awaited<ReturnType<typeof getApplicationsForCompany>>["applications"] | null>(null);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
 
@@ -111,6 +113,7 @@ export default function EntrepriseProfilePage() {
       const company = await getCompanyByOwner(user.id);
       if (company) {
         setCompanyId(company.id);
+        setVerificationStatus(company.verificationStatus);
         setProfile({
           name: company.name || "",
           legalName: company.legalName || "",
@@ -208,6 +211,7 @@ export default function EntrepriseProfilePage() {
     const company = await getCompanyByOwner(user.id);
     if (company) {
       setCompanyId(company.id);
+      setVerificationStatus(company.verificationStatus);
       setProfile({
         name: company.name || "",
         legalName: company.legalName || "",
@@ -461,6 +465,17 @@ export default function EntrepriseProfilePage() {
         <StatCard label="Clients" value={String(profile.clients.length)} detail="Types servis" />
         <StatCard label="Effectif" value={profile.employeeCount} detail="Salariés" />
       </div>
+
+      {companyId && (
+        <div className="mt-6">
+          <CompanyVerificationCard
+            companyId={companyId}
+            verificationStatus={verificationStatus}
+            defaultEmployeeCount={profile.employeeCount}
+            defaultPhone={profile.phone}
+          />
+        </div>
+      )}
 
       <div className="mt-6 surface p-6">
         <div className="flex items-center justify-between mb-4">

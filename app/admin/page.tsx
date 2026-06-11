@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { CircleSlash, Download, ShieldAlert, ShieldCheck, Users, ArrowRight, Briefcase } from "lucide-react";
+import { BadgeCheck, CircleSlash, Download, ShieldAlert, ShieldCheck, Users, ArrowRight, Briefcase } from "lucide-react";
 import { auth } from "@/auth";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
 import { StatusPill } from "@/components/status-pill";
 import { EmptyState } from "@/components/empty-state";
-import { getAdminQueue, getPendingJobsForModeration, updateEntityStatus } from "@/lib/actions/admin";
+import { getAdminQueue, getPendingJobsForModeration, getPendingVerificationRequests, updateEntityStatus } from "@/lib/actions/admin";
 import { getAdminStats } from "@/lib/actions/users";
 import { needsAdminValidation } from "@/lib/permissions";
 
@@ -20,10 +20,11 @@ export default async function AdminPage() {
     redirect("/");
   }
 
-  const [queuesResult, statsResult, pendingJobs] = await Promise.all([
+  const [queuesResult, statsResult, pendingJobs, verificationRequests] = await Promise.all([
     getAdminQueue(),
     getAdminStats(),
     getPendingJobsForModeration(),
+    getPendingVerificationRequests(),
   ]);
 
   const queues = queuesResult;
@@ -82,6 +83,110 @@ export default async function AdminPage() {
           <StatCard label="Formations" value={String(stats.totalTrainings)} detail="Catalogue" />
         </div>
       )}
+
+      {/* Demandes de vérification de fiche (RDV + questionnaire) */}
+      <div className="mt-8">
+        <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+          <BadgeCheck size={20} className="text-emerald-600" />
+          Demandes de vérification de fiche
+          {verificationRequests.length > 0 && (
+            <span className="bento-tag border-amber-400 bg-amber-50 text-amber-700">{verificationRequests.length}</span>
+          )}
+        </h2>
+
+        {verificationRequests.length === 0 ? (
+          <EmptyState
+            title="Aucune demande de vérification"
+            description="Quand une société demandera la vérification de sa fiche, vous trouverez ici son questionnaire et le créneau de rendez-vous souhaité."
+          />
+        ) : (
+          <div className="space-y-4">
+            {verificationRequests.map((request) => (
+              <div key={request.id} className="rounded-[20px] border-2 border-slate-900 bg-white p-5 shadow-panel">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-black text-slate-900">{request.entityName}</p>
+                    <p className="text-sm text-slate-500">
+                      {[
+                        request.entityCity,
+                        request.entitySiret ? `SIRET ${request.entitySiret}` : null,
+                        `Demandé par ${request.requester.firstName ?? ""} ${request.requester.lastName ?? ""}`.trim(),
+                        request.requester.email,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  <p className="text-xs font-bold text-slate-400">
+                    {new Date(request.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                  </p>
+                </div>
+
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Ancienneté</dt>
+                    <dd className="font-semibold text-slate-700">{request.yearsInBusiness || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Effectif</dt>
+                    <dd className="font-semibold text-slate-700">{request.employeeCount || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Clients principaux</dt>
+                    <dd className="font-semibold text-slate-700">{request.mainClients || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">RDV souhaité</dt>
+                    <dd className="font-semibold text-indigo-700">{request.preferredSlot || "—"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Téléphone</dt>
+                    <dd className="font-semibold text-slate-700">{request.contactPhone || request.requester.phone || "—"}</dd>
+                  </div>
+                  {request.additionalInfo && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Informations complémentaires</dt>
+                      <dd className="font-medium text-slate-600">{request.additionalInfo}</dd>
+                    </div>
+                  )}
+                </dl>
+
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t-2 border-slate-100 pt-4">
+                  <form action={handleValidate}>
+                    <input type="hidden" name="entityType" value="company" />
+                    <input type="hidden" name="entityId" value={request.entityId} />
+                    <input type="hidden" name="status" value="approved" />
+                    <button type="submit" className="bento-tag border-emerald-400 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 cursor-pointer">
+                      Vérifier la fiche (après RDV)
+                    </button>
+                  </form>
+                  <form action={handleValidate} className="flex items-center gap-1">
+                    <input type="hidden" name="entityType" value="company" />
+                    <input type="hidden" name="entityId" value={request.entityId} />
+                    <input type="hidden" name="status" value="rejected" />
+                    <input
+                      type="text"
+                      name="rejectionReason"
+                      placeholder="Motif (optionnel)"
+                      maxLength={500}
+                      className="w-40 rounded border border-rose-300 bg-white px-2 py-1 text-[11px]"
+                    />
+                    <button type="submit" className="bento-tag border-rose-400 bg-rose-50 text-rose-700 hover:bg-rose-100 cursor-pointer">
+                      Refuser
+                    </button>
+                  </form>
+                  <Link
+                    href={`/annuaire/societes/${request.entityId}`}
+                    className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                  >
+                    Voir la fiche
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Section modération offres pending */}
       <div className="mt-8">

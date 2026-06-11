@@ -67,11 +67,28 @@ export async function updateEntityStatus(formData: FormData) {
           where: { id: entityId },
           data: { verificationStatus: status },
         });
+        // Clôt la demande de vérification associée (RDV + questionnaire) :
+        // la décision admin porte sur cette demande.
+        await prisma.verificationRequest.updateMany({
+          where: { entityType: "company", entityId, status: "pending" },
+          data: {
+            status: status === "approved" ? "approved" : "rejected",
+            reviewedBy: admin.id,
+            reviewedAt: new Date(),
+            rejectionReason: status === "rejected" ? rejectionReason ?? null : null,
+          },
+        });
         notify = {
           userId: company.ownerUserId,
           type: "moderation",
-          title: `Société ${decisionLabel(status)}`,
-          body: `Votre fiche « ${company.name} » a été ${decisionLabel(status)}.${reasonSuffix}`,
+          title:
+            status === "approved"
+              ? "Fiche vérifiée ✓"
+              : `Demande de vérification ${decisionLabel(status)}`,
+          body:
+            status === "approved"
+              ? `Votre fiche « ${company.name} » est désormais vérifiée : le badge est visible sur l'annuaire.`
+              : `Votre demande de vérification pour « ${company.name} » a été ${decisionLabel(status)}.${reasonSuffix} Votre fiche reste visible dans l'annuaire.`,
           link: status === "approved" ? `/annuaire/societes/${company.id}` : "/dashboard/entreprise",
         };
         break;
@@ -293,11 +310,10 @@ export async function getAdminQueue(): Promise<QueueItem[]> {
   try {
     await requireAdmin();
 
-    const [companies, suppliers, trainingOrganizations, jobs, trainings, memberships, articles, authorApplications] = await Promise.all([
-      prisma.company.findMany({
-        where: { deletedAt: null, verificationStatus: { in: ["pending", "draft", "rejected"] } },
-        select: { id: true, name: true, verificationStatus: true },
-      }),
+    // Les sociétés ne passent plus par cette file : leurs fiches sont publiées
+    // immédiatement et les demandes de vérification ont leur section dédiée
+    // (getPendingVerificationRequests) avec questionnaire et créneau de RDV.
+    const [suppliers, trainingOrganizations, jobs, trainings, memberships, articles, authorApplications] = await Promise.all([
       prisma.supplier.findMany({
         where: { deletedAt: null, verificationStatus: { in: ["pending", "draft", "rejected"] } },
         select: { id: true, name: true, verificationStatus: true },
@@ -334,7 +350,6 @@ export async function getAdminQueue(): Promise<QueueItem[]> {
     ]);
 
     return [
-      ...companies.map((c) => ({ id: c.id, entityType: "company" as const, type: "Société", title: c.name, status: c.verificationStatus })),
       ...suppliers.map((s) => ({ id: s.id, entityType: "supplier" as const, type: "Fournisseur", title: s.name, status: s.verificationStatus })),
       ...trainingOrganizations.map((organization) => ({
         id: organization.id,
@@ -408,6 +423,49 @@ export async function getPendingJobsForModeration() {
       return [];
     }
     console.error("getPendingJobsForModeration error:", err);
+    return [];
+  }
+}
+
+/**
+ * Demandes de vérification de fiche en attente, avec le questionnaire et le
+ * créneau de rendez-vous souhaité : c'est sur cette base que l'admin planifie
+ * l'entretien puis valide ou refuse le badge.
+ */
+export async function getPendingVerificationRequests() {
+  try {
+    await requireAdmin();
+
+    const requests = await prisma.verificationRequest.findMany({
+      where: { status: "pending" },
+      include: {
+        requester: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const companyIds = requests
+      .filter((request) => request.entityType === "company")
+      .map((request) => request.entityId);
+    const companies = companyIds.length
+      ? await prisma.company.findMany({
+          where: { id: { in: companyIds } },
+          select: { id: true, name: true, city: true, siret: true },
+        })
+      : [];
+    const companyById = new Map(companies.map((company) => [company.id, company]));
+
+    return requests.map((request) => ({
+      ...request,
+      entityName: companyById.get(request.entityId)?.name ?? "—",
+      entityCity: companyById.get(request.entityId)?.city ?? null,
+      entitySiret: companyById.get(request.entityId)?.siret ?? null,
+    }));
+  } catch (err) {
+    if (err instanceof PermissionError) {
+      return [];
+    }
+    console.error("getPendingVerificationRequests error:", err);
     return [];
   }
 }
