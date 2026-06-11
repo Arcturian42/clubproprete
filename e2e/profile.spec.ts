@@ -8,9 +8,10 @@ test.describe('Profil utilisateur', () => {
     await page.goto('/profil');
 
     await expect(page).toHaveURL(/\/profil/);
-    // Le titre contient le prénom de l'utilisateur connecté
-    await expect(page.getByRole('heading', { name: /Bonjour, Claire/i })).toBeVisible();
-    // Vérifie la présence du bloc "Profil entreprise"
-    await expect(page.getByRole('heading', { name: /Profil entreprise/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Mon profil' })).toBeVisible();
+    // Le bloc identité affiche le nom de l'utilisateur connecté
+    await expect(page.getByRole('heading', { name: /Claire Martin/i })).toBeVisible();
+    // Les réglages de visibilité du profil public sont présents
+    await expect(page.getByRole('heading', { name: /Visibilité du profil/i })).toBeVisible();
   });
 });
