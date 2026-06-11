@@ -78,6 +78,7 @@ export default function EntrepriseProfilePage() {
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [newService, setNewService] = useState("");
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [newClient, setNewClient] = useState("");
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [applications, setApplications] = useState<Awaited<ReturnType<typeof getApplicationsForCompany>>["applications"] | null>(null);
@@ -273,12 +274,15 @@ export default function EntrepriseProfilePage() {
   const uploadFile = async (file: File): Promise<string | null> => {
     const formData = new FormData();
     formData.append("file", file);
+    setUploadError(null);
     try {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (data.success) return data.url;
+      setUploadError(data.error || "L'envoi du fichier a échoué.");
       return null;
     } catch {
+      setUploadError("L'envoi du fichier a échoué. Vérifiez votre connexion et réessayez.");
       return null;
     }
   };
@@ -689,6 +693,19 @@ export default function EntrepriseProfilePage() {
 
       <input type="file" accept="image/*" hidden ref={logoInputRef} onChange={handleLogoFileChange} />
       <input type="file" accept="image/*" hidden ref={photoInputRef} onChange={handlePhotoFileChange} />
+
+      {uploadError && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-slate-900 bg-white/95 backdrop-blur">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            <p className="text-sm font-bold text-red-600" role="alert">
+              {uploadError}
+            </p>
+            <button type="button" onClick={() => setUploadError(null)} className="bento-btn min-h-0 px-3 py-2">
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
 
       {!isEditing && (
         <div className="mt-8 flex justify-start">
