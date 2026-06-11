@@ -22,6 +22,8 @@ import { useSession } from "next-auth/react";
 import { PageShell } from "@/components/page-shell";
 import { roleLabels } from "@/lib/auth-demo";
 import { updateUserProfile, getUserProfile } from "@/lib/actions/profile";
+import { parsePhotos } from "@/lib/photos";
+import { RecommendationsManager } from "@/components/profile/recommendations-manager";
 
 type EditableProfile = {
   firstName: string;
@@ -54,16 +56,6 @@ const emptyProfile: EditableProfile = {
   photos: [],
   visibility: "private",
 };
-
-function parsePhotos(raw: string | null | undefined): string[] {
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === "string") : [];
-  } catch {
-    return [];
-  }
-}
 
 export default function ProfilPage() {
   const { data: session, status } = useSession();
@@ -199,7 +191,7 @@ export default function ProfilPage() {
   if (status === "loading") {
     return (
       <PageShell eyebrow="Mon compte" title="Mon profil" description="">
-        <div className="surface p-6 text-center">
+        <div className="card-soft p-6 text-center">
           <p className="text-slate-600">Chargement de votre profil...</p>
         </div>
       </PageShell>
@@ -213,12 +205,12 @@ export default function ProfilPage() {
         title="Non connecté"
         description="Connectez-vous pour accéder à votre profil."
         actions={
-          <Link href="/connexion" className="bento-btn bento-btn-primary">
+          <Link href="/connexion" className="btn-soft btn-soft-primary">
             Connexion
           </Link>
         }
       >
-        <div className="surface p-6 text-center">
+        <div className="card-soft p-6 text-center">
           <p className="text-slate-600">Vous devez être connecté pour voir cette page.</p>
         </div>
       </PageShell>
@@ -256,10 +248,10 @@ export default function ProfilPage() {
       description="Ces informations alimentent votre profil membre. Vous choisissez ce qui est visible publiquement."
       actions={
         <>
-          <Link href="/dashboard" className="bento-btn">
+          <Link href="/dashboard" className="btn-soft">
             <ArrowLeft size={16} /> Dashboard
           </Link>
-          <Link href={`/membres/${user.id}`} className="bento-btn bento-btn-primary">
+          <Link href={`/membres/${user.id}`} className="btn-soft btn-soft-primary">
             <Eye size={16} /> Voir mon profil public
           </Link>
         </>
@@ -267,24 +259,24 @@ export default function ProfilPage() {
     >
       <div className="mx-auto max-w-3xl space-y-6 pb-28">
         {/* Identité & coordonnées */}
-        <section className="surface p-6">
+        <section className="card-soft p-6">
           <div className="flex items-center gap-5">
             <div className="relative shrink-0">
               {profile.avatar ? (
                 <img
                   src={profile.avatar}
                   alt={`${profile.firstName} ${profile.lastName}`}
-                  className="h-20 w-20 rounded-[16px] border-2 border-slate-900 object-cover"
+                  className="h-20 w-20 rounded-full border border-slate-200 object-cover"
                 />
               ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-[16px] border-2 border-slate-900 bg-indigo-100">
-                  <UserRound size={32} className="text-indigo-600" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-200 bg-slate-100">
+                  <UserRound size={32} className="text-slate-400" />
                 </div>
               )}
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                className="absolute -bottom-2 -right-2 rounded-full border-2 border-slate-900 bg-white p-1.5 text-slate-900 shadow-[2px_2px_0px_#0f172a] hover:bg-indigo-50"
+                className="absolute -bottom-1 -right-1 rounded-full border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm hover:bg-slate-50"
                 aria-label="Changer ma photo de profil"
                 title="Changer ma photo de profil"
               >
@@ -292,10 +284,10 @@ export default function ProfilPage() {
               </button>
             </div>
             <div className="min-w-0">
-              <h2 className="truncate text-xl font-black text-slate-900">
+              <h2 className="truncate text-xl font-bold text-slate-900">
                 {profile.firstName || "Prénom"} {profile.lastName || "Nom"}
               </h2>
-              <p className="mt-1 text-sm font-semibold text-slate-500">
+              <p className="mt-1 text-sm font-medium text-slate-500">
                 {roleLabels[user.role as keyof typeof roleLabels] || user.role}
                 {user.organization ? ` · ${user.organization}` : ""}
               </p>
@@ -303,12 +295,12 @@ export default function ProfilPage() {
           </div>
 
           <div className="mt-6">
-            <label htmlFor="profil-headline" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+            <label htmlFor="profil-headline" className="mb-1.5 block text-sm font-medium text-slate-700">
               Titre professionnel
             </label>
             <input
               id="profil-headline"
-              className="bento-input w-full"
+              className="input-soft w-full"
               value={profile.headline}
               onChange={(e) => handleChange("headline", e.target.value)}
               placeholder="Ex : Gérant · Nettoyage tertiaire & copropriétés — Lyon"
@@ -321,50 +313,50 @@ export default function ProfilPage() {
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="profil-firstname" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+              <label htmlFor="profil-firstname" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Prénom
               </label>
               <input
                 id="profil-firstname"
-                className="bento-input w-full"
+                className="input-soft w-full"
                 value={profile.firstName}
                 onChange={(e) => handleChange("firstName", e.target.value)}
                 autoComplete="given-name"
               />
             </div>
             <div>
-              <label htmlFor="profil-lastname" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+              <label htmlFor="profil-lastname" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Nom
               </label>
               <input
                 id="profil-lastname"
-                className="bento-input w-full"
+                className="input-soft w-full"
                 value={profile.lastName}
                 onChange={(e) => handleChange("lastName", e.target.value)}
                 autoComplete="family-name"
               />
             </div>
             <div>
-              <label htmlFor="profil-email" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+              <label htmlFor="profil-email" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Email
               </label>
               <input
                 id="profil-email"
                 type="email"
-                className="bento-input w-full"
+                className="input-soft w-full"
                 value={profile.email}
                 onChange={(e) => handleChange("email", e.target.value)}
                 autoComplete="email"
               />
             </div>
             <div>
-              <label htmlFor="profil-phone" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+              <label htmlFor="profil-phone" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Téléphone
               </label>
               <input
                 id="profil-phone"
                 type="tel"
-                className="bento-input w-full"
+                className="input-soft w-full"
                 value={profile.phone}
                 onChange={(e) => handleChange("phone", e.target.value)}
                 placeholder="06 12 34 56 78"
@@ -372,12 +364,12 @@ export default function ProfilPage() {
               />
             </div>
             <div>
-              <label htmlFor="profil-city" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+              <label htmlFor="profil-city" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Ville
               </label>
               <input
                 id="profil-city"
-                className="bento-input w-full"
+                className="input-soft w-full"
                 value={profile.city}
                 onChange={(e) => handleChange("city", e.target.value)}
                 placeholder="Votre ville"
@@ -385,12 +377,12 @@ export default function ProfilPage() {
               />
             </div>
             <div>
-              <label htmlFor="profil-website" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+              <label htmlFor="profil-website" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Site web
               </label>
               <input
                 id="profil-website"
-                className="bento-input w-full"
+                className="input-soft w-full"
                 value={profile.website}
                 onChange={(e) => handleChange("website", e.target.value)}
                 placeholder="www.votresite.fr"
@@ -398,13 +390,13 @@ export default function ProfilPage() {
               />
             </div>
             <div>
-              <label htmlFor="profil-linkedin" className="mb-2 block text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
+              <label htmlFor="profil-linkedin" className="mb-1.5 block text-sm font-medium text-slate-700">
                 Profil LinkedIn
               </label>
               <input
                 id="profil-linkedin"
                 type="url"
-                className="bento-input w-full"
+                className="input-soft w-full"
                 value={profile.linkedinUrl}
                 onChange={(e) => handleChange("linkedinUrl", e.target.value)}
                 placeholder="https://www.linkedin.com/in/votre-profil"
@@ -415,27 +407,27 @@ export default function ProfilPage() {
         </section>
 
         {/* Présentation */}
-        <section className="surface p-6">
-          <h2 className="text-lg font-black text-slate-900">Présentation</h2>
+        <section className="card-soft p-6">
+          <h2 className="text-lg font-semibold text-slate-900">Présentation</h2>
           <p className="mt-1 text-sm text-slate-500">
             Quelques lignes sur votre parcours et ce que vous proposez. C&apos;est la première chose que les
             autres professionnels lisent.
           </p>
           <textarea
             id="profil-bio"
-            className="bento-input mt-4 min-h-[140px] w-full resize-none"
+            className="input-soft mt-4 min-h-[140px] w-full resize-none"
             value={profile.bio}
             onChange={(e) => handleChange("bio", e.target.value)}
             placeholder="Exemple : Gérant d'une société de nettoyage tertiaire depuis 8 ans, spécialisé bureaux et copropriétés sur la région lyonnaise."
           />
 
-          <div className="mt-6 border-t-2 border-slate-100 pt-5">
+          <div className="mt-6 border-t border-slate-100 pt-5">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-sm font-black text-slate-900">Photos</h3>
+                <h3 className="text-sm font-semibold text-slate-900">Photos</h3>
                 <p className="mt-1 text-sm text-slate-500">Chantiers, équipe, matériel… (facultatif)</p>
               </div>
-              <button type="button" onClick={() => photoInputRef.current?.click()} className="bento-btn min-h-0 px-3 py-2">
+              <button type="button" onClick={() => photoInputRef.current?.click()} className="btn-soft min-h-0 px-3 py-2">
                 <Plus size={14} /> Ajouter
               </button>
             </div>
@@ -446,12 +438,12 @@ export default function ProfilPage() {
                     <img
                       src={photo}
                       alt={`Photo ${index + 1}`}
-                      className="h-24 w-full rounded-[12px] border-2 border-slate-900 object-cover"
+                      className="h-24 w-full rounded-lg border border-slate-200 object-cover"
                     />
                     <button
                       type="button"
                       onClick={() => handleRemovePhoto(index)}
-                      className="absolute -right-2 -top-2 rounded-full border-2 border-red-700 bg-red-500 p-1 text-white shadow-[2px_2px_0px_#991b1b]"
+                      className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white shadow-sm hover:bg-red-600"
                       aria-label={`Supprimer la photo ${index + 1}`}
                     >
                       <Trash2 size={12} />
@@ -463,21 +455,33 @@ export default function ProfilPage() {
           </div>
         </section>
 
+        {/* Recommandations reçues */}
+        <section className="card-soft p-6">
+          <h2 className="text-lg font-semibold text-slate-900">Recommandations reçues</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Les recommandations que vous publiez s&apos;affichent sur votre profil public, comme sur
+            LinkedIn. Vous gardez la main : publiez ou refusez chaque recommandation reçue.
+          </p>
+          <div className="mt-4">
+            <RecommendationsManager />
+          </div>
+        </section>
+
         {/* Visibilité */}
-        <section className="surface p-6">
-          <h2 className="text-lg font-black text-slate-900">Visibilité du profil</h2>
+        <section className="card-soft p-6">
+          <h2 className="text-lg font-semibold text-slate-900">Visibilité du profil</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
               type="button"
               onClick={() => handleChange("visibility", "public")}
-              className={`rounded-[14px] border-2 p-4 text-left transition-colors ${
+              className={`rounded-xl border p-4 text-left transition-colors ${
                 profile.visibility === "public"
                   ? "border-indigo-600 bg-indigo-50"
                   : "border-slate-200 bg-white hover:border-slate-400"
               }`}
               aria-pressed={profile.visibility === "public"}
             >
-              <span className="flex items-center gap-2 font-black text-slate-900">
+              <span className="flex items-center gap-2 font-semibold text-slate-900">
                 <Eye size={16} className="text-indigo-600" /> Public
               </span>
               <span className="mt-1 block text-sm text-slate-500">
@@ -488,14 +492,14 @@ export default function ProfilPage() {
             <button
               type="button"
               onClick={() => handleChange("visibility", "private")}
-              className={`rounded-[14px] border-2 p-4 text-left transition-colors ${
+              className={`rounded-xl border p-4 text-left transition-colors ${
                 profile.visibility === "private"
                   ? "border-indigo-600 bg-indigo-50"
                   : "border-slate-200 bg-white hover:border-slate-400"
               }`}
               aria-pressed={profile.visibility === "private"}
             >
-              <span className="flex items-center gap-2 font-black text-slate-900">
+              <span className="flex items-center gap-2 font-semibold text-slate-900">
                 <EyeOff size={16} className="text-slate-500" /> Privé
               </span>
               <span className="mt-1 block text-sm text-slate-500">
@@ -507,17 +511,17 @@ export default function ProfilPage() {
 
         {/* Fiche organisation */}
         {hasOrganizationProfile && user.organization && (
-          <section className="surface flex items-center justify-between gap-4 p-6">
+          <section className="card-soft flex items-center justify-between gap-4 p-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[14px] border-2 border-slate-900 bg-indigo-50">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-indigo-50">
                 <OrganizationIcon size={22} className="text-indigo-600" />
               </div>
               <div>
-                <h2 className="text-base font-black text-slate-900">{user.organization}</h2>
+                <h2 className="text-base font-semibold text-slate-900">{user.organization}</h2>
                 <p className="text-sm text-slate-500">Votre {organizationLabel.label} se gère séparément.</p>
               </div>
             </div>
-            <Link href="/dashboard/entreprise" className="bento-btn shrink-0">
+            <Link href="/dashboard/entreprise" className="btn-soft shrink-0">
               Gérer <ExternalLink size={14} />
             </Link>
           </section>
@@ -532,7 +536,7 @@ export default function ProfilPage() {
             type="button"
             onClick={handleSave}
             disabled={saving || !isDirty}
-            className="bento-btn bento-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-soft btn-soft-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Save size={14} /> {saving ? "Enregistrement..." : "Enregistrer"}
           </button>
@@ -544,7 +548,7 @@ export default function ProfilPage() {
 
       {/* Barre de sauvegarde */}
       {(isDirty || saveMessage) && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-slate-900 bg-white/95 backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 shadow-[0_-2px_8px_rgba(15,23,42,0.06)] backdrop-blur">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
             {saveMessage ? (
               <p
@@ -561,14 +565,14 @@ export default function ProfilPage() {
             )}
             {isDirty && (
               <div className="flex shrink-0 gap-2">
-                <button type="button" onClick={handleCancel} className="bento-btn min-h-0 px-3 py-2">
+                <button type="button" onClick={handleCancel} className="btn-soft min-h-0 px-3 py-2">
                   Annuler
                 </button>
                 <button
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="bento-btn bento-btn-primary min-h-0 px-4 py-2"
+                  className="btn-soft btn-soft-primary min-h-0 px-4 py-2"
                 >
                   <Save size={14} /> {saving ? "Enregistrement..." : "Enregistrer"}
                 </button>

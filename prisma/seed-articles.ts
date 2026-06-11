@@ -30,6 +30,21 @@ async function main() {
     console.log(`✅ Using existing author: ${author.email} (${author.id})`);
   }
 
+  // Chaque utilisateur doit avoir un UserProfile : sans lui, la page
+  // /membres/[id] de l'auteur renvoie un 404.
+  await prisma.userProfile.upsert({
+    where: { userId: author.id },
+    update: {},
+    create: {
+      userId: author.id,
+      profileType: author.mainRole,
+      visibility: "public",
+      verificationStatus: "approved",
+      associationStatus: "not_applicable",
+      completionScore: 60,
+    },
+  });
+
   const articles = [
     {
       slug: "trouver-missions-sous-traitance-proprete",

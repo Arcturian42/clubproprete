@@ -200,7 +200,7 @@ export default async function HomePage() {
                 Allez plus loin avec l'association Club Propreté
               </h2>
               <p className="mt-4 text-base font-medium leading-7 text-slate-300">
-                ClubPropreté.com est ouvert et gratuit. Mais les professionnels qui souhaitent aller plus loin peuvent
+                Club Propreté est ouvert et gratuit. Mais les professionnels qui souhaitent aller plus loin peuvent
                 candidater pour devenir membres. L'association rassemble des acteurs engagés autour d'un réseau plus
                 qualifié, plus humain et plus confidentiel.
               </p>

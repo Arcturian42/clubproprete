@@ -160,3 +160,83 @@ textarea {
   box-shadow: 3px 3px 0 var(--color-bento-accent);
   transform: translate(-1px, -1px);
 }
+
+/* --- Style "profil" épuré (façon LinkedIn) -------------------------------- */
+/* Cartes fines et calmes, réservées aux pages profil/membres : on garde le   */
+/* style bento sur le reste du site.                                          */
+
+.card-soft {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.btn-soft {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: white;
+  padding: 0.5rem 1.1rem;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.btn-soft:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.btn-soft-primary {
+  border-color: #4f46e5;
+  background: #4f46e5;
+  color: white;
+}
+
+.btn-soft-primary:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+}
+
+.tag-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #f8fafc;
+  padding: 0.25rem 0.65rem;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.input-soft {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: white;
+  padding: 0.6rem 0.8rem;
+  color: #0f172a;
+  font-weight: 500;
+  outline: none;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.input-soft:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
