@@ -118,11 +118,30 @@ export default async function CompaniesPage({ searchParams }: CompaniesPageProps
         )}
       </form>
 
+      {(search || region) && (
+        <p className="mt-4 text-sm font-bold text-slate-600" role="status">
+          {total === 0
+            ? `Aucun résultat pour ${search ? `« ${search} »` : "ce filtre"}${region ? ` en ${region}` : ""}.`
+            : `${total} société${total > 1 ? "s" : ""} trouvée${total > 1 ? "s" : ""}${search ? ` pour « ${search} »` : ""}${region ? ` en ${region}` : ""}.`}
+        </p>
+      )}
+
       {companies.length === 0 ? (
-        <EmptyState
-          title="Aucune société référencée pour le moment"
-          description="Les sociétés de nettoyage vérifiées apparaîtront ici. Vous êtes prestataire ? Soyez le premier à créer votre fiche."
-        />
+        search || region ? (
+          <EmptyState
+            title="Aucune société ne correspond à votre recherche"
+            description="Essayez avec un autre nom, une autre ville ou élargissez à toutes les régions."
+            actionLabel="Réinitialiser la recherche"
+            actionHref="/annuaire/societes"
+          />
+        ) : (
+          <EmptyState
+            title="Aucune société référencée pour le moment"
+            description="Les sociétés de nettoyage vérifiées apparaîtront ici. Vous êtes prestataire ? Soyez le premier à créer votre fiche."
+            actionLabel="Référencer ma société"
+            actionHref="/inscription?role=company_owner"
+          />
+        )
       ) : (
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
           {companies.map((company) => (

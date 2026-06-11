@@ -518,6 +518,21 @@ export default function ProfilPage() {
             </Link>
           </section>
         )}
+
+        {/* Bouton de sauvegarde toujours visible en fin de formulaire */}
+        <section className="flex items-center justify-end gap-3">
+          {!isDirty && !saveMessage && (
+            <p className="text-sm font-semibold text-slate-400">Toutes vos modifications sont enregistrées.</p>
+          )}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !isDirty}
+            className="bento-btn bento-btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Save size={14} /> {saving ? "Enregistrement..." : "Enregistrer"}
+          </button>
+        </section>
       </div>
 
       <input type="file" accept="image/*" hidden ref={avatarInputRef} onChange={handleAvatarFileChange} />

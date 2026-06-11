@@ -53,8 +53,13 @@ function MapContent({ companies }: CompanyMapProps) {
       : [46.8, 2.3];
   const zoom = companiesWithCoords.length === 1 ? 9 : 6;
 
+  // Leaflet ignore les changements de la prop `center` après le montage :
+  // la clé force un remontage quand la liste filtrée change, pour recentrer.
+  const mapKey = companiesWithCoords.map((c) => c.id).join(",") || "empty";
+
   return (
     <MapContainer
+      key={mapKey}
       center={center}
       zoom={zoom}
       scrollWheelZoom={false}

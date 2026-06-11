@@ -76,7 +76,7 @@ export default async function SupplierDetailPage({ params }: Props) {
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Famille" value={familyLabel} detail={subCategoryLabel} />
         <StatCard label="Couverture" value={coverage} detail="Zone d'intervention" />
-        <StatCard label="Offre" value={offerTypeLabel || "Service"} detail="Achat / location" />
+        <StatCard label="Offre" value={offerTypeLabel || "Non précisé"} detail="Type d'offre" />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">

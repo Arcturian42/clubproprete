@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
+import { getResourceHref, resourceCategories, resources } from "@/lib/resources";
 
 // Genere a la requete : le contenu depend de la base, qui n'est pas
 // disponible au build (Vercel) et evolue en continu.
@@ -58,9 +59,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/association`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.6 },
     { url: `${baseUrl}/independants`, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 0.6 },
     { url: `${baseUrl}/candidats`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.5 },
+    { url: `${baseUrl}/a-propos`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.4 },
     { url: `${baseUrl}/mentions-legales`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.3 },
     { url: `${baseUrl}/cgu`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.3 },
     { url: `${baseUrl}/politique-confidentialite`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.3 },
+    // Section Ressources : rubriques et pages détail (données statiques).
+    ...resourceCategories.map((category) => ({
+      url: `${baseUrl}/ressources/${category.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
+    ...resources.map((resource) => ({
+      url: `${baseUrl}${getResourceHref(resource)}`,
+      lastModified: new Date(resource.updatedAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
   ];
 
   const dynamicRoutes = [
