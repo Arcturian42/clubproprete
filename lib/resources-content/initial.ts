@@ -1,31 +1,11 @@
-// Contenus rédactionnels complets des ressources, séparés des métadonnées
-// (lib/resources.ts) pour rester lisibles. Une ressource présente ici est
-// considérée comme publiée : la page détail rend l'intégralité du contenu,
-// la FAQ et les données structurées associées.
-//
-// Principes éditoriaux (SEO + GEO) :
-// - l'intro répond directement à la question de la page (featured snippet) ;
-// - des H2 explicites, souvent formulés comme des questions ;
-// - des listes et tableaux facilement citables par les moteurs génératifs ;
-// - des ordres de grandeur prudents plutôt que des chiffres inventés ;
-// - une FAQ courte qui couvre les requêtes associées.
+// Première vague de contenus publiés (P0) : guides piliers, modèles
+// devis/sous-traitance/cahier des charges, calculateur de prix, comparatif
+// autolaveuses, plan de prévention et analyses marché.
 
-export type ContentSection = {
-  heading: string;
-  paragraphs?: string[];
-  bullets?: string[];
-  table?: { caption: string; headers: string[]; rows: string[][] };
-};
+import type { ResourceContent } from "./types";
 
-export type ResourceFaqItem = { q: string; a: string };
+export const initialContents: Record<string, ResourceContent> = {
 
-export type ResourceContent = {
-  intro: string;
-  sections: ContentSection[];
-  faq?: ResourceFaqItem[];
-};
-
-export const resourceContents: Record<string, ResourceContent> = {
   // ── Guides ────────────────────────────────────────────────────────────────
   "creer-entreprise-nettoyage": {
     intro:
@@ -739,7 +719,3 @@ export const resourceContents: Record<string, ResourceContent> = {
     ],
   },
 };
-
-export function getResourceContent(id: string): ResourceContent | undefined {
-  return resourceContents[id];
-}
