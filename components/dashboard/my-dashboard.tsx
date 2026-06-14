@@ -117,33 +117,18 @@ const fallbackDashboards: Record<string, DashboardSeed> = {
     label: "Espace formation",
     summary: "Référencer vos formations, suivre les validations et recevoir les demandes d'information.",
     actions: [],
-    metrics: [
-      { label: "Formations", value: "0" },
-      { label: "Statut", value: "À compléter" },
-      { label: "Demandes", value: "0" },
-    ],
   },
   author: {
     role: "author",
     label: "Espace rédaction",
     summary: "Préparer des articles et ressources pour alimenter le média Club Propreté.",
     actions: [],
-    metrics: [
-      { label: "Brouillons", value: "1" },
-      { label: "Publiés", value: "0" },
-      { label: "SEO", value: "À faire" },
-    ],
   },
   registered_user: {
     role: "registered_user",
     label: "Mon espace",
     summary: "Complétez votre profil pour activer les modules adaptés à votre activité.",
     actions: [],
-    metrics: [
-      { label: "Profil", value: "20%" },
-      { label: "Statut", value: "Inscrit" },
-      { label: "Module", value: "À choisir" },
-    ],
   },
 };
 
@@ -403,16 +388,13 @@ export function MyDashboard({
   const isCompanyRole = user.role === "company_owner" || user.role === "verified_company";
 
   if (isCompanyRole) {
-    // Aligne les métriques de démo sur les vraies données : même score que la
-    // bannière de complétion, vrai statut d'adhésion.
+    // Uniquement de vraies données : score de complétion réel et statut
+    // d'adhésion effectif (aucune métrique de démonstration).
     const realScore = company ? computeCompanyScore(company).score : 0;
-    const companyMetrics = dashboard.metrics.map((metric) => {
-      if (metric.label === "Score profil") return { ...metric, value: `${realScore}%` };
-      if (metric.label === "Statut association") {
-        return { ...metric, value: user.associationMember ? "Validée" : "Non membre" };
-      }
-      return metric;
-    });
+    const companyMetrics = [
+      { label: "Score profil", value: `${realScore}%` },
+      { label: "Statut association", value: user.associationMember ? "Validée" : "Non membre" },
+    ];
 
     return (
       <div className="grid gap-6">
@@ -448,7 +430,7 @@ export function MyDashboard({
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {companyMetrics.map((metric) => (
               <StatCard key={metric.label} label={metric.label} value={metric.value} />
             ))}
@@ -554,12 +536,6 @@ export function MyDashboard({
               <span className="bento-tag border-slate-300 bg-slate-50 text-slate-700">Non membre association</span>
             )}
           </div>
-        </div>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {dashboard.metrics.map((metric) => (
-            <StatCard key={metric.label} label={metric.label} value={metric.value} />
-          ))}
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2">

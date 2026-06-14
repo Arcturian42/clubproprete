@@ -188,5 +188,4 @@ export type DashboardSeed = {
   label: string;
   summary: string;
   actions: string[];
-  metrics: { label: string; value: string }[];
 };
