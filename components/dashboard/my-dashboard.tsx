@@ -283,7 +283,7 @@ function MediaCard({
         <Mic size={18} aria-hidden="true" />
         Média Club Propreté
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Link
           href="/dashboard/auteur"
           className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 cursor-pointer text-center"

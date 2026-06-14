@@ -40,7 +40,7 @@ export default async function HomePage() {
             <span className="bento-tag border-indigo-600 bg-indigo-50 text-indigo-700">
               <Sparkles size={12} aria-hidden="true" /> Club professionnel gratuit
             </span>
-            <h1 className="mt-4 text-4xl font-black leading-tight text-slate-900 sm:text-6xl">Club Propreté</h1>
+            <h1 className="mt-4 text-3xl font-black leading-tight text-slate-900 sm:text-5xl lg:text-6xl">Club Propreté</h1>
             <p className="mt-3 text-xl font-extrabold text-indigo-600 sm:text-2xl">
               Le club professionnel gratuit de la propreté
             </p>
