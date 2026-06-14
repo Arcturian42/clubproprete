@@ -49,7 +49,7 @@ test.describe('Flux auteur (demande → validation → panel)', () => {
     await page.goto('/dashboard/auteur');
 
     await page.locator('input[name="title"]').fill(articleTitle);
-    await page.locator('input[name="category"]').fill('Tribune');
+    await page.locator('select[name="category"]').selectOption('Actualités du secteur');
     await page.locator('textarea[name="excerpt"]').fill('Résumé de tribune pour valider le flux auteur QA.');
     await page
       .locator('textarea[name="content"]')
