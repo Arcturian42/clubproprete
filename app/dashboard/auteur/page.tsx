@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { AuthorDashboard } from "@/components/author-dashboard";
 import { PageShell } from "@/components/page-shell";
 import { getMyAuthorWorkspace } from "@/lib/actions/articles";
+import { getBlogCategories } from "@/lib/resources";
 
 export default async function AuthorDashboardPage() {
   const session = await auth();
@@ -26,6 +27,7 @@ export default async function AuthorDashboardPage() {
       }
     >
       <AuthorDashboard
+        categories={getBlogCategories()}
         canWrite={workspace.canWrite}
         application={
           workspace.application

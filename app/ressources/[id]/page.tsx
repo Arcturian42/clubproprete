@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
@@ -188,10 +189,12 @@ export default async function ArticleDetailPage({ params }: Props) {
 
           {/* Contenu */}
           <article className="surface p-6 lg:p-8">
-            <div className="prose prose-slate max-w-none prose-lg">
-              <p className="leading-relaxed text-slate-600 whitespace-pre-wrap">
-                {article.content || "Contenu de l'article en cours de rédaction."}
-              </p>
+            <div className="prose prose-slate prose-lg max-w-none prose-img:rounded-[14px] prose-img:border-2 prose-img:border-slate-900">
+              {article.content ? (
+                <ReactMarkdown>{article.content}</ReactMarkdown>
+              ) : (
+                <p className="text-slate-500">Contenu de l&apos;article en cours de rédaction.</p>
+              )}
             </div>
           </article>
 
