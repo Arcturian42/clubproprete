@@ -139,7 +139,8 @@ const providers: Provider[] = [
 
       const { email, password } = parsed.data;
       const user = await findUserWithContext(email);
-      if (!user || !user.passwordHash) return null;
+      // Un compte supprimé (soft-delete) ne peut plus se connecter.
+      if (!user || user.deletedAt || !user.passwordHash) return null;
 
       const valid = await bcrypt.compare(password, user.passwordHash);
       if (!valid) return null;
@@ -186,6 +187,8 @@ export const {
 
       try {
         let dbUser = await findUserWithContext(email);
+        // Un compte supprimé n'est jamais réutilisé : on en recrée un nouveau.
+        if (dbUser?.deletedAt) dbUser = null;
 
         if (!dbUser) {
           const fullName = (profile?.name ?? "").trim();

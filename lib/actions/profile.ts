@@ -157,3 +157,58 @@ export async function getUserProfile(userId: string) {
   const { passwordHash: _passwordHash, ...safeUser } = user;
   return safeUser;
 }
+
+/**
+ * Suppression du compte par l'utilisateur lui-même : soft-delete (deletedAt)
+ * + anonymisation des données personnelles. L'email d'origine est remplacé par
+ * une adresse « tombstone » pour le libérer (réinscription possible) et le
+ * mot de passe est effacé : plus aucune connexion n'est possible (un garde
+ * `deletedAt` est aussi présent côté authentification).
+ */
+export async function deleteMyAccount() {
+  try {
+    const limit = rateLimitByIp(await getClientIp(), "delete_account", 5, 3_600_000);
+    if (!limit.success) {
+      return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
+    }
+
+    const session = await requireUser();
+    const userId = session.user.id;
+
+    const existing = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return { success: false, message: "Compte introuvable ou déjà supprimé." };
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        deletedAt: new Date(),
+        status: "suspended",
+        passwordHash: null,
+        email: `deleted-${userId}@comptes-supprimes.clubproprete.local`,
+        firstName: "Compte",
+        lastName: "supprimé",
+        phone: null,
+        avatarUrl: null,
+        bio: null,
+        photos: null,
+        address: null,
+        city: null,
+        newsletterOptIn: false,
+      },
+    });
+
+    return { success: true };
+  } catch (err) {
+    if (err instanceof PermissionError) {
+      return { success: false, message: err.message };
+    }
+    console.error("deleteMyAccount error:", err);
+    return { success: false, message: "Une erreur est survenue. Veuillez réessayer." };
+  }
+}
