@@ -86,10 +86,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Aucun fichier fourni." }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ success: false, error: "Type de fichier non autorisé." }, { status: 400 });
-    }
-
     if (file.size > MAX_SIZE) {
       return NextResponse.json({ success: false, error: "Fichier trop volumineux (max 5Mo)." }, { status: 400 });
     }
@@ -102,10 +98,12 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Validation par signature binaire : le contenu réel doit correspondre à un type
-    // autorisé ET au type déclaré (anti-usurpation de Content-Type).
+    // Sécurité : on valide par la signature binaire (magic bytes), source fiable,
+    // et NON par le `file.type` déclaré par le navigateur — celui-ci est
+    // falsifiable et parfois incohérent (image/jpg, image/pjpeg, type vide),
+    // ce qui rejetait à tort des fichiers valides.
     const detectedType = sniffMimeType(buffer);
-    if (!detectedType || !ALLOWED_TYPES.includes(detectedType) || detectedType !== file.type) {
+    if (!detectedType || !ALLOWED_TYPES.includes(detectedType)) {
       return NextResponse.json(
         { success: false, error: "Le contenu du fichier ne correspond pas à un type autorisé." },
         { status: 400 }

@@ -4,8 +4,9 @@ export function JsonLd({ data }: { data: object | object[] }) {
   return (
     <script
       type="application/ld+json"
-      // Le contenu est généré côté serveur à partir de nos données : pas de saisie utilisateur brute.
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+      // On échappe `<` pour empêcher toute rupture de la balise via `</script>`
+      // (défense contre une injection si des données dynamiques/DB sont incluses).
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
     />
   );
 }
