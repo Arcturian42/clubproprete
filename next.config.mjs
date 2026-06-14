@@ -10,7 +10,8 @@ const csp = [
   // Next.js needs unsafe-inline/unsafe-eval in dev for HMR; tighter in prod
   `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.tile.openstreetmap.org",
+  // Vercel Blob (photos/documents uploadés) + tuiles OpenStreetMap de la carte.
+  "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://*.tile.openstreetmap.org",
   "font-src 'self' data:",
   // recherche-entreprises.api.gouv.fr : autocomplétion SIRET de l'onboarding
   "connect-src 'self' https://recherche-entreprises.api.gouv.fr",
