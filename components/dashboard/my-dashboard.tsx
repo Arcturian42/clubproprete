@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ClipboardList, ShieldCheck, Building2, Briefcase, Shield, Mic, Package, GraduationCap, Hammer, PenLine, Headphones, Youtube } from "lucide-react";
-import { CandidateDashboard, type CandidateProfileSummary } from "@/components/dashboard/candidate-dashboard";
+import { ArrowRight, ClipboardList, ShieldCheck, Building2, Briefcase, BriefcaseBusiness, Shield, Mic, Package, GraduationCap, Hammer, PenLine, Headphones, Youtube } from "lucide-react";
+import { CandidateDashboard, ApplicationsList, type CandidateProfileSummary } from "@/components/dashboard/candidate-dashboard";
 import { EntityCard } from "@/components/entity-card";
 import { StatCard } from "@/components/stat-card";
 import { roleLabels } from "@/lib/auth-demo";
