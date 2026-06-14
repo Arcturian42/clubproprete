@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ClipboardList, ShieldCheck, Building2, Briefcase, BriefcaseBusiness, Shield, Mic, Package, GraduationCap, Hammer, PenLine, Headphones, Youtube } from "lucide-react";
+import { ArrowRight, ClipboardList, ShieldCheck, Building2, Briefcase, BriefcaseBusiness, Shield, Mic, Package, GraduationCap, Hammer, PenLine, Headphones, Youtube, PlusCircle } from "lucide-react";
 import { CandidateDashboard, ApplicationsList, type CandidateProfileSummary } from "@/components/dashboard/candidate-dashboard";
 import { EntityCard } from "@/components/entity-card";
 import { StatCard } from "@/components/stat-card";
@@ -76,40 +76,93 @@ const roleActions: Record<string, Array<{ label: string; href: string }>> = {
   ],
 };
 
-// Fonctionnalités activables par un compte sans fiche : chaque carte relance
-// l'onboarding avec l'intention correspondante.
-const activationCards = [
+// Activités activables : chaque carte relance l'onboarding avec l'intention
+// correspondante. La clé sert à n'afficher que les activités non encore activées
+// (un compte peut cumuler plusieurs fiches : société + fournisseur, etc.).
+export type ActivityKey = "company" | "supplier" | "training" | "independent" | "job_seeker";
+
+const activationCards: Array<{
+  key: ActivityKey;
+  title: string;
+  subtitle: string;
+  href: string;
+  icon: typeof Building2;
+}> = [
   {
+    key: "company",
     title: "Créer ma fiche société",
     subtitle: "Annuaire, recrutement, sous-traitance pour votre entreprise de propreté.",
     href: "/onboarding?intent=company",
     icon: Building2,
   },
   {
+    key: "supplier",
     title: "Devenir fournisseur",
     subtitle: "Présentez vos produits, machines ou logiciels aux professionnels.",
     href: "/onboarding?intent=supplier",
     icon: Package,
   },
   {
+    key: "training",
     title: "Créer mon centre de formation",
     subtitle: "Référencez votre organisme et proposez vos formations.",
     href: "/onboarding?intent=training",
     icon: GraduationCap,
   },
   {
+    key: "independent",
     title: "Je suis indépendant",
     subtitle: "Auto-entrepreneur ou sous-traitant : créez votre profil pro.",
     href: "/onboarding?intent=independent",
     icon: Hammer,
   },
   {
+    key: "job_seeker",
     title: "Je cherche un emploi",
     subtitle: "Créez votre profil candidat et postulez aux offres du secteur.",
     href: "/onboarding?intent=job_seeker",
     icon: Briefcase,
   },
 ];
+
+/**
+ * Section « Ajouter une activité » : propose d'activer les fiches que
+ * l'utilisateur ne possède pas encore. Masquée si tout est déjà activé.
+ */
+function AddActivitySection({ owned }: { owned?: Partial<Record<ActivityKey, boolean>> }) {
+  const available = activationCards.filter((card) => !owned?.[card.key]);
+  if (available.length === 0) return null;
+
+  return (
+    <section className="surface p-6">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="rounded-[14px] border-2 border-slate-900 bg-amber-400 p-2.5 text-slate-900 shadow-[3px_3px_0px_#0f172a]">
+          <PlusCircle size={18} aria-hidden="true" />
+        </div>
+        <div>
+          <p className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">Ajouter une activité</p>
+          <h2 className="text-xl font-black text-slate-900">Cumulez plusieurs statuts</h2>
+        </div>
+      </div>
+      <p className="mb-5 text-sm font-medium leading-6 text-slate-500">
+        Vous pouvez être à la fois société, fournisseur, centre de formation… Activez une fiche supplémentaire :
+        votre profil et vos accès actuels sont conservés.
+      </p>
+      <div className="grid gap-5 lg:grid-cols-3">
+        {available.map((card) => {
+          const Icon = card.icon;
+          return (
+            <EntityCard key={card.key} title={card.title} subtitle={card.subtitle}>
+              <Link href={card.href} className="bento-btn bento-btn-primary w-full block text-center">
+                <Icon size={16} className="inline mr-2" /> Activer
+              </Link>
+            </EntityCard>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 const fallbackDashboards: Record<string, DashboardSeed> = {
   training_organization: {
@@ -297,6 +350,7 @@ export function MyDashboard({
   jobsCount,
   trainingsCount,
   company,
+  ownedActivities,
 }: {
   user: { id: string; role: string; firstName: string; lastName: string; associationMember: boolean; organization: string | null; email: string; phone: string };
   candidateApplications?: Awaited<ReturnType<typeof import("@/lib/actions/jobs").getCandidateApplications>>;
@@ -304,6 +358,7 @@ export function MyDashboard({
   jobsCount?: number;
   trainingsCount?: number;
   company?: CompanyProfile;
+  ownedActivities?: Partial<Record<ActivityKey, boolean>>;
 }) {
   const dashboard = getDashboardForRole(user.role as Role);
   const primaryHref = getPrimaryHref(user.role as Role);
@@ -500,6 +555,8 @@ export function MyDashboard({
             </EntityCard>
           )}
         </div>
+
+        <AddActivitySection owned={ownedActivities} />
       </div>
     );
   }
@@ -560,6 +617,8 @@ export function MyDashboard({
       {(user.role === "supplier_owner" || user.role === "verified_supplier" || user.role === "independent_profile") && (
         <MediaCard user={user} />
       )}
+
+      <AddActivitySection owned={ownedActivities} />
     </div>
   );
 }
