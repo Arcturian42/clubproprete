@@ -24,6 +24,14 @@ const csp = [
 const nextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: __dirname,
+  images: {
+    // next/image proxifie et optimise les images distantes via /_next/image
+    // (same-origin → conforme à la CSP `img-src 'self'`). On autorise tout hôte
+    // HTTPS car les sources sont variées : Vercel Blob (uploads), avatars Google
+    // (lh3.googleusercontent.com), logos/visuels saisis. Le proxy same-origin
+    // évite d'avoir à élargir la CSP image.
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
+  },
   async headers() {
     const headers = [
       { key: "X-Frame-Options", value: "DENY" },

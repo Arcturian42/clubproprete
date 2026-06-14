@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
@@ -263,9 +264,11 @@ export default function ProfilPage() {
           <div className="flex items-center gap-5">
             <div className="relative shrink-0">
               {profile.avatar ? (
-                <img
+                <Image
                   src={profile.avatar}
                   alt={`${profile.firstName} ${profile.lastName}`}
+                  width={80}
+                  height={80}
                   className="h-20 w-20 rounded-full border border-slate-200 object-cover"
                 />
               ) : (
@@ -435,9 +438,11 @@ export default function ProfilPage() {
               <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
                 {profile.photos.map((photo, index) => (
                   <div key={index} className="group relative">
-                    <img
+                    <Image
                       src={photo}
                       alt={`Photo ${index + 1}`}
+                      width={600}
+                      height={400}
                       className="h-24 w-full rounded-lg border border-slate-200 object-cover"
                     />
                     <button

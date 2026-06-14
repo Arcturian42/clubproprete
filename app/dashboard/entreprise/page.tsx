@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
@@ -357,7 +358,7 @@ export default function EntrepriseProfilePage() {
             <div className="flex flex-col md:flex-row gap-6">
               <div className="shrink-0">
                 {profile.logo ? (
-                  <img src={profile.logo} alt="Logo" className="w-32 h-32 rounded-[20px] border-4 border-slate-900 object-cover shadow-[4px_4px_0px_#0f172a]" />
+                  <Image src={profile.logo} alt="Logo" width={128} height={128} className="w-32 h-32 rounded-[20px] border-4 border-slate-900 object-cover shadow-[4px_4px_0px_#0f172a]" />
                 ) : (
                   <div className="w-32 h-32 rounded-[20px] border-4 border-slate-900 bg-indigo-100 flex items-center justify-center shadow-[4px_4px_0px_#0f172a]">
                     <Building2 size={48} className="text-indigo-600" />
@@ -400,7 +401,7 @@ export default function EntrepriseProfilePage() {
                   <h2 className="text-xl font-black text-slate-900 mb-4">Galerie</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {profile.photos.map((photo, index) => (
-                      <img key={index} src={photo} alt={`Réalisation ${index + 1}`} className="w-full h-48 object-cover rounded-[14px] border-2 border-slate-900" />
+                      <Image key={index} src={photo} alt={`Réalisation ${index + 1}`} width={600} height={400} className="w-full h-48 object-cover rounded-[14px] border-2 border-slate-900" />
                     ))}
                   </div>
                 </div>
@@ -529,7 +530,7 @@ export default function EntrepriseProfilePage() {
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 {profile.logo ? (
-                  <img src={profile.logo} alt="Logo" className="w-32 h-32 rounded-[20px] border-4 border-slate-900 object-cover shadow-[4px_4px_0px_#0f172a]" />
+                  <Image src={profile.logo} alt="Logo" width={128} height={128} className="w-32 h-32 rounded-[20px] border-4 border-slate-900 object-cover shadow-[4px_4px_0px_#0f172a]" />
                 ) : (
                   <div className="w-32 h-32 rounded-[20px] border-4 border-slate-900 bg-indigo-100 flex items-center justify-center shadow-[4px_4px_0px_#0f172a]">
                     <Building2 size={48} className="text-indigo-600" />
@@ -662,7 +663,7 @@ export default function EntrepriseProfilePage() {
               <div className="grid grid-cols-2 gap-4">
                 {profile.photos.map((photo, index) => (
                   <div key={index} className="relative group">
-                    <img src={photo} alt={`Réalisation ${index + 1}`} className="w-full h-32 object-cover rounded-[14px] border-2 border-slate-900" />
+                    <Image src={photo} alt={`Réalisation ${index + 1}`} width={600} height={400} className="w-full h-32 object-cover rounded-[14px] border-2 border-slate-900" />
                     {isEditing && <button onClick={() => handleRemovePhoto(index)} className="absolute -top-2 -right-2 bento-btn bg-red-500 text-white p-1 border-red-600 shadow-[2px_2px_0px_#991b1b]"><Trash2 size={14} /></button>}
                   </div>
                 ))}

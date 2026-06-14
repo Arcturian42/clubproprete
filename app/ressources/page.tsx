@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpenText, MailPlus, Search } from "lucide-react";
 import { PageShell } from "@/components/page-shell";
@@ -241,7 +242,7 @@ export default async function ResourcesHubPage({ searchParams }: ResourcesPagePr
             <article key={article.id} className="bento-card bento-card-interactive overflow-hidden">
               <div className="relative h-36 w-full overflow-hidden bg-slate-100">
                 {article.featuredImage ? (
-                  <img src={article.featuredImage} alt={article.title} className="h-full w-full object-cover" />
+                  <Image src={article.featuredImage} alt={article.title} width={600} height={400} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-100 to-slate-100">
                     <BookOpenText size={28} className="text-indigo-300" aria-hidden="true" />
