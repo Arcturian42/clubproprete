@@ -32,7 +32,7 @@ function MapContent({ companies }: CompanyMapProps) {
 
   if (!MapContainer) {
     return (
-      <div className="h-[500px] surface flex items-center justify-center">
+      <div className="h-[360px] sm:h-[440px] lg:h-[500px] surface flex items-center justify-center">
         Chargement de la carte…
       </div>
     );
@@ -63,8 +63,8 @@ function MapContent({ companies }: CompanyMapProps) {
       center={center}
       zoom={zoom}
       scrollWheelZoom={false}
-      style={{ height: "500px", width: "100%", borderRadius: "20px" }}
-      className="border-2 border-slate-900"
+      style={{ width: "100%", borderRadius: "20px" }}
+      className="h-[360px] sm:h-[440px] lg:h-[500px] border-2 border-slate-900"
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

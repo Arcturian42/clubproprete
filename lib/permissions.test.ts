@@ -94,7 +94,11 @@ test("PermissionError carries an authorization code", () => {
   assert.equal(error.message, "Refusé");
 });
 
-test("requireEntityRole resolves active EntityMember roles", async () => {
+test("requireEntityRole resolves active EntityMember roles", {
+  // Ce test nécessite une vraie base de données ; il est ignoré (et non échoué)
+  // lorsque DATABASE_URL n'est pas configurée (ex. exécution locale sans Postgres).
+  skip: process.env.DATABASE_URL ? false : "DATABASE_URL requis pour ce test d'intégration",
+}, async () => {
   const owner = await prisma.user.create({
     data: {
       email: `owner-${Date.now()}@clubproprete.test`,
