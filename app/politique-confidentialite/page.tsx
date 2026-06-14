@@ -16,7 +16,7 @@ export default function PolitiqueConfidentialitePage() {
         <section>
           <h2 className="text-xl font-black text-slate-900 mb-3">1. Responsable du traitement</h2>
           <p className="text-sm font-medium leading-7 text-slate-600">
-            Le responsable du traitement des données est Club Propreté. Contact : contact@clubproprete.fr.
+            Le responsable du traitement des données est Club Propreté. Contact : contact@clubproprete.com.
             Les données sont hébergées sur des serveurs situés dans l'Union Européenne.
           </p>
         </section>
@@ -73,7 +73,7 @@ export default function PolitiqueConfidentialitePage() {
             <li>Droit de retirer votre consentement à tout moment</li>
           </ul>
           <p className="text-sm font-medium leading-7 text-slate-600 mt-2">
-            Pour exercer ces droits, contactez-nous à <a href="mailto:contact@clubproprete.fr" className="text-indigo-600 hover:underline font-bold">contact@clubproprete.fr</a>.
+            Pour exercer ces droits, contactez-nous à <a href="mailto:contact@clubproprete.com" className="text-indigo-600 hover:underline font-bold">contact@clubproprete.com</a>.
             Vous pouvez également introduire une réclamation auprès de la CNIL.
           </p>
         </section>

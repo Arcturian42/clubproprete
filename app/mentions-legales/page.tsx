@@ -19,7 +19,7 @@ export default function MentionsLegalesPage() {
             <p><strong>Raison sociale :</strong> Club Propreté</p>
             <p><strong>Forme juridique :</strong> Association en cours de constitution</p>
             <p><strong>Siège social :</strong> France</p>
-            <p><strong>Email :</strong> contact@clubproprete.fr</p>
+            <p><strong>Email :</strong> contact@clubproprete.com</p>
             <p><strong>Directeur de la publication :</strong> Administrateur Club Propreté</p>
           </div>
         </section>
@@ -62,7 +62,7 @@ export default function MentionsLegalesPage() {
           <h2 className="text-xl font-black text-slate-900 mb-3">Contact</h2>
           <p className="text-sm font-medium leading-7 text-slate-600">
             Pour toute question relative aux mentions légales ou au fonctionnement du site, contactez-nous à
-            l'adresse <a href="mailto:contact@clubproprete.fr" className="text-indigo-600 hover:underline font-bold">contact@clubproprete.fr</a>.
+            l'adresse <a href="mailto:contact@clubproprete.com" className="text-indigo-600 hover:underline font-bold">contact@clubproprete.com</a>.
           </p>
         </section>
       </div>
