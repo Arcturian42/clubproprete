@@ -7,6 +7,7 @@ import { NewsletterForm } from "@/components/newsletter-form";
 import { ResourceCard } from "@/components/resources/resource-card";
 import { getPublishedArticles } from "@/lib/actions/articles";
 import {
+  getBlogCategories,
   getPopularResources,
   getResourceById,
   getResourceCategory,
@@ -23,16 +24,16 @@ export const metadata = {
 };
 
 interface ResourcesPageProps {
-  searchParams: Promise<{ q?: string; search?: string }>;
+  searchParams: Promise<{ q?: string; search?: string; category?: string }>;
 }
 
 type ArticleItems = Awaited<ReturnType<typeof getPublishedArticles>>["items"];
 
 // Le hub est essentiellement statique : si la base est indisponible, on
 // affiche quand même les ressources sans la section articles.
-async function safeGetArticles(search?: string): Promise<ArticleItems> {
+async function safeGetArticles(search?: string, category?: string): Promise<ArticleItems> {
   try {
-    const { items } = await getPublishedArticles(search, 1);
+    const { items } = await getPublishedArticles(search, 1, 12, category);
     return items;
   } catch (error) {
     console.error("ressources: articles indisponibles", error);
@@ -44,9 +45,12 @@ export default async function ResourcesHubPage({ searchParams }: ResourcesPagePr
   const params = await searchParams;
   // `search` est conservé pour compatibilité avec les anciens liens du blog.
   const query = (params.q || params.search || "").trim();
+  const blogCategories = getBlogCategories();
+  const activeCategory = params.category && blogCategories.includes(params.category) ? params.category : undefined;
 
   const matchingResources = query ? searchResources(query) : [];
   const matchingArticles = query ? await safeGetArticles(query) : [];
+  const categoryArticles = activeCategory ? await safeGetArticles(undefined, activeCategory) : [];
   const latestArticles = await safeGetArticles();
 
   const popularResources = getPopularResources();
@@ -91,6 +95,77 @@ export default async function ResourcesHubPage({ searchParams }: ResourcesPagePr
           </Link>
         )}
       </form>
+
+      {/* Catégories du blog */}
+      <div className="mt-5 flex flex-wrap gap-2">
+        <Link
+          href="/ressources"
+          className={`bento-tag ${
+            !activeCategory
+              ? "border-indigo-600 bg-indigo-600 text-white"
+              : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+          }`}
+        >
+          Toutes les actualités
+        </Link>
+        {blogCategories.map((cat) => (
+          <Link
+            key={cat}
+            href={`/ressources?category=${encodeURIComponent(cat)}`}
+            className={`bento-tag ${
+              activeCategory === cat
+                ? "border-indigo-600 bg-indigo-600 text-white"
+                : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+            }`}
+          >
+            {cat}
+          </Link>
+        ))}
+      </div>
+
+      {/* Articles d'une catégorie sélectionnée */}
+      {activeCategory && (
+        <section className="mt-8">
+          <h2 className="text-2xl font-black text-slate-900">{activeCategory}</h2>
+          {categoryArticles.length === 0 ? (
+            <div className="mt-4">
+              <EmptyState
+                title="Aucun article dans cette catégorie pour l'instant"
+                description="Revenez bientôt, ou explorez les autres catégories du blog."
+                actionLabel="Toutes les actualités"
+                actionHref="/ressources"
+              />
+            </div>
+          ) : (
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {categoryArticles.map((article) => (
+                <article key={article.id} className="bento-card bento-card-interactive overflow-hidden">
+                  <div className="relative h-36 w-full overflow-hidden bg-slate-100">
+                    {article.featuredImage ? (
+                      <Image src={article.featuredImage} alt={article.title} width={600} height={400} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-100 to-slate-100">
+                        <BookOpenText size={28} className="text-indigo-300" aria-hidden="true" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <span className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">{article.category || "Article"}</span>
+                    <h3 className="mt-2 text-base font-bold text-slate-900">
+                      <Link href={`/ressources/${article.slug || article.id}`} className="hover:text-indigo-600">
+                        {article.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-slate-500">
+                      {article.excerpt || "Lire l'article pour en savoir plus."}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Résultats de recherche */}
       {query && (
@@ -231,12 +306,7 @@ export default async function ResourcesHubPage({ searchParams }: ResourcesPagePr
 
       {/* Dernières publications */}
       <section className="mt-12">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-black text-slate-900">Dernières publications</h2>
-          <Link href="/ressources/media" className="bento-btn text-sm">
-            Voir le média →
-          </Link>
-        </div>
+        <h2 className="text-2xl font-black text-slate-900">Dernières publications</h2>
         <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {latestArticles.slice(0, 3).map((article) => (
             <article key={article.id} className="bento-card bento-card-interactive overflow-hidden">

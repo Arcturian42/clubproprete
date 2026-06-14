@@ -43,8 +43,11 @@ export async function hasAuthorAccess(userId: string, role?: string | null) {
   return Boolean(approvedApplication);
 }
 
-export async function getPublishedArticles(search?: string, page?: number, limit = 12) {
+export async function getPublishedArticles(search?: string, page?: number, limit = 12, category?: string) {
   const where: Record<string, unknown> = { status: "published", deletedAt: null };
+  if (category) {
+    where.category = category;
+  }
   if (search) {
     where.OR = [
       { title: { contains: search, mode: "insensitive" } },

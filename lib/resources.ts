@@ -1042,6 +1042,18 @@ export function getResourceHref(resource: Resource): string {
   return `/ressources/${resource.category}/${resource.slug}`;
 }
 
+// Catégories éditoriales du blog : dérivées de la rubrique « média » du
+// méga-menu. Utilisées pour filtrer le blog (/ressources?category=) et pour
+// proposer une liste fermée aux auteurs lors de la rédaction.
+export function getBlogCategories(): string[] {
+  const media = resourceCategories.find((category) => category.slug === "media");
+  if (!media) return [];
+  return media.menuResourceIds
+    .map((id) => getResourceById(id))
+    .filter((resource): resource is Resource => Boolean(resource))
+    .map((resource) => resource.title);
+}
+
 export function getPopularResources(): Resource[] {
   return resources.filter((resource) => resource.isPopular);
 }
