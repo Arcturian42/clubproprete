@@ -7,8 +7,24 @@ import {
   getResourceById,
   getResourceHref,
   resourceCategories,
+  type Resource,
   type ResourceCategory,
 } from "@/lib/resources";
+
+// La rubrique « média » n'est pas une série de landing pages SEO : c'est le
+// blog. Son en-tête renvoie vers /ressources et ses items deviennent des
+// catégories du blog (/ressources?category=…).
+const BLOG_CATEGORY_SLUG = "media";
+
+function categoryHeaderHref(category: ResourceCategory): string {
+  return category.slug === BLOG_CATEGORY_SLUG ? "/ressources" : `/ressources/${category.slug}`;
+}
+
+function categoryItemHref(category: ResourceCategory, resource: Resource): string {
+  return category.slug === BLOG_CATEGORY_SLUG
+    ? `/ressources?category=${encodeURIComponent(resource.title)}`
+    : getResourceHref(resource);
+}
 
 function CategoryLinks({ category, onNavigate }: { category: ResourceCategory; onNavigate?: () => void }) {
   return (
@@ -19,7 +35,7 @@ function CategoryLinks({ category, onNavigate }: { category: ResourceCategory; o
         return (
           <li key={id}>
             <Link
-              href={getResourceHref(resource)}
+              href={categoryItemHref(category, resource)}
               onClick={onNavigate}
               className="block rounded-[8px] px-1.5 py-0.5 text-xs font-semibold normal-case tracking-normal text-slate-500 hover:bg-indigo-50 hover:text-indigo-700"
             >
@@ -30,7 +46,7 @@ function CategoryLinks({ category, onNavigate }: { category: ResourceCategory; o
       })}
       <li>
         <Link
-          href={`/ressources/${category.slug}`}
+          href={categoryHeaderHref(category)}
           onClick={onNavigate}
           className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-extrabold normal-case tracking-normal text-indigo-600 hover:underline"
         >
@@ -114,7 +130,7 @@ export function ResourcesMegaMenu() {
                 return (
                   <div key={category.slug}>
                     <Link
-                      href={`/ressources/${category.slug}`}
+                      href={categoryHeaderHref(category)}
                       onClick={close}
                       className="group flex items-center gap-2"
                     >
@@ -202,7 +218,7 @@ export function ResourcesMobileMenu({ onNavigate }: { onNavigate: () => void }) 
                       return (
                         <li key={id}>
                           <Link
-                            href={getResourceHref(resource)}
+                            href={categoryItemHref(category, resource)}
                             onClick={onNavigate}
                             className="block rounded-[8px] px-2 py-1 text-xs font-semibold normal-case tracking-normal text-slate-500 hover:bg-indigo-50 hover:text-indigo-700"
                           >
@@ -213,7 +229,7 @@ export function ResourcesMobileMenu({ onNavigate }: { onNavigate: () => void }) 
                     })}
                     <li>
                       <Link
-                        href={`/ressources/${category.slug}`}
+                        href={categoryHeaderHref(category)}
                         onClick={onNavigate}
                         className="block px-2 py-1 text-xs font-extrabold normal-case tracking-normal text-indigo-600"
                       >

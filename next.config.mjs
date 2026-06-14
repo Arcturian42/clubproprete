@@ -50,6 +50,10 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // La rubrique « média » est désormais le blog : on consolide les anciennes
+      // landing pages média vers /ressources (catégories du blog).
+      { source: "/ressources/media", destination: "/ressources", permanent: true },
+      { source: "/ressources/media/:slug", destination: "/ressources", permanent: true },
       { source: "/societes", destination: "/annuaire/societes", permanent: true },
       { source: "/fournisseurs", destination: "/annuaire/fournisseurs", permanent: true },
       { source: "/centres-formation", destination: "/annuaire/centres-formation", permanent: true },

@@ -66,18 +66,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/cgu`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.3 },
     { url: `${baseUrl}/politique-confidentialite`, lastModified: new Date(), changeFrequency: "yearly" as const, priority: 0.3 },
     // Section Ressources : rubriques et pages détail (données statiques).
-    ...resourceCategories.map((category) => ({
-      url: `${baseUrl}/ressources/${category.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    })),
-    ...resources.map((resource) => ({
-      url: `${baseUrl}${getResourceHref(resource)}`,
-      lastModified: new Date(resource.updatedAt),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    })),
+    // La rubrique « média » redirige vers le blog : on l'exclut du sitemap.
+    ...resourceCategories
+      .filter((category) => category.slug !== "media")
+      .map((category) => ({
+        url: `${baseUrl}/ressources/${category.slug}`,
+        lastModified: new Date(),
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      })),
+    ...resources
+      .filter((resource) => resource.category !== "media")
+      .map((resource) => ({
+        url: `${baseUrl}${getResourceHref(resource)}`,
+        lastModified: new Date(resource.updatedAt),
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
+      })),
   ];
 
   const dynamicRoutes = [
