@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Quote, ThumbsUp, UserRound, X } from "lucide-react";
@@ -88,9 +89,11 @@ export function RecommendationsManager() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 {reco.author?.avatarUrl ? (
-                  <img
+                  <Image
                     src={reco.author.avatarUrl}
                     alt=""
+                    width={36}
+                    height={36}
                     className="h-9 w-9 rounded-full object-cover"
                   />
                 ) : (

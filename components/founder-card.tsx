@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { Linkedin } from "lucide-react";
 
@@ -30,9 +31,11 @@ export function FounderCard({ name, role, photoSrc, linkedinUrl }: FounderCardPr
           {initials}
         </div>
       ) : (
-        <img
+        <Image
           src={photoSrc}
           alt={`Photo de ${name}`}
+          width={48}
+          height={48}
           className="h-12 w-12 shrink-0 rounded-full border-2 border-slate-900 object-cover"
           onError={() => setPhotoFailed(true)}
         />

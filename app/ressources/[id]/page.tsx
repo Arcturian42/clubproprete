@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -165,9 +166,11 @@ export default async function ArticleDetailPage({ params }: Props) {
             </div>
             {article.featuredImage && (
               <div className="surface overflow-hidden">
-                <img
+                <Image
                   src={article.featuredImage}
                   alt={article.title}
+                  width={1200}
+                  height={675}
                   className="h-auto w-full object-cover"
                 />
               </div>

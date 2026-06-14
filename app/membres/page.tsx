@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { PageShell } from "@/components/page-shell";
 import { getPublicMembers } from "@/lib/actions/public";
@@ -73,9 +74,11 @@ export default async function MembersDirectoryPage({ searchParams }: Props) {
                   className="card-soft flex items-start gap-4 p-5 transition-shadow hover:shadow-md"
                 >
                   {member.avatarUrl ? (
-                    <img
+                    <Image
                       src={member.avatarUrl}
                       alt=""
+                      width={56}
+                      height={56}
                       className="h-14 w-14 shrink-0 rounded-full object-cover"
                     />
                   ) : (

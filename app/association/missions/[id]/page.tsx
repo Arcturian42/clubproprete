@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
@@ -225,7 +226,7 @@ export default async function MissionDetailPage({ params }: Props) {
             <h2 className="text-lg font-black text-slate-900 mb-4">Publié par</h2>
             <div className="flex items-center gap-3 mb-4">
               {mission.creator.avatarUrl ? (
-                <img src={mission.creator.avatarUrl} alt={`Photo de ${mission.creator.firstName || ""} ${mission.creator.lastName || ""}`.trim()} className="w-12 h-12 rounded-full border-2 border-slate-900 object-cover" />
+                <Image src={mission.creator.avatarUrl} alt={`Photo de ${mission.creator.firstName || ""} ${mission.creator.lastName || ""}`.trim()} width={48} height={48} className="w-12 h-12 rounded-full border-2 border-slate-900 object-cover" />
               ) : (
                 <div className="w-12 h-12 rounded-full border-2 border-slate-900 bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
                   {mission.creator.firstName?.[0]}{mission.creator.lastName?.[0]}

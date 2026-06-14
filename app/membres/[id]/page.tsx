@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
@@ -155,9 +156,11 @@ export default async function PublicProfilePage({ params }: Props) {
               <div className="px-6 pb-6">
                 <div className="-mt-14 flex items-end justify-between sm:-mt-16">
                   {profile.avatarUrl ? (
-                    <img
+                    <Image
                       src={profile.avatarUrl}
                       alt={fullName}
+                      width={112}
+                      height={112}
                       className="h-28 w-28 rounded-full border-4 border-white object-cover shadow-md sm:h-32 sm:w-32"
                     />
                   ) : (
@@ -297,9 +300,11 @@ export default async function PublicProfilePage({ params }: Props) {
                     <div key={reco.id} className="py-4 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-3">
                         {reco.author?.avatarUrl ? (
-                          <img
+                          <Image
                             src={reco.author.avatarUrl}
                             alt=""
+                            width={40}
+                            height={40}
                             className="h-10 w-10 rounded-full object-cover"
                           />
                         ) : (
@@ -408,10 +413,12 @@ export default async function PublicProfilePage({ params }: Props) {
                 <h2 className="text-lg font-semibold text-slate-900">Photos</h2>
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {photos.map((photo, index) => (
-                    <img
+                    <Image
                       key={photo}
                       src={photo}
                       alt={`Photo ${index + 1} de ${profile.firstName || "ce membre"}`}
+                      width={600}
+                      height={400}
                       className="h-36 w-full rounded-lg object-cover"
                       loading="lazy"
                     />

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -151,9 +152,11 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
           <div className="shrink-0">
             {company.logoUrl ? (
-              <img
+              <Image
                 src={company.logoUrl}
                 alt={`Logo de ${company.name}`}
+                width={112}
+                height={112}
                 className="h-28 w-28 rounded-[20px] border-4 border-slate-900 object-cover shadow-[4px_4px_0px_#0f172a]"
               />
             ) : (
@@ -269,10 +272,12 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
               <h3 className="text-lg font-black text-slate-900">Galerie</h3>
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {photos.map((photo, index) => (
-                  <img
+                  <Image
                     key={photo}
                     src={photo}
                     alt={`Réalisation ${index + 1} de ${company.name}`}
+                    width={600}
+                    height={400}
                     className="h-36 w-full rounded-[14px] border-2 border-slate-900 object-cover"
                     loading="lazy"
                   />
@@ -373,9 +378,11 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
                       className="flex items-center gap-3 rounded-[14px] border-2 border-slate-200 bg-white p-3"
                     >
                       {member.user.avatarUrl ? (
-                        <img
+                        <Image
                           src={member.user.avatarUrl}
                           alt={`Photo de ${member.user.firstName || ""} ${member.user.lastName || ""}`.trim()}
+                          width={40}
+                          height={40}
                           className="h-10 w-10 rounded-full border-2 border-slate-900 object-cover"
                         />
                       ) : (

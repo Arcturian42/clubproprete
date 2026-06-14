@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -230,9 +231,11 @@ export default async function SupplierDetailPage({ params }: Props) {
                   className="flex items-center gap-3 p-3 rounded-[14px] border-2 border-slate-200 bg-white"
                 >
                   {member.user.avatarUrl ? (
-                    <img
+                    <Image
                       src={member.user.avatarUrl}
                       alt={`${member.user.firstName} ${member.user.lastName}`}
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-full border-2 border-slate-900 object-cover"
                     />
                   ) : (
