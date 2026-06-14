@@ -190,6 +190,13 @@ export const resourceCategories: ResourceCategory[] = [
   },
 ];
 
+// Rubriques de ressources « classiques » (guides, modèles, outils…). Exclut
+// « média » : ce n'est pas une ressource statique mais le blog (actualités et
+// publications des auteurs), présenté à part sur /ressources.
+export const resourceRubrics: ResourceCategory[] = resourceCategories.filter(
+  (category) => category.slug !== "media",
+);
+
 // Mention affichée sur toutes les pages de la bibliothèque réglementaire.
 export const regulatoryDisclaimer =
   "Cette ressource est fournie à titre informatif et ne remplace pas un conseil juridique, social ou réglementaire personnalisé.";

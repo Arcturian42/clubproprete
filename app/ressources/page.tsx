@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BookOpenText, MailPlus, Search } from "lucide-react";
+import { ArrowRight, BookOpenText, MailPlus, Newspaper, Search } from "lucide-react";
 import { PageShell } from "@/components/page-shell";
 import { EmptyState } from "@/components/empty-state";
 import { NewsletterForm } from "@/components/newsletter-form";
@@ -12,7 +12,7 @@ import {
   getResourceById,
   getResourceCategory,
   getResourceHref,
-  resourceCategories,
+  resourceRubrics,
   resourcesByProfile,
   searchResources,
 } from "@/lib/resources";
@@ -52,11 +52,10 @@ export default async function ResourcesHubPage({ searchParams }: ResourcesPagePr
   const matchingArticles = query ? await safeGetArticles(query) : [];
   const categoryArticles = activeCategory ? await safeGetArticles(undefined, activeCategory) : [];
   const latestArticles = await safeGetArticles();
+  // Articles affichés dans le bloc blog : la catégorie filtrée, sinon les derniers.
+  const blogArticles = activeCategory ? categoryArticles : latestArticles;
 
   const popularResources = getPopularResources();
-  const featuredNew = ["creer-entreprise-nettoyage", "devis-nettoyage", "calculateur-prix-nettoyage"]
-    .map((id) => getResourceById(id))
-    .filter((resource): resource is NonNullable<typeof resource> => Boolean(resource));
 
   return (
     <PageShell
@@ -96,76 +95,92 @@ export default async function ResourcesHubPage({ searchParams }: ResourcesPagePr
         )}
       </form>
 
-      {/* Catégories du blog */}
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Link
-          href="/ressources"
-          className={`bento-tag ${
-            !activeCategory
-              ? "border-indigo-600 bg-indigo-600 text-white"
-              : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-          }`}
-        >
-          Toutes les actualités
-        </Link>
-        {blogCategories.map((cat) => (
+      {/* Actualités & média : le blog (publications des auteurs), distinct des
+          rubriques de ressources statiques ci-dessous. */}
+      <section id="actualites" className="surface mt-6 scroll-mt-24 p-6">
+        <div className="flex items-center gap-3">
+          <div className="rounded-[14px] border-2 border-slate-900 bg-amber-400 p-2.5 text-slate-900 shadow-[3px_3px_0px_#0f172a]">
+            <Newspaper size={18} aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">Le blog du secteur</p>
+            <h2 className="text-2xl font-black text-slate-900">Actualités &amp; média</h2>
+          </div>
+        </div>
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+          Tendances, interviews, analyses et publications des auteurs de la communauté propreté.
+        </p>
+
+        {/* Filtre par catégorie */}
+        <div className="mt-4 flex flex-wrap gap-2">
           <Link
-            key={cat}
-            href={`/ressources?category=${encodeURIComponent(cat)}`}
+            href="/ressources#actualites"
             className={`bento-tag ${
-              activeCategory === cat
+              !activeCategory
                 ? "border-indigo-600 bg-indigo-600 text-white"
                 : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
             }`}
           >
-            {cat}
+            Toutes les actualités
           </Link>
-        ))}
-      </div>
+          {blogCategories.map((cat) => (
+            <Link
+              key={cat}
+              href={`/ressources?category=${encodeURIComponent(cat)}#actualites`}
+              className={`bento-tag ${
+                activeCategory === cat
+                  ? "border-indigo-600 bg-indigo-600 text-white"
+                  : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+              }`}
+            >
+              {cat}
+            </Link>
+          ))}
+        </div>
 
-      {/* Articles d'une catégorie sélectionnée */}
-      {activeCategory && (
-        <section className="mt-8">
-          <h2 className="text-2xl font-black text-slate-900">{activeCategory}</h2>
-          {categoryArticles.length === 0 ? (
-            <div className="mt-4">
-              <EmptyState
-                title="Aucun article dans cette catégorie pour l'instant"
-                description="Revenez bientôt, ou explorez les autres catégories du blog."
-                actionLabel="Toutes les actualités"
-                actionHref="/ressources"
-              />
-            </div>
-          ) : (
-            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {categoryArticles.map((article) => (
-                <article key={article.id} className="bento-card bento-card-interactive overflow-hidden">
-                  <div className="relative h-36 w-full overflow-hidden bg-slate-100">
-                    {article.featuredImage ? (
-                      <Image src={article.featuredImage} alt={article.title} width={600} height={400} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-100 to-slate-100">
-                        <BookOpenText size={28} className="text-indigo-300" aria-hidden="true" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <span className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">{article.category || "Article"}</span>
-                    <h3 className="mt-2 text-base font-bold text-slate-900">
-                      <Link href={`/ressources/${article.slug || article.id}`} className="hover:text-indigo-600">
-                        {article.title}
-                      </Link>
-                    </h3>
-                    <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-slate-500">
-                      {article.excerpt || "Lire l'article pour en savoir plus."}
-                    </p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+        {/* Articles : la catégorie filtrée si sélectionnée, sinon les derniers publiés. */}
+        {blogArticles.length === 0 ? (
+          <div className="mt-5">
+            <EmptyState
+              title={
+                activeCategory
+                  ? "Aucun article dans cette catégorie pour l'instant"
+                  : "Aucun article publié pour l'instant"
+              }
+              description="Les articles validés des auteurs apparaîtront ici. Revenez bientôt."
+              actionLabel="Devenir auteur"
+              actionHref="/dashboard/auteur"
+            />
+          </div>
+        ) : (
+          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {blogArticles.map((article) => (
+              <article key={article.id} className="bento-card bento-card-interactive overflow-hidden">
+                <div className="relative h-36 w-full overflow-hidden bg-slate-100">
+                  {article.featuredImage ? (
+                    <Image src={article.featuredImage} alt={article.title} width={600} height={400} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-100 to-slate-100">
+                      <BookOpenText size={28} className="text-indigo-300" aria-hidden="true" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-5">
+                  <span className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">{article.category || "Article"}</span>
+                  <h3 className="mt-2 text-base font-bold text-slate-900">
+                    <Link href={`/ressources/${article.slug || article.id}`} className="hover:text-indigo-600">
+                      {article.title}
+                    </Link>
+                  </h3>
+                  <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-slate-500">
+                    {article.excerpt || "Lire l'article pour en savoir plus."}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Résultats de recherche */}
       {query && (
@@ -218,11 +233,11 @@ export default async function ResourcesHubPage({ searchParams }: ResourcesPagePr
         </section>
       )}
 
-      {/* Cartes catégories */}
+      {/* Cartes catégories (ressources statiques, hors blog) */}
       <section id="categories" className="mt-10 scroll-mt-24">
-        <h2 className="text-2xl font-black text-slate-900">Explorez par rubrique</h2>
+        <h2 className="text-2xl font-black text-slate-900">Ressources par rubrique</h2>
         <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {resourceCategories.map((category) => {
+          {resourceRubrics.map((category) => {
             const Icon = category.icon;
             const examples = category.menuResourceIds.slice(0, 3);
             return (
@@ -288,10 +303,12 @@ export default async function ResourcesHubPage({ searchParams }: ResourcesPagePr
                 {profile.categories.map((slug) => {
                   const category = getResourceCategory(slug);
                   if (!category) return null;
+                  // « média » est le blog : on pointe vers le bloc Actualités, pas une rubrique.
+                  const href = slug === "media" ? "/ressources#actualites" : `/ressources/${slug}`;
                   return (
                     <Link
                       key={slug}
-                      href={`/ressources/${slug}`}
+                      href={href}
                       className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
                     >
                       {category.title}
@@ -301,41 +318,6 @@ export default async function ResourcesHubPage({ searchParams }: ResourcesPagePr
               </div>
             </article>
           ))}
-        </div>
-      </section>
-
-      {/* Dernières publications */}
-      <section className="mt-12">
-        <h2 className="text-2xl font-black text-slate-900">Dernières publications</h2>
-        <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {latestArticles.slice(0, 3).map((article) => (
-            <article key={article.id} className="bento-card bento-card-interactive overflow-hidden">
-              <div className="relative h-36 w-full overflow-hidden bg-slate-100">
-                {article.featuredImage ? (
-                  <Image src={article.featuredImage} alt={article.title} width={600} height={400} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-100 to-slate-100">
-                    <BookOpenText size={28} className="text-indigo-300" aria-hidden="true" />
-                  </div>
-                )}
-              </div>
-              <div className="p-5">
-                <span className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700">
-                  {article.category || "Article"}
-                </span>
-                <h3 className="mt-2 text-base font-bold text-slate-900">
-                  <Link href={`/ressources/${article.slug || article.id}`} className="hover:text-indigo-600">
-                    {article.title}
-                  </Link>
-                </h3>
-                <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-slate-500">
-                  {article.excerpt || "Lire l'article pour en savoir plus."}
-                </p>
-              </div>
-            </article>
-          ))}
-          {latestArticles.length === 0 &&
-            featuredNew.map((resource) => <ResourceCard key={resource.id} resource={resource} />)}
         </div>
       </section>
 
