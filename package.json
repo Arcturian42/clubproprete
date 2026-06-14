@@ -18,7 +18,8 @@
     "test:e2e": "npm run build && PLAYWRIGHT_PORT=4567 playwright test",
     "test:e2e:ui": "playwright test --ui",
     "prisma:backfill-user-profiles": "tsx prisma/backfill-user-profiles.ts",
-    "set-role": "tsx scripts/set-user-role.ts"
+    "set-role": "tsx scripts/set-user-role.ts",
+    "purge-directories": "tsx scripts/purge-directory-data.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
