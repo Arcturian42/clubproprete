@@ -179,52 +179,65 @@ export const {
 
       const email = (profile?.email ?? user.email ?? "").toLowerCase();
       if (!email) return false;
-      // Google ne renvoie l'email que s'il est vérifié ; on refuse sinon.
-      if (profile && profile.email_verified === false) return false;
+      // Liaison par email sensible : on exige une vérification d'email *positive*
+      // (un claim absent/undefined ne doit pas suffire à rattacher l'identité
+      // Google à un compte existant).
+      if (profile?.email_verified !== true) return false;
 
-      let dbUser = await findUserWithContext(email);
+      try {
+        let dbUser = await findUserWithContext(email);
 
-      if (!dbUser) {
-        const fullName = (profile?.name ?? "").trim();
-        const firstName =
-          (profile?.given_name as string | undefined) || fullName.split(" ")[0] || "Membre";
-        const lastName =
-          (profile?.family_name as string | undefined) ||
-          fullName.split(" ").slice(1).join(" ") ||
-          "";
+        if (!dbUser) {
+          const fullName = (profile?.name ?? "").trim();
+          const firstName =
+            (profile?.given_name as string | undefined) || fullName.split(" ")[0] || "Membre";
+          const lastName =
+            (profile?.family_name as string | undefined) ||
+            fullName.split(" ").slice(1).join(" ") ||
+            "";
 
-        await prisma.$transaction(async (tx) => {
-          const created = await tx.user.create({
-            data: {
-              email,
-              firstName,
-              lastName,
-              avatarUrl: (profile?.picture as string | undefined) ?? null,
-              mainRole: "registered_user",
-              emailVerified: true,
-              termsAcceptedAt: new Date(),
-            },
-          });
-          await tx.userProfile.create({
-            data: {
-              userId: created.id,
-              profileType: "registered_user",
-              completionScore: 15,
-              verificationStatus: "draft",
-              associationStatus: "not_applicable",
-              visibility: "public",
-            },
-          });
-        });
+          try {
+            await prisma.$transaction(async (tx) => {
+              const created = await tx.user.create({
+                data: {
+                  email,
+                  firstName,
+                  lastName,
+                  avatarUrl: (profile?.picture as string | undefined) ?? null,
+                  mainRole: "registered_user",
+                  emailVerified: true,
+                  termsAcceptedAt: new Date(),
+                },
+              });
+              await tx.userProfile.create({
+                data: {
+                  userId: created.id,
+                  profileType: "registered_user",
+                  completionScore: 15,
+                  verificationStatus: "draft",
+                  associationStatus: "not_applicable",
+                  visibility: "public",
+                },
+              });
+            });
+          } catch (createError) {
+            // Collision unique (P2002) si deux premiers logins concurrents pour le
+            // même email : on ignore et on relit l'utilisateur créé par l'autre requête.
+            console.warn("Google signIn: création concurrente probable, relecture.", createError);
+          }
 
-        dbUser = await findUserWithContext(email);
+          dbUser = await findUserWithContext(email);
+        }
+
+        if (!dbUser) return false;
+
+        // Enrichit l'objet `user` transmis ensuite au callback jwt.
+        Object.assign(user, await toSessionUser(dbUser));
+        return true;
+      } catch (error) {
+        console.error("Google signIn error:", error);
+        return false;
       }
-
-      if (!dbUser) return false;
-
-      // Enrichit l'objet `user` transmis ensuite au callback jwt.
-      Object.assign(user, await toSessionUser(dbUser));
-      return true;
     },
   },
 });
