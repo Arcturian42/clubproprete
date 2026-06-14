@@ -5,11 +5,41 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { FlashToast } from "@/components/flash-toast";
+import { JsonLd } from "@/components/json-ld";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  getBaseUrl,
+  organizationJsonLd,
+  websiteJsonLd,
+} from "@/lib/seo";
+
+const baseUrl = getBaseUrl();
+const DEFAULT_TITLE = "Club Propreté — La boîte à outils des professionnels de la propreté";
 
 export const metadata: Metadata = {
-  title: "Club Propreté — La boîte à outils des professionnels de la propreté",
-  description:
-    "La boîte à outils gratuite des professionnels de la propreté : annuaire, emploi, formations, association et sous-traitance privée.",
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: DEFAULT_TITLE,
+    template: "%s | Club Propreté",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "fr_FR",
+    url: baseUrl,
+    title: DEFAULT_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: DEFAULT_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
@@ -20,6 +50,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className="flex min-h-screen flex-col">
+        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <AuthProvider>
           <SiteHeader />
           <main className="flex-1">{children}</main>
