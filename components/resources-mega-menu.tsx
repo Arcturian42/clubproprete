@@ -2,29 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ArrowRight } from "lucide-react";
+import { ChevronDown, ArrowRight, Newspaper } from "lucide-react";
 import {
   getResourceById,
   getResourceHref,
-  resourceCategories,
+  resourceRubrics,
   type Resource,
   type ResourceCategory,
 } from "@/lib/resources";
 
-// La rubrique « média » n'est pas une série de landing pages SEO : c'est le
-// blog. Son en-tête renvoie vers /ressources et ses items deviennent des
-// catégories du blog (/ressources?category=…).
-const BLOG_CATEGORY_SLUG = "media";
-
-function categoryHeaderHref(category: ResourceCategory): string {
-  return category.slug === BLOG_CATEGORY_SLUG ? "/ressources" : `/ressources/${category.slug}`;
-}
-
-function categoryItemHref(category: ResourceCategory, resource: Resource): string {
-  return category.slug === BLOG_CATEGORY_SLUG
-    ? `/ressources?category=${encodeURIComponent(resource.title)}`
-    : getResourceHref(resource);
-}
+// La rubrique « média » n'est pas une ressource : c'est le blog (actualités &
+// publications des auteurs). Elle est présentée à part, en tête du méga-menu,
+// et renvoie vers le bloc blog de /ressources.
+const BLOG_HREF = "/ressources#actualites";
 
 function CategoryLinks({ category, onNavigate }: { category: ResourceCategory; onNavigate?: () => void }) {
   return (
@@ -35,7 +25,7 @@ function CategoryLinks({ category, onNavigate }: { category: ResourceCategory; o
         return (
           <li key={id}>
             <Link
-              href={categoryItemHref(category, resource)}
+              href={getResourceHref(resource)}
               onClick={onNavigate}
               className="block rounded-[8px] px-1.5 py-0.5 text-xs font-semibold normal-case tracking-normal text-slate-500 hover:bg-indigo-50 hover:text-indigo-700"
             >
@@ -46,7 +36,7 @@ function CategoryLinks({ category, onNavigate }: { category: ResourceCategory; o
       })}
       <li>
         <Link
-          href={categoryHeaderHref(category)}
+          href={`/ressources/${category.slug}`}
           onClick={onNavigate}
           className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-extrabold normal-case tracking-normal text-indigo-600 hover:underline"
         >
@@ -125,12 +115,32 @@ export function ResourcesMegaMenu() {
         <div className="absolute inset-x-0 top-full z-30 px-4 pb-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-h-[calc(100vh-110px)] max-w-7xl overflow-y-auto rounded-[20px] border-2 border-slate-900 bg-white p-6 shadow-[6px_6px_0px_#0f172a]">
             <div className="grid gap-6 lg:grid-cols-3 xl:grid-cols-4">
-              {resourceCategories.map((category) => {
+              {/* Le blog, mis en avant et distinct des rubriques de ressources. */}
+              <Link
+                href={BLOG_HREF}
+                onClick={close}
+                className="group flex flex-col justify-center rounded-[14px] border-2 border-slate-900 bg-amber-400 p-4 shadow-[3px_3px_0px_#0f172a] lg:col-span-3 xl:col-span-4"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border-2 border-slate-900 bg-white text-slate-900">
+                    <Newspaper size={15} aria-hidden="true" />
+                  </span>
+                  <span className="text-sm font-black normal-case tracking-normal text-slate-900">
+                    Actualités & média — le blog du secteur
+                  </span>
+                  <ArrowRight size={14} className="ml-auto text-slate-900" aria-hidden="true" />
+                </span>
+                <span className="mt-1.5 text-[11px] font-semibold normal-case leading-4 tracking-normal text-slate-700">
+                  Tendances, interviews et publications des auteurs de la communauté propreté.
+                </span>
+              </Link>
+
+              {resourceRubrics.map((category) => {
                 const Icon = category.icon;
                 return (
                   <div key={category.slug}>
                     <Link
-                      href={categoryHeaderHref(category)}
+                      href={`/ressources/${category.slug}`}
                       onClick={close}
                       className="group flex items-center gap-2"
                     >
@@ -193,7 +203,14 @@ export function ResourcesMobileMenu({ onNavigate }: { onNavigate: () => void }) 
 
       {open && (
         <div className="mt-1 space-y-1 border-l-2 border-slate-200 pl-3">
-          {resourceCategories.map((category) => {
+          <Link
+            href={BLOG_HREF}
+            onClick={onNavigate}
+            className="flex items-center gap-2 rounded-[10px] bg-amber-50 px-2 py-1.5 font-extrabold normal-case tracking-normal text-slate-900 hover:bg-amber-100"
+          >
+            <Newspaper size={14} aria-hidden="true" /> Actualités & média
+          </Link>
+          {resourceRubrics.map((category) => {
             const isOpen = openCategory === category.slug;
             return (
               <div key={category.slug}>
@@ -218,7 +235,7 @@ export function ResourcesMobileMenu({ onNavigate }: { onNavigate: () => void }) 
                       return (
                         <li key={id}>
                           <Link
-                            href={categoryItemHref(category, resource)}
+                            href={getResourceHref(resource)}
                             onClick={onNavigate}
                             className="block rounded-[8px] px-2 py-1 text-xs font-semibold normal-case tracking-normal text-slate-500 hover:bg-indigo-50 hover:text-indigo-700"
                           >
@@ -229,7 +246,7 @@ export function ResourcesMobileMenu({ onNavigate }: { onNavigate: () => void }) 
                     })}
                     <li>
                       <Link
-                        href={categoryHeaderHref(category)}
+                        href={`/ressources/${category.slug}`}
                         onClick={onNavigate}
                         className="block px-2 py-1 text-xs font-extrabold normal-case tracking-normal text-indigo-600"
                       >

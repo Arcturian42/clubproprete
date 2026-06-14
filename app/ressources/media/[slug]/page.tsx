@@ -1,21 +1,15 @@
-import {
-  ResourceDetailPage,
-  resourceDetailMetadata,
-  resourceStaticParams,
-} from "@/components/resources/resource-detail-page";
+import { redirect } from "next/navigation";
+import { resourceStaticParams } from "@/components/resources/resource-detail-page";
 
-// Toutes les ressources valides sont connues au build : tout autre slug renvoie un vrai 404.
+// Les anciennes pages « média » (landing statiques) sont remplacées par le blog
+// (bloc Actualités de /ressources). On garde les slugs connus (404 sinon) et on
+// redirige vers le blog.
 export const dynamicParams = false;
 
 export function generateStaticParams() {
   return resourceStaticParams("media");
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  return resourceDetailMetadata("media", slug);
-}
-
-export default function Page({ params }: { params: Promise<{ slug: string }> }) {
-  return <ResourceDetailPage categorySlug="media" params={params} />;
+export default function Page() {
+  redirect("/ressources#actualites");
 }
