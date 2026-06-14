@@ -21,6 +21,8 @@ import { PageShell } from "@/components/page-shell";
 import { getCompanyById, getEntityMembers } from "@/lib/actions/public";
 import { parsePhotos } from "@/lib/photos";
 import { prisma } from "@/lib/prisma";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbJsonLd, getBaseUrl } from "@/lib/seo";
 
 type CompanyDetailPageProps = {
   params: Promise<{
@@ -36,14 +38,15 @@ export async function generateMetadata({ params }: CompanyDetailPageProps) {
   const { id } = await params;
   const company = await getCompanyById(id);
   if (!company) {
-    return { title: "Société introuvable | Club Propreté" };
+    return { title: "Société introuvable" };
   }
   const location = [company.city, company.region].filter(Boolean).join(", ");
   return {
-    title: `${company.name}${location ? ` — Nettoyage ${location}` : ""} | Club Propreté`,
+    title: `${company.name}${location ? ` — Nettoyage ${location}` : ""}`,
     description:
       company.descriptionShort ||
       `Fiche de ${company.name}, société de nettoyage${location ? ` basée à ${location}` : ""}, référencée sur Club Propreté.`,
+    alternates: { canonical: `/annuaire/societes/${company.slug ?? company.id}` },
   };
 }
 
@@ -84,6 +87,33 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
     member: "Membre",
   };
 
+  const baseUrl = getBaseUrl();
+  const companyUrl = `${baseUrl}/annuaire/societes/${company.slug ?? company.id}`;
+  const localBusinessJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "@id": `${companyUrl}#business`,
+    name: company.name,
+    ...(company.descriptionShort ? { description: company.descriptionShort } : {}),
+    url: companyUrl,
+    ...(company.logoUrl?.startsWith("http") ? { image: company.logoUrl } : {}),
+    ...(company.phone ? { telephone: company.phone } : {}),
+    ...(company.email ? { email: company.email } : {}),
+    ...(company.website ? { sameAs: [externalUrl(company.website)] } : {}),
+    address: {
+      "@type": "PostalAddress",
+      ...(company.address ? { streetAddress: company.address } : {}),
+      ...(company.city ? { addressLocality: company.city } : {}),
+      ...(company.region ? { addressRegion: company.region } : {}),
+      ...(company.postalCode ? { postalCode: company.postalCode } : {}),
+      addressCountry: "FR",
+    },
+    ...(company.latitude != null && company.longitude != null
+      ? { geo: { "@type": "GeoCoordinates", latitude: company.latitude, longitude: company.longitude } }
+      : {}),
+    ...(company.region ? { areaServed: company.region } : {}),
+  };
+
   return (
     <PageShell
       eyebrow="Fiche société"
@@ -106,6 +136,16 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
         </>
       }
     >
+      <JsonLd
+        data={[
+          localBusinessJsonLd,
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Sociétés", path: "/annuaire/societes" },
+            { name: company.name, path: `/annuaire/societes/${company.slug ?? company.id}` },
+          ]),
+        ]}
+      />
       {/* En-tête façon LinkedIn : logo, nom, accroche, localisation, badges */}
       <section className="surface p-6 sm:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">

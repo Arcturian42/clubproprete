@@ -23,6 +23,8 @@ import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
 import { getTrainingById } from "@/lib/actions/public";
 import { prisma } from "@/lib/prisma";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbJsonLd, getBaseUrl } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -33,13 +35,14 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const training = await getTrainingById(id);
   if (!training) {
-    return { title: "Formation introuvable | Club Propreté" };
+    return { title: "Formation introuvable" };
   }
   return {
-    title: `${training.title} — Formation propreté | Club Propreté`,
+    title: `${training.title} — Formation propreté`,
     description:
       training.description ||
       `Formation ${training.title} pour les professionnels du nettoyage.`,
+    alternates: { canonical: `/formations/${id}` },
   };
 }
 
@@ -83,6 +86,31 @@ export default async function TrainingDetailPage({ params }: Props) {
     ? training.prerequisites.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
+  const baseUrl = getBaseUrl();
+  const courseJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: training.title,
+    ...(training.description ? { description: training.description } : {}),
+    provider: {
+      "@type": "Organization",
+      name: creatorName || "Club Propreté",
+      ...(creatorHref ? { sameAs: `${baseUrl}${creatorHref}` } : {}),
+    },
+    ...(training.targetAudience ? { audience: { "@type": "Audience", audienceType: training.targetAudience } } : {}),
+    ...(training.sessions && training.sessions.length > 0
+      ? {
+          hasCourseInstance: training.sessions.map((s) => ({
+            "@type": "CourseInstance",
+            courseMode: training.format || "onsite",
+            ...(training.city ? { location: { "@type": "Place", name: training.city } } : {}),
+            ...(s.startDate ? { startDate: new Date(s.startDate).toISOString() } : {}),
+            ...(s.endDate ? { endDate: new Date(s.endDate).toISOString() } : {}),
+          })),
+        }
+      : {}),
+  };
+
   return (
     <PageShell
       eyebrow="Formation"
@@ -94,6 +122,16 @@ export default async function TrainingDetailPage({ params }: Props) {
         </Link>
       }
     >
+      <JsonLd
+        data={[
+          courseJsonLd,
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Formations", path: "/formations" },
+            { name: training.title, path: `/formations/${training.id}` },
+          ]),
+        ]}
+      />
       {/* Stats rapides */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Durée" value={training.duration || "Non précisée"} detail="Formation complète" />

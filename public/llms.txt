@@ -1,0 +1,28 @@
+# Club Propreté
+
+> Plateforme B2B gratuite pour les professionnels du nettoyage et de la propreté en France : annuaire d'entreprises et de fournisseurs, offres d'emploi, formations, association professionnelle, sous-traitance privée et ressources métier. Éditée par Club Propreté.
+
+## À propos
+- [À propos de Club Propreté](https://clubproprete.com/a-propos) : mission, fondateurs et fonctionnement de la plateforme.
+- [L'association](https://clubproprete.com/association) : adhésion, accompagnement et entraide entre professionnels.
+
+## Annuaires
+- [Sociétés de nettoyage](https://clubproprete.com/annuaire/societes) : entreprises de propreté référencées et géolocalisées.
+- [Fournisseurs](https://clubproprete.com/annuaire/fournisseurs) : matériel, produits et services pour le secteur.
+- [Centres de formation](https://clubproprete.com/annuaire/centres-formation) : organismes de formation propreté.
+- [Membres](https://clubproprete.com/membres) : profils publics des professionnels.
+- [Indépendants](https://clubproprete.com/independants) : agents et prestataires indépendants.
+
+## Emploi & formations
+- [Offres d'emploi](https://clubproprete.com/emploi) : postes dans la propreté, candidature gratuite.
+- [Formations](https://clubproprete.com/formations) : sessions et habilitations du secteur.
+
+## Ressources
+- [Blog & ressources](https://clubproprete.com/ressources) : guides, réglementation, modèles, outils, comparatifs et appels d'offres.
+- [Réglementation](https://clubproprete.com/ressources/reglementation) : sécurité, EPI, produits chimiques (FDS), obligations.
+- [Guides pratiques](https://clubproprete.com/ressources/guides) : méthodes et bonnes pratiques métier.
+- [Outils](https://clubproprete.com/ressources/outils) : calculateurs (prix, marge, coût horaire).
+
+## Légal
+- [Mentions légales](https://clubproprete.com/mentions-legales)
+- [Politique de confidentialité](https://clubproprete.com/politique-confidentialite)

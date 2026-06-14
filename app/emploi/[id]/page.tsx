@@ -15,6 +15,8 @@ import { StatCard } from "@/components/stat-card";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { applyToJob, getJobById } from "@/lib/actions/jobs";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbJsonLd, getBaseUrl } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -25,12 +27,23 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const job = await getJobById(id);
   if (!job) {
-    return { title: "Offre introuvable | Club Propreté" };
+    return { title: "Offre introuvable" };
   }
   return {
-    title: `${job.title}${job.city ? ` — ${job.city}` : ""} (${job.contractType}) | Club Propreté`,
+    title: `${job.title}${job.city ? ` — ${job.city}` : ""} (${job.contractType})`,
     description: `Offre d'emploi propreté : ${job.title}${job.city ? ` à ${job.city}` : ""}. Postulez gratuitement sur Club Propreté.`,
+    alternates: { canonical: `/emploi/${id}` },
   };
+}
+
+// schema.org JobPosting attend un employmentType normalisé (et non « CDI »/« CDD »).
+function toEmploymentType(contractType: string, workingTime?: string | null): string {
+  const haystack = `${contractType} ${workingTime ?? ""}`.toLowerCase();
+  if (haystack.includes("partiel")) return "PART_TIME";
+  if (haystack.includes("alternance") || haystack.includes("apprentissage")) return "OTHER";
+  if (haystack.includes("stage")) return "INTERN";
+  if (haystack.includes("cdd") || haystack.includes("intérim") || haystack.includes("interim")) return "TEMPORARY";
+  return "FULL_TIME";
 }
 
 export default async function JobDetailPage({ params }: Props) {
@@ -74,6 +87,47 @@ export default async function JobDetailPage({ params }: Props) {
     ? job.requiredSkills.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
+  const baseUrl = getBaseUrl();
+  const monthly = job.salaryMin != null && job.salaryMin < 12000;
+  const jobPostingJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: job.description || job.title,
+    datePosted: (job.publishedAt ?? job.createdAt).toISOString(),
+    ...(job.expiresAt ? { validThrough: job.expiresAt.toISOString() } : {}),
+    employmentType: toEmploymentType(job.contractType, job.workingTime),
+    directApply: true,
+    hiringOrganization: {
+      "@type": "Organization",
+      name: job.employerName,
+      sameAs: job.employerHref ? `${baseUrl}${job.employerHref}` : baseUrl,
+    },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: job.company?.city || job.city || undefined,
+        postalCode: job.postalCode || undefined,
+        addressCountry: "FR",
+      },
+    },
+    ...(job.salaryMin != null
+      ? {
+          baseSalary: {
+            "@type": "MonetaryAmount",
+            currency: "EUR",
+            value: {
+              "@type": "QuantitativeValue",
+              minValue: job.salaryMin,
+              maxValue: job.salaryMax ?? job.salaryMin,
+              unitText: monthly ? "MONTH" : "YEAR",
+            },
+          },
+        }
+      : {}),
+  };
+
   return (
     <PageShell
       eyebrow="Offre d'emploi"
@@ -85,6 +139,16 @@ export default async function JobDetailPage({ params }: Props) {
         </Link>
       }
     >
+      <JsonLd
+        data={[
+          jobPostingJsonLd,
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Emploi", path: "/emploi" },
+            { name: job.title, path: `/emploi/${job.id}` },
+          ]),
+        ]}
+      />
       {/* Stats rapides */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Contrat" value={job.contractType} detail={job.workingTime || "Non précisé"} />
