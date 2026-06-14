@@ -2,10 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { SignupForm } from "@/components/auth/signup-form";
+import { GoogleSignInButton, AuthDivider } from "@/components/auth/google-signin-button";
 import { PageShell } from "@/components/page-shell";
 
 export const metadata = {
-  title: "Inscription gratuite | Club Propreté",
+  title: "Inscription gratuite",
   description:
     "Créez votre compte gratuit Club Propreté : annuaire, emploi, formations et réseau des professionnels de la propreté.",
 };
@@ -27,7 +28,11 @@ export default async function InscriptionPage() {
         </Link>
       }
     >
-      <SignupForm />
+      <div className="space-y-4">
+        <GoogleSignInButton callbackUrl="/onboarding" label="S'inscrire avec Google" />
+        <AuthDivider />
+        <SignupForm />
+      </div>
     </PageShell>
   );
 }

@@ -16,7 +16,7 @@ import {
 } from "@/lib/resources";
 
 export const metadata = {
-  title: "Ressources pour les professionnels de la propreté | Club Propreté",
+  title: "Ressources pour les professionnels de la propreté",
   description:
     "Guides métier, modèles de documents, calculateurs, actualités, comparatifs et ressources réglementaires pour créer, structurer et développer votre activité dans le nettoyage professionnel.",
 };

@@ -9,7 +9,7 @@ import { getPublishedIndependents } from "@/lib/actions/independents";
 import { getAvailabilityLabel } from "@/lib/labels";
 
 export const metadata = {
-  title: "Indépendants & sous-traitants en propreté | Club Propreté",
+  title: "Indépendants & sous-traitants en propreté",
   description:
     "Annuaire des indépendants et auto-entrepreneurs du nettoyage disponibles pour des missions de sous-traitance.",
 };

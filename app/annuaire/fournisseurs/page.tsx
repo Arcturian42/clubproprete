@@ -19,7 +19,7 @@ import {
 import type { Supplier } from "@/lib/types";
 
 export const metadata = {
-  title: "Fournisseurs pour professionnels de la propreté | Club Propreté",
+  title: "Fournisseurs pour professionnels de la propreté",
   description:
     "Produits, machines, EPI, logiciels : l'annuaire des fournisseurs vérifiés pour les entreprises de nettoyage.",
 };

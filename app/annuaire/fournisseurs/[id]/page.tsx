@@ -31,10 +31,10 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const supplier = await getSupplierById(id);
   if (!supplier) {
-    return { title: "Fournisseur introuvable | Club Propreté" };
+    return { title: "Fournisseur introuvable" };
   }
   return {
-    title: `${supplier.name} — Fournisseur propreté | Club Propreté`,
+    title: `${supplier.name} — Fournisseur propreté`,
     description:
       supplier.description ||
       `Fiche de ${supplier.name}, fournisseur vérifié pour les professionnels du nettoyage.`,
