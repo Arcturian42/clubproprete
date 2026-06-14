@@ -59,7 +59,7 @@ const emptyProfile: EditableProfile = {
 };
 
 export default function ProfilPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const user = session?.user;
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -129,6 +129,12 @@ export default function ProfilPage() {
     });
     if (result.success) {
       setSavedProfile(profile);
+      // Rafraîchit la session (header + dashboard) sans reconnexion.
+      await update({
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        phone: profile.phone,
+      });
       setSaveMessage({ type: "success", text: "Profil enregistré." });
     } else {
       setSaveMessage({
