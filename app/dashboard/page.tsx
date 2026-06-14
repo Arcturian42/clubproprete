@@ -45,13 +45,28 @@ export default async function DashboardPage() {
     company = await getCompanyByOwner(user.id);
   }
 
-  const [jobsTotal, trainingsTotal] = await Promise.all([
-    prisma.job.count({ where: { status: "published", deletedAt: null } }),
-    prisma.training.count({ where: { status: "approved", deletedAt: null } }),
-  ]);
+  // Activités déjà activées par l'utilisateur : permet de proposer uniquement
+  // les fiches manquantes (« ajouter une activité ») sur le dashboard.
+  const [jobsTotal, trainingsTotal, companyCount, supplierCount, trainingOrgCount, independentProfile] =
+    await Promise.all([
+      prisma.job.count({ where: { status: "published", deletedAt: null } }),
+      prisma.training.count({ where: { status: "approved", deletedAt: null } }),
+      prisma.company.count({ where: { ownerUserId: user.id, deletedAt: null } }),
+      prisma.supplier.count({ where: { ownerUserId: user.id, deletedAt: null } }),
+      prisma.trainingOrganization.count({ where: { ownerUserId: user.id, deletedAt: null } }),
+      prisma.independentProfile.findFirst({ where: { userId: user.id, deletedAt: null }, select: { id: true } }),
+    ]);
 
   jobsCount = jobsTotal;
   trainingsCount = trainingsTotal;
+
+  const ownedActivities = {
+    company: companyCount > 0,
+    supplier: supplierCount > 0,
+    training: trainingOrgCount > 0,
+    independent: Boolean(independentProfile),
+    job_seeker: Boolean(candidateProfile),
+  };
 
   return (
     <PageShell
@@ -59,7 +74,15 @@ export default async function DashboardPage() {
       title="Mon espace"
       description="Bienvenue dans votre espace personnel Club Propreté."
     >
-      <MyDashboard user={user} candidateApplications={candidateApplications} candidateProfile={candidateProfile} jobsCount={jobsCount} trainingsCount={trainingsCount} company={company} />
+      <MyDashboard
+        user={user}
+        candidateApplications={candidateApplications}
+        candidateProfile={candidateProfile}
+        jobsCount={jobsCount}
+        trainingsCount={trainingsCount}
+        company={company}
+        ownedActivities={ownedActivities}
+      />
     </PageShell>
   );
 }
