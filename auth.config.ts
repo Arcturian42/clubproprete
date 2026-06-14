@@ -11,7 +11,7 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -20,6 +20,20 @@ export const authConfig = {
         token.associationMember = user.associationMember;
         token.organization = user.organization;
         token.phone = user.phone;
+      }
+      // Rafraîchissement de la session sans reconnexion (ex. changement de nom
+      // dans /profil) : on fusionne les champs transmis à update() dans le token.
+      if (trigger === "update" && session && typeof session === "object") {
+        const data = session as {
+          firstName?: string;
+          lastName?: string;
+          phone?: string;
+          organization?: string | null;
+        };
+        if (typeof data.firstName === "string") token.firstName = data.firstName;
+        if (typeof data.lastName === "string") token.lastName = data.lastName;
+        if (typeof data.phone === "string") token.phone = data.phone;
+        if ("organization" in data) token.organization = data.organization ?? null;
       }
       return token;
     },

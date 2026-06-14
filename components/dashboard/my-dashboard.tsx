@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, ClipboardList, ShieldCheck, Building2, Briefcase, Shield, Mic, Package, GraduationCap, Hammer } from "lucide-react";
+import { ArrowRight, ClipboardList, ShieldCheck, Building2, Briefcase, Shield, Mic, Package, GraduationCap, Hammer, PenLine, Headphones, Youtube } from "lucide-react";
 import { CandidateDashboard, type CandidateProfileSummary } from "@/components/dashboard/candidate-dashboard";
 import { EntityCard } from "@/components/entity-card";
 import { StatCard } from "@/components/stat-card";
@@ -274,42 +274,34 @@ function MediaCard({
     `mailto:contact@clubproprete.com?subject=${encodeURIComponent(`${subject} - ${name}`)}`;
 
   return (
-    <EntityCard
-      title="Média Club Propreté"
-      subtitle={subtitle}
-      meta={["Article", "Interview", "Podcast", "Vidéo"]}
-    >
-      <div className="flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wide text-indigo-600 mb-3">
-        <Mic size={18} aria-hidden="true" />
-        Média Club Propreté
+    <section className="surface p-6">
+      <div className="flex items-center gap-3">
+        <div className="rounded-[14px] border-2 border-slate-900 bg-indigo-600 p-2.5 text-white shadow-[3px_3px_0px_#0f172a]">
+          <Mic size={18} aria-hidden="true" />
+        </div>
+        <div>
+          <p className="text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">Média Club Propreté</p>
+          <h2 className="text-xl font-black text-slate-900">Prenez la parole dans le média du secteur</h2>
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Link
-          href="/dashboard/auteur"
-          className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 cursor-pointer text-center"
-        >
-          Devenir auteur
+      <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
+        {subtitle} : publiez un article, ou participez à une interview, un podcast ou une vidéo.
+      </p>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Link href="/dashboard/auteur" className="bento-btn bento-btn-primary justify-center">
+          <PenLine size={16} aria-hidden="true" /> Devenir auteur
         </Link>
-        <a
-          href={mailto("Demande d'interview")}
-          className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 cursor-pointer text-center"
-        >
-          Demander une interview
+        <a href={mailto("Demande d'interview")} className="bento-btn justify-center">
+          <Mic size={16} aria-hidden="true" /> Demander une interview
         </a>
-        <a
-          href={mailto("Demande de participation au podcast")}
-          className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 cursor-pointer text-center"
-        >
-          Rejoindre le podcast
+        <a href={mailto("Demande de participation au podcast")} className="bento-btn justify-center">
+          <Headphones size={16} aria-hidden="true" /> Rejoindre le podcast
         </a>
-        <a
-          href={mailto("Demande de participation à une vidéo YouTube")}
-          className="bento-tag border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 cursor-pointer text-center"
-        >
-          Vidéo YouTube
+        <a href={mailto("Demande de participation à une vidéo YouTube")} className="bento-btn justify-center">
+          <Youtube size={16} aria-hidden="true" /> Vidéo YouTube
         </a>
       </div>
-    </EntityCard>
+    </section>
   );
 }
 
@@ -571,31 +563,9 @@ export function MyDashboard({
         </div>
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <EntityCard
-          title="Profil"
-          subtitle={`${user.firstName} ${user.lastName} · ${user.email}`}
-          meta={[roleLabels[user.role as keyof typeof roleLabels] || user.role, user.organization ?? "Structure à compléter"]}
-        >
-          <div className="flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">
-            <ClipboardList size={18} aria-hidden="true" />
-            Données persistantes V1
-          </div>
-        </EntityCard>
-        <EntityCard
-          title="Onboarding"
-          subtitle="Complétez les données métier pour passer d'un compte à un profil exploitable."
-          meta={["Informations", "Objectifs", "Besoins"]}
-        />
-        <EntityCard
-          title="Validation"
-          subtitle="Les badges et accès sensibles seront contrôlés par le back-office admin."
-          meta={["Profil", "Association", "Modération"]}
-        />
-        {(user.role === "supplier_owner" || user.role === "verified_supplier" || user.role === "independent_profile") && (
-          <MediaCard user={user} />
-        )}
-      </div>
+      {(user.role === "supplier_owner" || user.role === "verified_supplier" || user.role === "independent_profile") && (
+        <MediaCard user={user} />
+      )}
     </div>
   );
 }
