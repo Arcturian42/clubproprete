@@ -12,7 +12,7 @@ import {
 import { EntityCard } from "@/components/entity-card";
 import { StatCard } from "@/components/stat-card";
 
-type ApplicationWithJob = {
+export type ApplicationWithJob = {
   id: string;
   status: string;
   createdAt: Date;
@@ -73,6 +73,56 @@ function formatDate(value: Date | string) {
     day: "2-digit",
     month: "short",
   }).format(new Date(value));
+}
+
+// Liste des candidatures de l'utilisateur, réutilisée par le dashboard
+// candidat et par les dashboards des autres rôles (tout utilisateur peut
+// postuler aux offres, quel que soit son rôle).
+export function ApplicationsList({ applications }: { applications: ApplicationWithJob[] }) {
+  if (applications.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-slate-500">Vous n&apos;avez pas encore de candidatures.</p>
+        <Link href="/emploi" className="bento-btn bento-btn-primary mt-4 inline-block">
+          Voir les offres
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {applications.map((application) => (
+        <div key={application.id} className="border-t-2 border-slate-900 pt-4 first:border-t-0 first:pt-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="font-black text-slate-900">{application.job.title}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-500">
+                {application.job.company?.name || "Entreprise"} · {application.job.city || ""} · {application.job.contractType}
+              </p>
+            </div>
+            <span className={`bento-tag ${statusClassMap[application.status] || statusClassMap.sent}`}>
+              {statusLabelMap[application.status] || "Envoyée"}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="bento-tag border-slate-300 bg-slate-50 text-slate-700">
+              Candidaté le {formatDate(application.createdAt)}
+            </span>
+            {application.message ? (
+              <span className="bento-tag border-amber-400 bg-amber-100 text-slate-900">
+                <MessageSquareText size={13} aria-hidden="true" />
+                Message joint
+              </span>
+            ) : null}
+          </div>
+          {application.message ? (
+            <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">{application.message}</p>
+          ) : null}
+        </div>
+      ))}
+    </>
+  );
 }
 
 export function CandidateDashboard({
@@ -192,44 +242,7 @@ export function CandidateDashboard({
             <h2 className="text-2xl font-black text-slate-900">Mes candidatures</h2>
           </div>
           <div className="mt-5 grid gap-4">
-            {realApplications.length > 0 ? (
-              realApplications.map((application) => (
-                <div key={application.id} className="border-t-2 border-slate-900 pt-4 first:border-t-0 first:pt-0">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="font-black text-slate-900">{application.job.title}</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-500">
-                        {application.job.company?.name || "Entreprise"} · {application.job.city || ""} · {application.job.contractType}
-                      </p>
-                    </div>
-                    <span className={`bento-tag ${statusClassMap[application.status] || statusClassMap.sent}`}>
-                      {statusLabelMap[application.status] || "Envoyée"}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="bento-tag border-slate-300 bg-slate-50 text-slate-700">
-                      Candidaté le {formatDate(application.createdAt)}
-                    </span>
-                    {application.message ? (
-                      <span className="bento-tag border-amber-400 bg-amber-100 text-slate-900">
-                        <MessageSquareText size={13} aria-hidden="true" />
-                        Message joint
-                      </span>
-                    ) : null}
-                  </div>
-                  {application.message ? (
-                    <p className="mt-3 text-sm font-semibold leading-6 text-slate-500">{application.message}</p>
-                  ) : null}
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-slate-500">Vous n'avez pas encore de candidatures.</p>
-                <Link href="/emploi" className="bento-btn bento-btn-primary mt-4 inline-block">
-                  Voir les offres
-                </Link>
-              </div>
-            )}
+            <ApplicationsList applications={realApplications} />
           </div>
         </div>
 

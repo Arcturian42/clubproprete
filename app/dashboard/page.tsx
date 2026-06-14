@@ -32,13 +32,13 @@ export default async function DashboardPage() {
   let trainingsCount = 0;
   let company: Awaited<ReturnType<typeof getCompanyByOwner>> | undefined;
 
-  if (role === "candidate_profile") {
-    candidateProfile = await prisma.candidateProfile.findFirst({
-      where: { userId: user.id, deletedAt: null },
-    });
-    if (candidateProfile) {
-      candidateApplications = await getCandidateApplications(candidateProfile.id);
-    }
+  // Tout utilisateur peut postuler aux offres : on charge le profil candidat
+  // et les candidatures dès qu'ils existent, quel que soit le rôle.
+  candidateProfile = await prisma.candidateProfile.findFirst({
+    where: { userId: user.id, deletedAt: null },
+  });
+  if (candidateProfile) {
+    candidateApplications = await getCandidateApplications(candidateProfile.id);
   }
 
   if (role === "company_owner" || role === "verified_company") {
