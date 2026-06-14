@@ -142,10 +142,12 @@ export function ImageUploadField({
   name,
   label = "Image de couverture",
   defaultValue = "",
+  required = false,
 }: {
   name: string;
   label?: string;
   defaultValue?: string;
+  required?: boolean;
 }) {
   const [url, setUrl] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
@@ -162,7 +164,7 @@ export function ImageUploadField({
 
   return (
     <div>
-      <input type="hidden" name={name} value={url} />
+      <input type="hidden" name={name} value={url} required={required} aria-required={required} />
       <div className="flex items-center gap-3">
         <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-[10px] border-2 border-slate-200 bg-slate-50">
           {url ? (

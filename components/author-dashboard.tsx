@@ -64,11 +64,19 @@ export function AuthorDashboard({
 
   async function submitRequest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    if (!String(formData.get("featuredImage") || "").trim()) {
+      setMessage("");
+      setErrors({ featuredImage: "L'image de couverture est obligatoire." });
+      return;
+    }
+
     setSubmitting(true);
     setErrors({});
     setMessage("");
 
-    const result = await requestAuthorAccess(new FormData(event.currentTarget));
+    const result = await requestAuthorAccess(formData);
     setSubmitting(false);
 
     if (!result.success) {
@@ -89,12 +97,20 @@ export function AuthorDashboard({
     const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     const status = submitter?.value === "draft" ? "draft" : "pending";
 
+    const formData = new FormData(form);
+    formData.set("status", status);
+
+    // L'image de couverture est obligatoire pour soumettre à la modération
+    // (mais pas pour enregistrer un simple brouillon).
+    if (status === "pending" && !String(formData.get("featuredImage") || "").trim()) {
+      setMessage("");
+      setErrors({ featuredImage: "L'image de couverture est obligatoire." });
+      return;
+    }
+
     setSubmitting(true);
     setErrors({});
     setMessage("");
-
-    const formData = new FormData(form);
-    formData.set("status", status);
 
     const result = await createArticle(formData);
     setSubmitting(false);
@@ -186,6 +202,12 @@ export function AuthorDashboard({
           <Field label="Catégorie">
             <CategorySelect categories={categories} />
           </Field>
+          <Field label="Image de couverture" hint="Obligatoire : affichée en tête d'article et sur le blog.">
+            <ImageUploadField name="featuredImage" required />
+            {errors.featuredImage && (
+              <p className="mt-1 text-[11px] font-bold text-red-500">{errors.featuredImage}</p>
+            )}
+          </Field>
           <Field label="Résumé" hint="Une à deux phrases qui donnent envie de lire.">
             <textarea name="excerpt" required rows={3} className="bento-input w-full resize-none" placeholder="Résumé de l'article" />
           </Field>
@@ -244,8 +266,11 @@ export function AuthorDashboard({
           <Field label="Catégorie">
             <CategorySelect categories={categories} />
           </Field>
-          <Field label="Image de couverture">
-            <ImageUploadField name="featuredImage" />
+          <Field label="Image de couverture" hint="Obligatoire pour soumettre à la modération.">
+            <ImageUploadField name="featuredImage" required />
+            {errors.featuredImage && (
+              <p className="mt-1 text-[11px] font-bold text-red-500">{errors.featuredImage}</p>
+            )}
           </Field>
           <Field label="Résumé">
             <textarea name="excerpt" rows={3} className="bento-input w-full resize-none" placeholder="Résumé affiché dans le blog" />

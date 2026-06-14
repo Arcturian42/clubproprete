@@ -145,25 +145,33 @@ export async function softDeleteArticle(articleId: string) {
   }
 }
 
-const createArticleSchema = z.object({
-  title: z.string().min(3, "Le titre est obligatoire."),
-  slug: z.string().optional(),
-  excerpt: z.string().optional(),
-  content: z.string().optional(),
-  category: z.string().optional(),
-  seoTitle: z.string().optional(),
-  seoDescription: z.string().optional(),
-  featuredImage: z.string().optional(),
-  readTime: z.string().optional(),
-  tags: z.string().optional(),
-  status: z.enum(["draft", "pending"]).optional(),
-});
+const createArticleSchema = z
+  .object({
+    title: z.string().min(3, "Le titre est obligatoire."),
+    slug: z.string().optional(),
+    excerpt: z.string().optional(),
+    content: z.string().optional(),
+    category: z.string().optional(),
+    seoTitle: z.string().optional(),
+    seoDescription: z.string().optional(),
+    featuredImage: z.string().optional(),
+    readTime: z.string().optional(),
+    tags: z.string().optional(),
+    status: z.enum(["draft", "pending"]).optional(),
+  })
+  // L'image de couverture est obligatoire pour une soumission à la modération,
+  // mais reste facultative pour un simple brouillon.
+  .refine((data) => data.status === "draft" || Boolean(data.featuredImage?.trim()), {
+    message: "L'image de couverture est obligatoire.",
+    path: ["featuredImage"],
+  });
 
 const authorApplicationSchema = z.object({
   title: z.string().min(5, "Proposez un titre d'article."),
   excerpt: z.string().min(20, "Ajoutez un résumé d'au moins 20 caractères."),
   content: z.string().min(80, "Le premier article doit contenir au moins 80 caractères."),
   category: z.string().optional(),
+  featuredImage: z.string().min(1, "L'image de couverture est obligatoire."),
   motivation: z.string().min(10, "Expliquez votre motivation en quelques mots."),
   expertise: z.string().optional(),
 });
@@ -209,6 +217,7 @@ export async function requestAuthorAccess(formData: FormData) {
           excerpt: data.excerpt,
           content: data.content,
           category: data.category || "Tribune",
+          featuredImage: data.featuredImage,
           authorId: userId,
           status: "pending",
         },
