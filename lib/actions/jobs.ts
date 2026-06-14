@@ -286,13 +286,32 @@ export async function applyToJob(formData: FormData) {
 
     const { jobId, candidateProfileId, message } = parsed.data;
 
-    const candidateProfile = await prisma.candidateProfile.findFirst({
+    // Tout utilisateur connecté peut postuler : le profil candidat est créé
+    // (ou restauré) automatiquement à la première candidature, pré-rempli
+    // depuis le compte utilisateur.
+    let candidateProfile = await prisma.candidateProfile.findFirst({
       where: { userId: session.user.id, deletedAt: null },
       select: { id: true, userId: true, firstName: true, lastName: true },
     });
 
     if (!candidateProfile) {
-      return { success: false, message: "Vous devez disposer d'un profil candidat pour postuler." };
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { firstName: true, lastName: true, email: true, phone: true, city: true },
+      });
+      candidateProfile = await prisma.candidateProfile.upsert({
+        where: { userId: session.user.id },
+        update: { deletedAt: null },
+        create: {
+          userId: session.user.id,
+          firstName: user?.firstName ?? null,
+          lastName: user?.lastName ?? null,
+          email: user?.email ?? null,
+          phone: user?.phone ?? null,
+          city: user?.city ?? null,
+        },
+        select: { id: true, userId: true, firstName: true, lastName: true },
+      });
     }
 
     if (candidateProfileId && candidateProfileId !== candidateProfile.id) {

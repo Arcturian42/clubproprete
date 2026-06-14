@@ -327,9 +327,25 @@ export function MyDashboard({
     return <CandidateDashboard user={user} applications={candidateApplications} candidateProfile={candidateProfile} jobsCount={jobsCount} trainingsCount={trainingsCount} />;
   }
 
+  // Tout utilisateur peut postuler aux offres d'emploi : ses candidatures
+  // restent visibles dans son dashboard même sans le rôle candidat.
+  const applicationsSection =
+    candidateApplications && candidateApplications.length > 0 ? (
+      <section className="surface p-6">
+        <div className="flex items-center gap-3">
+          <BriefcaseBusiness className="text-indigo-600" size={22} aria-hidden="true" />
+          <h2 className="text-2xl font-black text-slate-900">Mes candidatures</h2>
+        </div>
+        <div className="mt-5 grid gap-4">
+          <ApplicationsList applications={candidateApplications} />
+        </div>
+      </section>
+    ) : null;
+
   if (user.role === "registered_user") {
     return (
       <div className="grid gap-6">
+        {applicationsSection}
         <section className="surface p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -401,6 +417,7 @@ export function MyDashboard({
     return (
       <div className="grid gap-6">
         <ProfileCompletionBanner company={company ?? null} />
+        {applicationsSection}
 
         <section className="surface p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -507,6 +524,7 @@ export function MyDashboard({
 
   return (
     <div className="grid gap-6">
+      {applicationsSection}
       <section className="surface p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>

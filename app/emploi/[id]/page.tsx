@@ -54,12 +54,13 @@ export default async function JobDetailPage({ params }: Props) {
     notFound();
   }
 
-  const candidateProfile =
-    session?.user?.role === "candidate_profile"
-      ? await prisma.candidateProfile.findFirst({
-          where: { userId: session.user.id, deletedAt: null },
-        })
-      : null;
+  // Tout utilisateur connecté peut postuler, quel que soit son rôle :
+  // le profil candidat est créé automatiquement à la première candidature.
+  const candidateProfile = session?.user
+    ? await prisma.candidateProfile.findFirst({
+        where: { userId: session.user.id, deletedAt: null },
+      })
+    : null;
   const existingApplication = candidateProfile
     ? await prisma.jobApplication.findFirst({
         where: { jobId: job.id, candidateProfileId: candidateProfile.id, deletedAt: null },
@@ -72,18 +73,6 @@ export default async function JobDetailPage({ params }: Props) {
     const currentSession = await auth();
     if (!currentSession?.user) {
       redirect(`/connexion?callbackUrl=/emploi/${id}`);
-    }
-
-    if (currentSession.user.role !== "candidate_profile") {
-      redirect("/inscription?role=candidate_profile");
-    }
-
-    const currentCandidateProfile = await prisma.candidateProfile.findFirst({
-      where: { userId: currentSession.user.id, deletedAt: null },
-    });
-
-    if (!currentCandidateProfile) {
-      redirect("/profil");
     }
 
     const payload = new FormData();
@@ -269,25 +258,16 @@ export default async function JobDetailPage({ params }: Props) {
             {!session?.user ? (
               <>
                 <p className="text-sm text-slate-600 mb-4">
-                  Connectez-vous en tant que candidat pour postuler à cette offre.
+                  Connectez-vous pour postuler à cette offre.
                 </p>
                 <Link href={`/connexion?callbackUrl=/emploi/${job.id}`} className="bento-btn bento-btn-primary w-full justify-center block text-center">
                   Se connecter pour postuler
                 </Link>
               </>
-            ) : session.user.role !== "candidate_profile" ? (
-              <>
-                <p className="text-sm text-slate-600 mb-4">
-                  Cette action est réservée aux profils candidats. Créez ou activez un profil candidat pour postuler.
-                </p>
-                <Link href="/inscription?role=candidate_profile" className="bento-btn bento-btn-primary w-full justify-center block text-center">
-                  Créer un profil candidat
-                </Link>
-              </>
             ) : existingApplication ? (
               <>
                 <p className="text-sm text-slate-600 mb-4">
-                  Vous avez déjà postulé à cette offre. Suivez la réponse dans votre dashboard candidat.
+                  Vous avez déjà postulé à cette offre. Suivez la réponse dans votre espace personnel.
                 </p>
                 <Link href="/dashboard" className="bento-btn bento-btn-primary w-full justify-center block text-center">
                   Voir mes candidatures
