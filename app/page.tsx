@@ -18,9 +18,21 @@ import {
   steps,
   subcontractingPerks,
 } from "@/lib/landing-content";
+import { JsonLd } from "@/components/json-ld";
 
 // Les compteurs viennent de la base, indisponible au moment du build.
 export const dynamic = "force-dynamic";
+
+// Données structurées FAQ (AEO) : éligibilité aux réponses directes Google/IA.
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faq.map(({ q, a }) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
+};
 
 export default async function HomePage() {
   const [{ total: companiesCount }, { total: jobsCount }, { total: suppliersCount }, { total: trainingsCount }] =
@@ -33,38 +45,39 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <JsonLd data={faqJsonLd} />
       {/* HERO */}
       <section className="surface p-6 sm:p-10">
         <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <span className="bento-tag border-indigo-600 bg-indigo-50 text-indigo-700">
-              <Sparkles size={12} aria-hidden="true" /> Club professionnel gratuit
+              <Sparkles size={12} aria-hidden="true" /> Club Propreté · Club professionnel gratuit
             </span>
-            <h1 className="mt-4 text-3xl font-black leading-tight text-slate-900 sm:text-5xl lg:text-6xl">Club Propreté</h1>
-            <p className="mt-3 text-xl font-extrabold text-indigo-600 sm:text-2xl">
-              Le club professionnel gratuit de la propreté
-            </p>
+            <h1 className="mt-4 text-3xl font-black leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
+              Recrutez, trouvez des partenaires et développez votre activité de propreté.
+            </h1>
             <p className="mt-5 max-w-2xl text-base font-medium leading-7 text-slate-500">
-              Annuaire, emploi, formations, ressources, fournisseurs et réseau privé : Club Propreté rassemble les
-              outils essentiels pour aider les professionnels du nettoyage à gagner en visibilité, recruter, se former,
-              trouver les bons partenaires et développer leur activité.
+              Annuaire, emploi, formations, fournisseurs et réseau privé : la plateforme gratuite qui réunit les
+              entreprises de nettoyage, indépendants, fournisseurs et organismes de formation.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-7">
               <Link href="/inscription" className="bento-btn bento-btn-primary">
                 Créer mon compte gratuit <ArrowRight size={16} aria-hidden="true" />
               </Link>
-              <Link href="/association" className="bento-btn">
-                Découvrir l'association
-              </Link>
+              <p className="mt-2 text-xs font-bold text-slate-400">Gratuit · sans carte bancaire · 2 minutes</p>
             </div>
+            <p className="mt-5 text-sm font-semibold text-slate-600">
+              Rejoignez les <span className="font-black text-slate-900">membres fondateurs</span> de Club Propreté.{" "}
+              <Link href="/association" className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+                Découvrir l'association →
+              </Link>
+            </p>
             <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2">
-              {["Gratuit à l'inscription", "Pensé pour les pros du terrain", "Accès associatif sur candidature"].map(
-                (item) => (
-                  <li key={item} className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                    <CheckCircle2 size={16} className="text-indigo-600" aria-hidden="true" /> {item}
-                  </li>
-                ),
-              )}
+              {["100 % gratuit", "Pensé pour le terrain", "Réseau privé sur candidature"].map((item) => (
+                <li key={item} className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                  <CheckCircle2 size={16} className="text-indigo-600" aria-hidden="true" /> {item}
+                </li>
+              ))}
             </ul>
           </div>
           {companiesCount >= 10 ? (
@@ -392,9 +405,10 @@ export default async function HomePage() {
               Créer mon compte gratuit <ArrowRight size={16} aria-hidden="true" />
             </Link>
             <Link href="/association" className="bento-btn">
-              Découvrir l'association
+              Voir les avantages membres
             </Link>
           </div>
+          <p className="mt-3 text-xs font-bold text-slate-400">Gratuit · sans carte bancaire · 2 minutes</p>
           <p className="mt-6 text-xs font-bold uppercase tracking-wide text-slate-400">
             Club Propreté · La plateforme gratuite des professionnels de la propreté
           </p>

@@ -31,50 +31,50 @@ export const features: Feature[] = [
     icon: Building2,
     title: "Annuaire professionnel",
     description:
-      "Référencez votre entreprise, votre activité ou votre organisation sur une fiche claire. Entreprises, indépendants, fournisseurs, organismes et experts gagnent en visibilité auprès du secteur.",
-    meta: "L'objectif : permettre aux bons acteurs de se trouver plus facilement.",
+      "Soyez trouvé par vos futurs clients et partenaires. Votre fiche géolocalisée vous rend visible auprès de tout le secteur — et indexée sur Google.",
+    meta: "Être trouvé, plutôt que chercher.",
   },
   {
     icon: BookOpen,
     title: "Média & ressources métier",
     description:
-      "Articles, guides, modèles et conseils pratiques pour mieux comprendre les enjeux du secteur : recrutement, gestion, sous-traitance, réglementation, matériel, rentabilité, qualité de service.",
-    meta: "Toutes les ressources utiles centralisées au même endroit.",
+      "Gagnez du temps sur le recrutement, la gestion, la sous-traitance ou la réglementation grâce à des guides et des modèles concrets, prêts à l'emploi.",
+    meta: "Des réponses utiles, pas de la théorie.",
   },
   {
     icon: Briefcase,
     title: "Job board spécialisé",
     description:
-      "Publiez ou consultez des offres dédiées aux métiers de la propreté : agents d'entretien, chefs d'équipe, responsables de secteur, inspecteurs, commerciaux, profils administratifs ou reconversions.",
-    meta: "Connecter les recruteurs et les talents du secteur.",
+      "Recrutez des profils du secteur — agents, chefs d'équipe, responsables, commerciaux — sans crouler sous les candidatures hors-sujet des plateformes généralistes.",
+    meta: "Les bons profils, au bon endroit.",
   },
   {
     icon: GraduationCap,
     title: "Formations",
     description:
-      "Techniques terrain, sécurité, management, habilitations, environnement, qualité, encadrement ou digitalisation. Les organismes de formation présentent leurs offres à une audience ciblée.",
-    meta: "Monter en compétence et professionnaliser les équipes.",
+      "Montez vos équipes en compétence : sécurité, management, habilitations, qualité. Trouvez la bonne formation au lieu de chercher pendant des heures.",
+    meta: "Des équipes mieux formées, plus vite.",
   },
   {
     icon: Truck,
     title: "Annuaire fournisseurs",
     description:
-      "Consommables, produits d'entretien, matériel, machines, location d'équipements, linge et textile, logiciels, outils RH ou services spécialisés : identifiez les bons partenaires plus rapidement.",
-    meta: "Trouver des fournisseurs adaptés aux besoins du secteur.",
+      "Comparez et trouvez les bons fournisseurs — consommables, machines, logiciels, textile — plus vite, au lieu de repartir de zéro à chaque besoin.",
+    meta: "Les bons partenaires, sans perdre de temps.",
   },
   {
     icon: Wrench,
     title: "Outils gratuits",
     description:
-      "Progressivement : modèles de documents, checklists, calculateurs, comparatifs, guides téléchargeables, ressources RH, modèles de devis et de contrats, supports opérationnels.",
-    meta: "Des outils pratiques pensés pour le quotidien.",
+      "Modèles de devis et de contrats, checklists, calculateurs, comparatifs : des outils prêts à l'emploi pour piloter votre activité au quotidien.",
+    meta: "Du concret, téléchargeable.",
   },
   {
     icon: Network,
     title: "Association & réseau privé",
     description:
-      "Après inscription, candidatez pour rejoindre l'association Club Propreté : badge membre, événements, newsletter privée, réseau interne et espace de sous-traitance entre professionnels vérifiés.",
-    meta: "Un niveau supplémentaire pour les membres engagés.",
+      "Allez plus loin : badge membre, événements, newsletter privée et, surtout, un espace de sous-traitance entre professionnels vérifiés. Sur candidature.",
+    meta: "Un cercle de confiance réservé aux membres.",
   },
 ];
 
