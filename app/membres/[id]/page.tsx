@@ -37,11 +37,11 @@ export async function generateMetadata({ params }: Props) {
   const { id } = await params;
   const profile = await getPublicProfile(id);
   if (!profile) {
-    return { title: "Profil membre | Club Propreté" };
+    return { title: "Profil membre" };
   }
   const fullName = `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || "Membre";
   return {
-    title: `${fullName} | Club Propreté`,
+    title: `${fullName}`,
     description:
       profile.profile?.headline ||
       profile.bio?.slice(0, 160) ||

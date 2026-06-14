@@ -9,7 +9,7 @@ import CompanyMap from "@/components/company-map";
 import { getPublishedCompanies } from "@/lib/actions/companies";
 
 export const metadata = {
-  title: "Annuaire des sociétés de nettoyage en France | Club Propreté",
+  title: "Annuaire des sociétés de nettoyage en France",
   description:
     "Trouvez une société de nettoyage vérifiée près de chez vous : annuaire gratuit des entreprises de propreté, par région et spécialité.",
 };

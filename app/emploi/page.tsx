@@ -9,7 +9,7 @@ import { Pagination } from "@/components/pagination";
 import { getPublishedJobs } from "@/lib/actions/jobs";
 
 export const metadata = {
-  title: "Offres d'emploi dans la propreté | Club Propreté",
+  title: "Offres d'emploi dans la propreté",
   description:
     "Le job board des métiers du nettoyage : agents, chefs d'équipe, encadrement. Postulez gratuitement.",
 };

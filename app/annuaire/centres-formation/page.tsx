@@ -8,7 +8,7 @@ import { StatCard } from "@/components/stat-card";
 import { getPublishedTrainingOrganizations } from "@/lib/actions/training-organizations";
 
 export const metadata = {
-  title: "Centres de formation propreté | Club Propreté",
+  title: "Centres de formation propreté",
   description:
     "Annuaire des organismes de formation spécialisés dans les métiers de la propreté et de l'hygiène.",
 };

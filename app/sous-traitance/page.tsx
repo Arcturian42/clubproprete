@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/empty-state";
 import { getPublishedSubcontractingMissions } from "@/lib/actions/subcontracting";
 
 export const metadata = {
-  title: "Sous-traitance en propreté entre professionnels | Club Propreté",
+  title: "Sous-traitance en propreté entre professionnels",
   description:
     "L'espace de sous-traitance privé du Club Propreté : missions qualifiées entre membres de l'association.",
 };

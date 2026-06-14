@@ -4,7 +4,7 @@ import { getPublicMembers } from "@/lib/actions/public";
 import { BadgeCheck, MapPin, Search, ShieldCheck, UserRound } from "lucide-react";
 
 export const metadata = {
-  title: "Annuaire des membres | Club Propreté",
+  title: "Annuaire des membres",
   description:
     "Découvrez les professionnels du réseau Club Propreté : dirigeants, indépendants, fournisseurs, formateurs et experts du secteur de la propreté.",
 };
