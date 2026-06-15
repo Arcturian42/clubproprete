@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { BadgeCheck, CircleSlash, Download, ShieldAlert, ShieldCheck, Users, ArrowRight, Briefcase } from "lucide-react";
+import { BadgeCheck, CircleSlash, Download, ShieldAlert, ShieldCheck, Users, ArrowRight, Briefcase, UserRoundCheck, UserCog } from "lucide-react";
 import { auth } from "@/auth";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
@@ -8,27 +8,35 @@ import { StatCard } from "@/components/stat-card";
 import { StatusPill } from "@/components/status-pill";
 import { EmptyState } from "@/components/empty-state";
 import { getAdminQueue, getPendingJobsForModeration, getPendingVerificationRequests, updateEntityStatus } from "@/lib/actions/admin";
-import { getAdminStats } from "@/lib/actions/users";
+import { getAdminStats, getPendingUserProfiles, getUserAccountStats, updateUserProfileVerification } from "@/lib/actions/users";
 import { needsAdminValidation } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
+import { AdminNav } from "@/components/admin/admin-nav";
 
 export default async function AdminPage() {
   const session = await auth();
-  const isSuperAdmin = session?.user?.role === "super_admin";
-  const isAdmin = session?.user?.role === "admin" || isSuperAdmin;
+  const databaseUser = session?.user?.id
+    ? await prisma.user.findUnique({ where: { id: session.user.id }, select: { mainRole: true, status: true, deletedAt: true } })
+    : null;
+  const isSuperAdmin = databaseUser?.mainRole === "super_admin";
+  const isAdmin = databaseUser?.mainRole === "admin" || isSuperAdmin;
 
-  if (!isAdmin) {
+  if (!isAdmin || databaseUser?.status !== "active" || databaseUser.deletedAt) {
     redirect("/");
   }
 
-  const [queuesResult, statsResult, pendingJobs, verificationRequests] = await Promise.all([
+  const [queuesResult, statsResult, pendingJobs, verificationRequests, accountStatsResult, pendingUserProfiles] = await Promise.all([
     getAdminQueue(),
     getAdminStats(),
     getPendingJobsForModeration(),
     getPendingVerificationRequests(),
+    isSuperAdmin ? getUserAccountStats() : Promise.resolve(null),
+    isSuperAdmin ? getPendingUserProfiles() : Promise.resolve([]),
   ]);
 
   const queues = queuesResult;
   const stats = statsResult.success ? statsResult.stats : null;
+  const accountStats = accountStatsResult?.success ? accountStatsResult.stats : null;
 
   const pendingCount = queues.filter((item) => needsAdminValidation(item.status)).length;
   const approvedCount = queues.filter((item) => item.status === "approved" || item.status === "published").length;
@@ -38,11 +46,20 @@ export default async function AdminPage() {
     await updateEntityStatus(formData);
   }
 
+  async function handleProfileVerification(formData: FormData) {
+    "use server";
+    await updateUserProfileVerification(formData);
+  }
+
   return (
     <PageShell
       eyebrow={isSuperAdmin ? "Back-office — Super Admin" : "Back-office — Admin"}
-      title="Validation et modération"
-      description="Centre de contrôle pour garder la qualité des données, appliquer les restrictions et préparer les exports."
+      title={isSuperAdmin ? "Centre de contrôle" : "Validation et modération"}
+      description={
+        isSuperAdmin
+          ? "Pilotage des utilisateurs, vérifications, validations métier, modération et sécurité de la plateforme."
+          : "Centre de validation pour garder la qualité des données, appliquer les restrictions et préparer les exports."
+      }
       actions={
         <div className="flex flex-wrap gap-3">
           {isSuperAdmin && (
@@ -56,6 +73,8 @@ export default async function AdminPage() {
         </div>
       }
     >
+      <AdminNav current="overview" isSuperAdmin={isSuperAdmin} />
+
       <div className="mb-4 flex flex-wrap gap-2">
         {isSuperAdmin ? (
           <span className="bento-tag border-rose-400 bg-rose-50 text-rose-700">
@@ -82,6 +101,105 @@ export default async function AdminPage() {
           <StatCard label="Offres" value={String(stats.totalJobs)} detail="Job board" />
           <StatCard label="Formations" value={String(stats.totalTrainings)} detail="Catalogue" />
         </div>
+      )}
+
+      {isSuperAdmin && accountStats && (
+        <section className="mt-8 rounded-[22px] border-2 border-slate-900 bg-slate-900 p-5 text-white shadow-panel sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-amber-300">Contrôle des comptes</p>
+              <h2 className="mt-2 text-2xl font-black">Utilisateurs, identité et profils</h2>
+              <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-300">
+                Suivez les comptes à examiner, les profils en attente et les accès suspendus depuis un espace réservé au super admin.
+              </p>
+            </div>
+            <Link href="/admin/users" className="bento-btn border-white bg-white text-slate-900 shadow-[3px_3px_0px_#fbbf24] hover:bg-amber-50">
+              <UserCog size={16} aria-hidden="true" /> Ouvrir la gestion complète
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-[16px] border border-slate-700 bg-slate-800 p-4">
+              <p className="text-2xl font-black text-amber-300">{accountStats.profilePending}</p>
+              <p className="mt-1 text-xs font-bold text-slate-300">Profils à vérifier</p>
+            </div>
+            <div className="rounded-[16px] border border-slate-700 bg-slate-800 p-4">
+              <p className="text-2xl font-black">{accountStats.emailUnverified}</p>
+              <p className="mt-1 text-xs font-bold text-slate-300">Emails non vérifiés</p>
+            </div>
+            <div className="rounded-[16px] border border-slate-700 bg-slate-800 p-4">
+              <p className="text-2xl font-black">{accountStats.onboardingIncomplete}</p>
+              <p className="mt-1 text-xs font-bold text-slate-300">Onboardings incomplets</p>
+            </div>
+            <div className="rounded-[16px] border border-slate-700 bg-slate-800 p-4">
+              <p className="text-2xl font-black text-rose-300">{accountStats.suspended}</p>
+              <p className="mt-1 text-xs font-bold text-slate-300">Comptes suspendus</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {isSuperAdmin && (
+        <section className="mt-8">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-wide text-indigo-600">Identité membre</p>
+              <h2 className="mt-1 flex items-center gap-2 text-xl font-black text-slate-900">
+                <UserRoundCheck size={20} aria-hidden="true" /> Profils utilisateurs à examiner
+              </h2>
+            </div>
+            <Link href="/admin/users?verification=pending" className="bento-btn min-h-0 px-3 py-2 text-xs">
+              Voir toute la file <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+
+          {pendingUserProfiles.length === 0 ? (
+            <EmptyState title="Aucun profil en attente" description="Les demandes de vérification de profils utilisateurs apparaîtront ici." />
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {pendingUserProfiles.map((user) => (
+                <article key={user.id} className="rounded-[20px] border-2 border-slate-900 bg-white p-5 shadow-panel">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-black text-slate-900">{`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Utilisateur sans nom"}</p>
+                      <p className="mt-1 text-xs font-semibold text-slate-500">{user.email}</p>
+                    </div>
+                    <span className="bento-tag border-amber-400 bg-amber-50 text-amber-700">À vérifier</span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <p className="font-extrabold uppercase tracking-wide text-slate-400">Complétude</p>
+                      <p className="mt-1 text-base font-black text-slate-900">{user.profile?.completionScore ?? 0}%</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <p className="font-extrabold uppercase tracking-wide text-slate-400">Contrôles</p>
+                      <p className="mt-1 font-bold text-slate-700">Email {user.emailVerified ? "vérifié" : "non vérifié"}</p>
+                    </div>
+                  </div>
+                  {user.profile?.headline && <p className="mt-3 text-sm font-semibold text-slate-600">{user.profile.headline}</p>}
+                  <div className="mt-4 flex flex-wrap gap-2 border-t-2 border-slate-100 pt-4">
+                    <Link href={`/admin/users/${user.id}`} className="bento-tag border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+                      Examiner le compte
+                    </Link>
+                    <form action={handleProfileVerification}>
+                      <input type="hidden" name="userId" value={user.id} />
+                      <input type="hidden" name="status" value="approved" />
+                      <button type="submit" className="bento-tag cursor-pointer border-emerald-400 bg-emerald-50 text-emerald-700 hover:bg-emerald-100">
+                        Valider le profil
+                      </button>
+                    </form>
+                    <form action={handleProfileVerification}>
+                      <input type="hidden" name="userId" value={user.id} />
+                      <input type="hidden" name="status" value="rejected" />
+                      <button type="submit" className="bento-tag cursor-pointer border-rose-400 bg-rose-50 text-rose-700 hover:bg-rose-100">
+                        Refuser
+                      </button>
+                    </form>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {/* Demandes de vérification de fiche (RDV + questionnaire) */}

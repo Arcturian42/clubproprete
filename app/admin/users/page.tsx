@@ -1,23 +1,41 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck, AlertTriangle, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, ShieldCheck, AlertTriangle, UserCheck, UserX, Search, SlidersHorizontal, Eye } from "lucide-react";
 import { auth } from "@/auth";
 import { PageShell } from "@/components/page-shell";
 import { EntityCard } from "@/components/entity-card";
 import { StatCard } from "@/components/stat-card";
 import { EmptyState } from "@/components/empty-state";
-import { getUsersList, updateUserRole, updateUserStatus } from "@/lib/actions/users";
+import { getUserAccountStats, getUsersList, updateUserRole, updateUserStatus } from "@/lib/actions/users";
 import { roleLabels } from "@/lib/auth-demo";
 import { RoleSelect } from "@/components/admin/role-select";
+import { AdminNav } from "@/components/admin/admin-nav";
+import { Pagination } from "@/components/pagination";
+import { prisma } from "@/lib/prisma";
 
-export default async function AdminUsersPage() {
+type AdminUsersPageProps = {
+  searchParams: Promise<{ page?: string; search?: string; status?: string; verification?: string }>;
+};
+
+export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
   const session = await auth();
-  if (session?.user?.role !== "super_admin") {
+  const [params, databaseUser] = await Promise.all([
+    searchParams,
+    session?.user?.id
+      ? prisma.user.findUnique({ where: { id: session.user.id }, select: { mainRole: true, status: true, deletedAt: true } })
+      : null,
+  ]);
+  if (databaseUser?.mainRole !== "super_admin" || databaseUser.status !== "active" || databaseUser.deletedAt) {
     redirect("/admin");
   }
 
-  const result = await getUsersList();
+  const page = Math.max(1, Number(params.page) || 1);
+  const [result, statsResult] = await Promise.all([
+    getUsersList({ page, query: params.search, status: params.status, verification: params.verification }),
+    getUserAccountStats(),
+  ]);
   const users = result.success && result.users ? result.users : [];
+  const stats = statsResult.success ? statsResult.stats : null;
 
   async function handleRoleChange(formData: FormData) {
     "use server";
@@ -28,11 +46,6 @@ export default async function AdminUsersPage() {
     "use server";
     await updateUserStatus(formData);
   }
-
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.status === "active").length;
-  const suspendedUsers = users.filter((u) => u.status === "suspended").length;
-  const adminCount = users.filter((u) => u.mainRole === "admin" || u.mainRole === "super_admin").length;
 
   return (
     <PageShell
@@ -45,23 +58,69 @@ export default async function AdminUsersPage() {
         </Link>
       }
     >
+      <AdminNav current="users" isSuperAdmin />
+
       <div className="grid gap-4 sm:grid-cols-4">
-        <StatCard label="Utilisateurs" value={String(totalUsers)} detail="Total inscrits" />
-        <StatCard label="Actifs" value={String(activeUsers)} detail="Comptes actifs" />
-        <StatCard label="Suspendus" value={String(suspendedUsers)} detail="Comptes suspendus" />
-        <StatCard label="Admins" value={String(adminCount)} detail="Admin + Super admin" />
+        <StatCard label="Utilisateurs" value={stats ? String(stats.total) : "—"} detail="Total inscrits" />
+        <StatCard label="À vérifier" value={stats ? String(stats.profilePending) : "—"} detail="Profils en attente" />
+        <StatCard label="Emails non vérifiés" value={stats ? String(stats.emailUnverified) : "—"} detail="Contrôle de compte" />
+        <StatCard label="Suspendus" value={stats ? String(stats.suspended) : "—"} detail="Accès bloqués" />
+      </div>
+
+      <form method="get" className="mt-6 grid gap-3 rounded-[20px] border-2 border-slate-900 bg-white p-4 shadow-panel lg:grid-cols-[minmax(260px,1fr)_190px_220px_auto]">
+        <label className="relative">
+          <span className="sr-only">Rechercher un utilisateur</span>
+          <Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <input
+            type="search"
+            name="search"
+            defaultValue={params.search ?? ""}
+            placeholder="Nom, email ou téléphone"
+            className="w-full rounded-[12px] border-2 border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm font-semibold outline-none focus:border-indigo-500"
+          />
+        </label>
+        <label>
+          <span className="sr-only">Filtrer par statut</span>
+          <select name="status" defaultValue={params.status ?? ""} className="w-full rounded-[12px] border-2 border-slate-300 bg-white px-3 py-2.5 text-sm font-bold text-slate-700">
+            <option value="">Tous les comptes</option>
+            <option value="active">Actifs</option>
+            <option value="suspended">Suspendus</option>
+          </select>
+        </label>
+        <label>
+          <span className="sr-only">Filtrer par vérification</span>
+          <select name="verification" defaultValue={params.verification ?? ""} className="w-full rounded-[12px] border-2 border-slate-300 bg-white px-3 py-2.5 text-sm font-bold text-slate-700">
+            <option value="">Toutes les vérifications</option>
+            <option value="pending">Profils à vérifier</option>
+            <option value="approved">Profils vérifiés</option>
+            <option value="rejected">Profils refusés</option>
+            <option value="draft">Profils en brouillon</option>
+            <option value="missing">Profil absent</option>
+          </select>
+        </label>
+        <button type="submit" className="bento-btn bento-btn-primary justify-center">
+          <SlidersHorizontal size={16} aria-hidden="true" /> Filtrer
+        </button>
+      </form>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-500">
+        <p>{result.success ? `${result.total} utilisateur${result.total === 1 ? "" : "s"} trouvé${result.total === 1 ? "" : "s"}` : "Impossible de charger les utilisateurs"}</p>
+        {(params.search || params.status || params.verification) && (
+          <Link href="/admin/users" className="text-indigo-600 hover:underline">Réinitialiser les filtres</Link>
+        )}
       </div>
 
       {users.length === 0 ? (
         <EmptyState title="Aucun utilisateur" description="La base ne contient aucun utilisateur." />
       ) : (
         <div className="mt-6 overflow-x-auto rounded-[20px] border-2 border-slate-900 bg-white shadow-panel">
-          <table className="w-full min-w-[800px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[1050px] border-collapse text-left text-sm">
             <thead className="bg-slate-100 text-slate-700">
               <tr>
                 <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Utilisateur</th>
                 <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Rôle</th>
                 <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Statut</th>
+                <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Vérification</th>
                 <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Entités</th>
                 <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Inscrit</th>
                 <th className="px-4 py-3 text-[11px] font-extrabold uppercase tracking-wide">Actions</th>
@@ -113,6 +172,28 @@ export default async function AdminUsersPage() {
                     >
                       {user.status === "active" ? "Actif" : "Suspendu"}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="space-y-1">
+                      <span className={`bento-tag text-[9px] ${
+                        user.profile?.verificationStatus === "approved"
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                          : user.profile?.verificationStatus === "pending"
+                            ? "border-amber-400 bg-amber-50 text-amber-700"
+                            : user.profile?.verificationStatus === "rejected"
+                              ? "border-rose-400 bg-rose-50 text-rose-700"
+                              : "border-slate-300 bg-slate-50 text-slate-600"
+                      }`}>
+                        {user.profile?.verificationStatus === "approved"
+                          ? "Profil vérifié"
+                          : user.profile?.verificationStatus === "pending"
+                            ? "À examiner"
+                            : user.profile?.verificationStatus === "rejected"
+                              ? "Refusé"
+                              : user.profile ? "Brouillon" : "Profil absent"}
+                      </span>
+                      <p className="text-[10px] font-bold text-slate-400">Complété à {user.profile?.completionScore ?? 0}%</p>
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
@@ -178,6 +259,9 @@ export default async function AdminUsersPage() {
                           </form>
                         </>
                       )}
+                      <Link href={`/admin/users/${user.id}`} className="bento-tag border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-[10px]">
+                        <Eye size={12} aria-hidden="true" /> Examiner
+                      </Link>
                     </div>
                   </td>
                 </tr>
@@ -185,6 +269,16 @@ export default async function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {result.success && (
+        <Pagination
+          currentPage={result.page ?? page}
+          totalPages={result.totalPages ?? 1}
+          basePath="/admin/users"
+          searchQuery={params.search}
+          extraParams={{ status: params.status, verification: params.verification }}
+        />
       )}
 
       <div className="mt-8 grid gap-5 lg:grid-cols-2">

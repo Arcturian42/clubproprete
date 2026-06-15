@@ -140,7 +140,7 @@ const providers: Provider[] = [
       const { email, password } = parsed.data;
       const user = await findUserWithContext(email);
       // Un compte supprimé (soft-delete) ne peut plus se connecter.
-      if (!user || user.deletedAt || !user.passwordHash) return null;
+      if (!user || user.deletedAt || user.status !== "active" || !user.passwordHash) return null;
 
       const valid = await bcrypt.compare(password, user.passwordHash);
       if (!valid) return null;
@@ -232,7 +232,7 @@ export const {
           dbUser = await findUserWithContext(email);
         }
 
-        if (!dbUser) return false;
+        if (!dbUser || dbUser.status !== "active") return false;
 
         // Enrichit l'objet `user` transmis ensuite au callback jwt.
         Object.assign(user, await toSessionUser(dbUser));

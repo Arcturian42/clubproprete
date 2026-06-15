@@ -63,6 +63,7 @@ export function AuthNav() {
   const user = session.user;
   const fullName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email;
   const roleLabel = roleLabels[user.role as keyof typeof roleLabels] || user.role;
+  const isPlatformAdmin = user.role === "admin" || user.role === "super_admin";
 
   async function handleDelete() {
     setDeleting(true);
@@ -113,12 +114,12 @@ export function AuthNav() {
 
             <div className="py-1">
               <Link
-                href="/dashboard"
+                href={isPlatformAdmin ? "/admin" : "/dashboard"}
                 role="menuitem"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700"
               >
-                <LayoutDashboard size={15} aria-hidden="true" /> Tableau de bord
+                <LayoutDashboard size={15} aria-hidden="true" /> {isPlatformAdmin ? "Administration" : "Tableau de bord"}
               </Link>
               <Link
                 href="/profil"
