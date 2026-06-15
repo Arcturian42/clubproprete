@@ -10,8 +10,10 @@ import {
   getOfferTypeLabel,
   getSupplierFamilyLabel,
   getSupplierSubCategoryLabel,
+  isOfferType,
   isSupplierFamily,
   isSupplierSubCategory,
+  OFFER_TYPES,
   SUPPLIER_FAMILIES,
   SUPPLIER_TAXONOMY,
 } from "@/lib/supplier-taxonomy";
@@ -31,6 +33,7 @@ interface SuppliersPageProps {
     search?: string;
     family?: string;
     subCategory?: string;
+    offerType?: string;
   }>;
 }
 
@@ -41,12 +44,14 @@ export default async function SuppliersPage({ searchParams }: SuppliersPageProps
   const page = params.page ? Math.max(1, parseInt(params.page, 10) || 1) : 1;
   const family = isSupplierFamily(params.family) ? params.family : undefined;
   const subCategory = isSupplierSubCategory(params.subCategory) ? params.subCategory : undefined;
+  const offerType = isOfferType(params.offerType) ? params.offerType : undefined;
   const search = params.search?.trim() || undefined;
 
   const { items: dbSuppliers, total } = await getPublishedSuppliers({
     search,
     family,
     subCategory,
+    offerType,
     page,
   });
 
@@ -75,7 +80,7 @@ export default async function SuppliersPage({ searchParams }: SuppliersPageProps
     ? SUPPLIER_TAXONOMY[family].subs
     : SUPPLIER_FAMILIES.flatMap((supplierFamily) => SUPPLIER_TAXONOMY[supplierFamily].subs);
 
-  const hasFilters = Boolean(search || family || subCategory);
+  const hasFilters = Boolean(search || family || subCategory || offerType);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (

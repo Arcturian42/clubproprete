@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { PermissionError, requireUser, canViewCandidate } from "@/lib/permissions";
 import { notifyUser } from "@/lib/notifications";
 
-const submitRecommendationSchema = z.object({
+const createDirectRecommendationSchema = z.object({
   candidateUserId: z.string(),
   relationship: z.string().min(1, "Précisez votre relation professionnelle."),
   comment: z
@@ -24,10 +24,12 @@ const requestRecommendationSchema = z.object({
 
 const writeRecommendationSchema = z.object({
   recommendationId: z.string(),
-  relationship: z.string().min(1, "Précisez la relation professionnelle."),
-  comment: z.string().min(10, "Le commentaire doit contenir au moins 10 caractères.").max(2000),
-  authorRole: z.string().optional(),
+  relationship: z.string().min(1),
+  comment: z.string().min(10).max(2000),
+  authorRole: z.string().max(120).optional(),
 });
+
+const submitRecommendationSchema = createDirectRecommendationSchema;
 
 const updateStatusSchema = z.object({
   recommendationId: z.string(),

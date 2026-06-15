@@ -77,6 +77,8 @@ export default function EntrepriseProfilePage() {
   const [verificationStatus, setVerificationStatus] = useState<string>("draft");
   const [applications, setApplications] = useState<Awaited<ReturnType<typeof getApplicationsForCompany>>["applications"] | null>(null);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [jobs, setJobs] = useState<Awaited<ReturnType<typeof getJobsForCurrentPublisher>>>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
 
   const user = session?.user;
 
@@ -173,6 +175,22 @@ export default function EntrepriseProfilePage() {
       setApplicationsLoading(false);
     };
     loadApplications();
+  }, [companyId]);
+
+  useEffect(() => {
+    if (!companyId) return;
+    const loadJobs = async () => {
+      setJobsLoading(true);
+      const result = await getJobsForCurrentPublisher();
+      const companyJobs = result.filter(
+        (job) =>
+          job.companyId === companyId ||
+          (job.employerType === "company" && job.employerEntityId === companyId)
+      );
+      setJobs(companyJobs);
+      setJobsLoading(false);
+    };
+    loadJobs();
   }, [companyId]);
 
   const handleSave = async () => {
@@ -449,6 +467,12 @@ export default function EntrepriseProfilePage() {
       description="Gérez la fiche de votre entreprise et son visibilité."
       actions={
         <>
+          <Link href="/emploi/nouvelle-offre" className="bento-btn bento-btn-primary">
+            <Plus size={16} /> Nouvelle offre
+          </Link>
+          <Link href="/dashboard/entreprise/offres" className="bento-btn">
+            <Briefcase size={16} /> Voir mes candidatures
+          </Link>
           <button onClick={() => setShowPreview(true)} className="bento-btn">
             <Eye size={16} /> Aperçu
           </button>
@@ -465,6 +489,11 @@ export default function EntrepriseProfilePage() {
         <StatCard label="Photos" value={String(profile.photos.length)} detail="Dans la galerie" />
         <StatCard label="Clients" value={String(profile.clients.length)} detail="Types servis" />
         <StatCard label="Effectif" value={profile.employeeCount} detail="Salariés" />
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <StatCard label="Offres publiées" value={jobsLoading ? "…" : String(jobs.length)} detail="Actives ou en attente" />
+        <StatCard label="Candidatures reçues" value={applicationsLoading ? "…" : String(applications?.length ?? 0)} detail="Total" />
       </div>
 
       {companyId && (

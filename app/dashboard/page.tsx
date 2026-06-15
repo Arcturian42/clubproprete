@@ -30,6 +30,18 @@ export default async function DashboardPage() {
     redirect("/admin");
   }
 
+  if (role === "company_owner" || role === "verified_company") {
+    redirect("/dashboard/entreprise");
+  }
+
+  if (role === "supplier_owner" || role === "verified_supplier") {
+    redirect("/dashboard/fournisseur");
+  }
+
+  if (role === "training_organization") {
+    redirect("/dashboard/centre-formation");
+  }
+
   let candidateApplications: Awaited<ReturnType<typeof getCandidateApplications>> | undefined;
   let candidateProfile: Awaited<ReturnType<typeof prisma.candidateProfile.findFirst>> = null;
   let jobsCount = 0;

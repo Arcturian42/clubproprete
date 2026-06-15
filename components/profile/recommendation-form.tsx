@@ -53,11 +53,12 @@ export function RecommendationForm({ candidateUserId, candidateFirstName }: Prop
       setOpen(false);
       router.refresh();
     } else {
-      const firstError =
-        result.message ||
-        (result.errors ? Object.values(result.errors).flat()[0] : null) ||
-        "Une erreur est survenue.";
-      setMessage({ type: "error", text: firstError });
+      let firstError = result.message || "";
+      if (!firstError && result.errors && typeof result.errors === "object") {
+        const flat = Object.values(result.errors).flat().filter((x): x is string => typeof x === "string");
+        firstError = flat[0] || "";
+      }
+      setMessage({ type: "error", text: firstError || "Une erreur est survenue." });
     }
     setSubmitting(false);
   };

@@ -70,10 +70,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: quality
-    # Temporairement désactivé : les seeds de démonstration ont été retirés du
-    # repo. La suite e2e s'appuyait sur les comptes seedés (@clubproprete.test)
-    # et doit être réécrite pour créer ses propres données avant réactivation.
-    if: false
     services:
       postgres:
         image: postgres:16
@@ -95,6 +91,7 @@ jobs:
       AUTH_SECRET: ci-auth-secret-with-at-least-32-characters
       AUTH_TRUST_HOST: "true"
       PLAYWRIGHT_PORT: 4567
+      ENABLE_DEMO_ACCOUNTS: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -116,6 +113,9 @@ jobs:
 
       - name: Apply database migrations
         run: npx prisma migrate deploy
+
+      - name: Seed test data
+        run: npx tsx prisma/seed.ts
 
       - name: Run E2E
         run: npm run test:e2e
