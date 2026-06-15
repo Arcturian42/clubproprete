@@ -1,5 +1,12 @@
 import type { Role } from "@/lib/types";
 
+// Les comptes de démo ne sont exposés que si la variable d'environnement
+// ENABLE_DEMO_ACCOUNTS est explicitement positionnée à "true". Ni le
+// NODE_ENV, ni le mode développement ne suffisent : c'est un opt-in explicite
+// contrôlé par l'opérateur de la plateforme.
+export const areDemoAccountsEnabled =
+  process.env.ENABLE_DEMO_ACCOUNTS === "true";
+
 export const roleLabels: Record<Role, string> = {
   public: "Visiteur",
   registered_user: "Utilisateur inscrit",
@@ -27,7 +34,7 @@ export type DemoAccount = {
   associationMember: boolean;
 };
 
-export const demoAccounts: DemoAccount[] = [
+export const demoAccounts: DemoAccount[] = areDemoAccountsEnabled ? [
   {
     id: "demo-company",
     email: "societe@clubproprete.test",
@@ -103,5 +110,5 @@ export const demoAccounts: DemoAccount[] = [
     profileType: "Super Admin",
     associationMember: true,
   },
-];
+] : [];
 

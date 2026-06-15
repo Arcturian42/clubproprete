@@ -50,6 +50,7 @@ export function SignupForm() {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [intent, setIntent] = useState<OnboardingIntent | null>(null);
@@ -70,10 +71,21 @@ export function SignupForm() {
     } else if (!emailRegex.test(email)) {
       nextErrors.email = "Veuillez saisir un email valide.";
     }
-    if (!password || password.length < 6) {
-      nextErrors.pwdError = "Saisissez au moins 6 caractères.";
+    if (!password) {
+      nextErrors.pwdError = "Le mot de passe est obligatoire.";
+    } else if (password.length < 10) {
+      nextErrors.pwdError = "Le mot de passe doit contenir au moins 10 caractères.";
+    } else if (!/[A-Z]/.test(password)) {
+      nextErrors.pwdError = "Le mot de passe doit contenir au moins une majuscule.";
+    } else if (!/[a-z]/.test(password)) {
+      nextErrors.pwdError = "Le mot de passe doit contenir au moins une minuscule.";
+    } else if (!/[0-9]/.test(password)) {
+      nextErrors.pwdError = "Le mot de passe doit contenir au moins un chiffre.";
+    } else if (!/[^A-Za-z0-9]/.test(password)) {
+      nextErrors.pwdError = "Le mot de passe doit contenir au moins un symbole.";
     }
     if (!termsAccepted) nextErrors.terms = "Vous devez accepter les conditions.";
+    if (!privacyAccepted) nextErrors.privacy = "Vous devez accepter la politique de confidentialité.";
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
@@ -83,9 +95,10 @@ export function SignupForm() {
     setFirstName("Camille");
     setLastName("Dupont");
     setEmail(`qa-user-${timestamp}@clubproprete.test`);
-    setPassword("demo123");
+    setPassword("DemoPass123!");
     setPhone("0600000000");
     setTermsAccepted(true);
+    setPrivacyAccepted(true);
     setErrors({});
   }
 
@@ -100,6 +113,7 @@ export function SignupForm() {
       lastName,
       phone,
       termsAccepted: termsAccepted as true,
+      privacyAccepted: privacyAccepted as true,
     });
 
     if (!result.success) {
@@ -136,12 +150,23 @@ export function SignupForm() {
     router.refresh();
   }
 
+  function isPasswordValid(pwd: string) {
+    return (
+      pwd.length >= 10 &&
+      /[A-Z]/.test(pwd) &&
+      /[a-z]/.test(pwd) &&
+      /[0-9]/.test(pwd) &&
+      /[^A-Za-z0-9]/.test(pwd)
+    );
+  }
+
   const canSubmit =
     firstName.trim() &&
     lastName.trim() &&
     emailRegex.test(email) &&
-    password.length >= 6 &&
-    termsAccepted;
+    isPasswordValid(password) &&
+    termsAccepted &&
+    privacyAccepted;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
@@ -229,7 +254,7 @@ export function SignupForm() {
               type="password"
               className={`bento-input ${errors.pwdError ? "border-red-500 shadow-[2px_2px_0_#ef4444]" : ""}`}
               value={password}
-              placeholder="Minimum 6 caractères"
+              placeholder="Min 10 car., majuscule, minuscule, chiffre, symbole"
               onChange={(event) => { setPassword(event.target.value); setErrors((e) => ({ ...e, pwdError: "" })); }}
               aria-invalid={errors.pwdError ? "true" : "false"}
               aria-describedby={errors.pwdError ? "error-password" : undefined}
@@ -258,12 +283,31 @@ export function SignupForm() {
             aria-describedby={errors.terms ? "error-terms" : undefined}
           />
           <span>
-            J&apos;accepte la collecte de ces informations pour créer mon profil Club Propreté, conformément à la{" "}
-            <a href="/politique-confidentialite" target="_blank" rel="noopener" className="text-indigo-600 underline hover:text-indigo-800">
-              politique de confidentialité
+            J&apos;accepte les{" "}
+            <a href="/cgu" target="_blank" rel="noopener" className="text-indigo-600 underline hover:text-indigo-800">
+              conditions générales d&apos;utilisation
             </a>
             .
             {errors.terms && <span id="error-terms" className="block text-[11px] font-bold text-red-500 normal-case mt-1">{errors.terms}</span>}
+          </span>
+        </label>
+
+        <label className="mt-3 flex items-start gap-3 text-sm font-bold text-slate-600">
+          <input
+            checked={privacyAccepted}
+            className="mt-1 h-5 w-5 accent-indigo-600"
+            type="checkbox"
+            onChange={(event) => { setPrivacyAccepted(event.target.checked); setErrors((e) => ({ ...e, privacy: "" })); }}
+            aria-invalid={errors.privacy ? "true" : "false"}
+            aria-describedby={errors.privacy ? "error-privacy" : undefined}
+          />
+          <span>
+            J&apos;accepte la{" "}
+            <a href="/politique-confidentialite" target="_blank" rel="noopener" className="text-indigo-600 underline hover:text-indigo-800">
+              politique de confidentialité
+            </a>
+            {" "}et la collecte de mes données personnelles.
+            {errors.privacy && <span id="error-privacy" className="block text-[11px] font-bold text-red-500 normal-case mt-1">{errors.privacy}</span>}
           </span>
         </label>
 

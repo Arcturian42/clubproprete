@@ -10,12 +10,21 @@ import { getClientIp } from "@/lib/ip";
 
 const signupSchema = z.object({
   email: z.string().email("Veuillez saisir un email valide."),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères."),
+  password: z
+    .string()
+    .min(10, "Le mot de passe doit contenir au moins 10 caractères.")
+    .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule.")
+    .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule.")
+    .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre.")
+    .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un symbole."),
   firstName: z.string().min(1, "Le prénom est obligatoire."),
   lastName: z.string().min(1, "Le nom est obligatoire."),
   phone: z.string().optional(),
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: "Vous devez accepter les conditions." }),
+  }),
+  privacyAccepted: z.literal(true, {
+    errorMap: () => ({ message: "Vous devez accepter la politique de confidentialité." }),
   }),
 });
 
@@ -56,12 +65,13 @@ export async function registerUser(data: SignupInput) {
           lastName,
           phone: phone || null,
           mainRole: "registered_user",
-          // Le compte personnel est auto-vérifié à l'inscription : il n'existe pas de
-          // parcours de double opt-in. La validation métier reste portée par la modération
-          // admin de l'entité (société/fournisseur/centre). Sans cela, isVerifiedPersonalAccount
-          // resterait toujours faux et aucune offre ne pourrait être publiée.
-          emailVerified: true,
+          // Le compte personnel n'est PAS auto-vérifié : un email de vérification
+          // est envoyé. L'utilisateur peut se connecter mais ne peut pas publier
+          // d'offre ni accéder aux actions sensibles tant que son email n'est pas
+          // vérifié (isVerifiedPersonalAccount utilise emailVerified).
+          emailVerified: false,
           termsAcceptedAt: new Date(),
+          privacyAcceptedAt: new Date(),
         },
       });
 

@@ -4,9 +4,9 @@ import { ArrowRight, KeyRound } from "lucide-react";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { demoAccounts } from "@/lib/auth-demo";
+import { demoAccounts, areDemoAccountsEnabled } from "@/lib/auth-demo";
 
-const showDemoAccounts = process.env.NODE_ENV === "development";
+const showDemoAccounts = areDemoAccountsEnabled;
 
 export function LoginForm() {
   const searchParams = useSearchParams();

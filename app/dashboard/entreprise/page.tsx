@@ -32,7 +32,7 @@ import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
 import { EntityCard } from "@/components/entity-card";
 import { createCompanyProfile, getCompanyByOwner, updateCompanyProfile } from "@/lib/actions/companies";
-import { getApplicationsForCompany } from "@/lib/actions/jobs";
+import { getApplicationsForCompany, getJobsForCurrentPublisher } from "@/lib/actions/jobs";
 import { parsePhotos } from "@/lib/photos";
 import { CompanyVerificationCard } from "@/components/dashboard/company-verification-card";
 

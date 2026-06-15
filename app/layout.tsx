@@ -5,6 +5,8 @@ import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { AuthProvider } from "@/components/providers/session-provider";
 import { FlashToast } from "@/components/flash-toast";
+import { CookieBanner } from "@/components/cookie-banner";
+import { Toaster } from "@/components/toaster";
 import { JsonLd } from "@/components/json-ld";
 import {
   SITE_DESCRIPTION,
@@ -55,6 +57,8 @@ export default function RootLayout({
           <SiteHeader />
           <main className="flex-1">{children}</main>
           <FlashToast />
+          <Toaster />
+          <CookieBanner />
           <footer className="border-t-2 border-slate-900 bg-white mt-10">
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -100,6 +104,8 @@ export default function RootLayout({
                     <li><Link href="/mentions-legales" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Mentions légales</Link></li>
                     <li><Link href="/politique-confidentialite" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Politique de confidentialité</Link></li>
                     <li><Link href="/cgu" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">CGU</Link></li>
+                    <li><Link href="/export-donnees" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Exporter mes données</Link></li>
+                    <li><Link href="/supprimer-compte" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Supprimer mon compte</Link></li>
                   </ul>
                 </div>
               </div>

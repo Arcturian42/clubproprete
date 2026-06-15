@@ -51,25 +51,30 @@ export const authConfig = {
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const userRole = auth?.user?.role;
       const path = nextUrl.pathname;
 
       // Seules les zones privées exigent une session ; toute autre URL reste
       // publique afin que les pages inconnues affichent la vraie 404.
       const protectedPrefixes = [
         "/dashboard",
-        "/admin",
         "/profil",
         "/notifications",
         "/candidats",
         "/emploi/nouvelle-offre",
-        "/api/admin",
         "/api/upload",
         "/api/user-company",
       ];
       const isProtected = protectedPrefixes.some((prefix) => path.startsWith(prefix));
+      const isAdminRoute = path.startsWith("/admin") || path.startsWith("/api/admin");
 
-      if (!isProtected) return true;
+      if (!isProtected && !isAdminRoute) return true;
       if (!isLoggedIn) return false;
+
+      // Les routes admin exigent un rôle admin/super_admin au niveau middleware.
+      if (isAdminRoute) {
+        return userRole === "admin" || userRole === "super_admin";
+      }
 
       return true;
     },
