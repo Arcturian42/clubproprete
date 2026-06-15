@@ -105,6 +105,22 @@ test.describe('Super Admin', () => {
     await expect(page.locator('table')).toBeVisible();
   });
 
+  test('le dashboard membre redirige le super admin vers le cockpit', async ({ page }) => {
+    await loginAs(page, 'superadmin@clubproprete.test');
+    await page.goto('/dashboard');
+    await page.waitForURL('/admin');
+    await expect(page.getByRole('heading', { name: /centre de contrôle/i })).toBeVisible();
+    await expect(page.getByText(/contrôle des comptes/i).first()).toBeVisible();
+  });
+
+  test('le registre utilisateurs expose les filtres et les fiches de contrôle', async ({ page }) => {
+    await loginAs(page, 'superadmin@clubproprete.test');
+    await page.goto('/admin/users');
+    await expect(page.getByPlaceholder('Nom, email ou téléphone')).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'Filtrer par statut' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Examiner' }).first()).toBeVisible();
+  });
+
   test('admin standard ne peut pas acceder a la gestion utilisateurs', async ({ page }) => {
     await loginAs(page, 'admin@clubproprete.test');
     await page.waitForURL('/admin');

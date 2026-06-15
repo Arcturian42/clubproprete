@@ -51,7 +51,6 @@ export const authConfig = {
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const role = auth?.user?.role as string | undefined;
       const path = nextUrl.pathname;
 
       // Seules les zones privées exigent une session ; toute autre URL reste
@@ -71,10 +70,6 @@ export const authConfig = {
 
       if (!isProtected) return true;
       if (!isLoggedIn) return false;
-
-      if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
-        return role === "admin" || role === "super_admin";
-      }
 
       return true;
     },

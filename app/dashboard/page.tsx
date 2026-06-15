@@ -26,6 +26,10 @@ export default async function DashboardPage() {
   const role = freshUser?.mainRole ?? session.user.role;
   const user = { ...session.user, role, associationMember };
 
+  if (role === "admin" || role === "super_admin") {
+    redirect("/admin");
+  }
+
   let candidateApplications: Awaited<ReturnType<typeof getCandidateApplications>> | undefined;
   let candidateProfile: Awaited<ReturnType<typeof prisma.candidateProfile.findFirst>> = null;
   let jobsCount = 0;

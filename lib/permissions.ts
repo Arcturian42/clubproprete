@@ -55,6 +55,23 @@ export async function requireUser(): Promise<AuthenticatedSession> {
     throw new PermissionError("UNAUTHENTICATED", "Vous devez être connecté.");
   }
 
+  // Le JWT peut conserver un ancien rôle après une promotion ou une suspension.
+  // Les autorisations sensibles doivent toujours refléter l'état courant en base.
+  const databaseUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { mainRole: true, status: true, deletedAt: true },
+  });
+
+  if (!databaseUser || databaseUser.deletedAt) {
+    throw new PermissionError("UNAUTHENTICATED", "Ce compte n'existe plus.");
+  }
+
+  if (databaseUser.status !== "active") {
+    throw new PermissionError("FORBIDDEN", "Ce compte est suspendu.");
+  }
+
+  session.user.role = databaseUser.mainRole;
+
   return session as AuthenticatedSession;
 }
 
