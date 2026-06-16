@@ -179,7 +179,7 @@ const authorApplicationSchema = z.object({
 export async function requestAuthorAccess(formData: FormData) {
   try {
     const session = await requireUser();
-    const limit = rateLimitByIp(await getClientIp(), "author_request", 5, 3_600_000);
+    const limit = await rateLimitByIp(await getClientIp(), "author_request", 5, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop de demandes envoyées récemment. Veuillez réessayer plus tard." };
     }

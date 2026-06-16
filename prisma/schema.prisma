@@ -22,6 +22,8 @@ model User {
   city              String?
   emailVerified     Boolean   @default(false)
   phoneVerified     Boolean   @default(false)
+  twoFactorSecret   String?
+  twoFactorEnabled  Boolean   @default(false)
   mainRole          String    @default("registered_user")
   status            String    @default("active")
   newsletterOptIn   Boolean   @default(false)

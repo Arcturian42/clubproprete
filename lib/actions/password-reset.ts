@@ -20,7 +20,7 @@ const requestSchema = z.object({
 
 export async function requestPasswordReset(formData: FormData) {
   try {
-    const limit = rateLimitByIp(await getClientIp(), "password_reset_request", 5, 3_600_000);
+    const limit = await rateLimitByIp(await getClientIp(), "password_reset_request", 5, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop de demandes. Veuillez réessayer plus tard." };
     }
@@ -65,7 +65,7 @@ const resetSchema = z.object({
 
 export async function resetPassword(formData: FormData) {
   try {
-    const limit = rateLimitByIp(await getClientIp(), "password_reset_confirm", 10, 3_600_000);
+    const limit = await rateLimitByIp(await getClientIp(), "password_reset_confirm", 10, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
     }

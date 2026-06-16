@@ -34,7 +34,7 @@ export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export async function updateUserProfile(data: UpdateProfileInput) {
   try {
     const ip = await getClientIp();
-    const limit = rateLimitByIp(ip, "update_profile", 10, 60_000);
+    const limit = await rateLimitByIp(ip, "update_profile", 10, 60_000);
     if (!limit.success) {
       return { success: false, message: "Trop de modifications. Veuillez ralentir." };
     }
@@ -167,7 +167,7 @@ export async function getUserProfile(userId: string) {
  */
 export async function deleteMyAccount() {
   try {
-    const limit = rateLimitByIp(await getClientIp(), "delete_account", 5, 3_600_000);
+    const limit = await rateLimitByIp(await getClientIp(), "delete_account", 5, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
     }

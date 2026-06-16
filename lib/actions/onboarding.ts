@@ -95,7 +95,7 @@ function computeMainRole(currentRole: string, situations: OnboardingSituation[])
 export async function completeOnboarding(data: OnboardingInput) {
   try {
     const ip = await getClientIp();
-    const limit = rateLimitByIp(ip, "onboarding", 10, 300_000);
+    const limit = await rateLimitByIp(ip, "onboarding", 10, 300_000);
     if (!limit.success) {
       return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
     }

@@ -118,7 +118,7 @@ export async function createSubcontractingMission(formData: FormData) {
     const session = await requireUser();
     const user = session.user;
 
-    const limit = rateLimitByIp(await getClientIp(), "create_mission", 15, 3_600_000);
+    const limit = await rateLimitByIp(await getClientIp(), "create_mission", 15, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop de missions publiées récemment. Veuillez réessayer plus tard." };
     }
@@ -186,7 +186,7 @@ export async function applyToSubcontractingMission(formData: FormData) {
     const session = await requireUser();
     const user = session.user;
 
-    const limit = rateLimitByIp(await getClientIp(), "apply_mission", 30, 3_600_000);
+    const limit = await rateLimitByIp(await getClientIp(), "apply_mission", 30, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop de candidatures envoyées récemment. Veuillez réessayer plus tard." };
     }

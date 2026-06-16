@@ -37,7 +37,7 @@ async function requireAdmin() {
 export async function updateEntityStatus(formData: FormData) {
   try {
     const ip = await getClientIp();
-    const limit = rateLimitByIp(ip, "admin_action", 30, 60_000);
+    const limit = await rateLimitByIp(ip, "admin_action", 30, 60_000);
     if (!limit.success) {
       return { success: false, message: "Trop d'actions. Veuillez ralentir." };
     }

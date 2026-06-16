@@ -132,7 +132,7 @@ async function attachEmployerSummaries<T extends JobWithEmployerFields>(jobs: T[
 export async function createJob(formData: FormData) {
   try {
     const session = await requireUser();
-    const limit = rateLimitByIp(await getClientIp(), "create_job", 20, 3_600_000);
+    const limit = await rateLimitByIp(await getClientIp(), "create_job", 20, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop d'offres publiées récemment. Veuillez réessayer plus tard." };
     }
@@ -273,7 +273,7 @@ const applySchema = z.object({
 export async function applyToJob(formData: FormData) {
   try {
     const session = await requireUser();
-    const limit = rateLimitByIp(await getClientIp(), "apply_job", 30, 3_600_000);
+    const limit = await rateLimitByIp(await getClientIp(), "apply_job", 30, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop de candidatures envoyées récemment. Veuillez réessayer plus tard." };
     }

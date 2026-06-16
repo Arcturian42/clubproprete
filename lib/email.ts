@@ -221,3 +221,24 @@ export async function sendAssociationMembershipRequestNotification(
     text: `${candidateName} (${candidateEmail}) demande à rejoindre l'association.`,
   });
 }
+
+export async function sendEmailVerificationEmail(to: string, firstName: string, token: string) {
+  const link = `${APP_URL}/verification-email?token=${encodeURIComponent(token)}`;
+  return sendEmail({
+    to,
+    subject: "Vérifiez votre adresse email — Club Propreté",
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #0f172a;">Bonjour ${escapeHtml(firstName)},</h1>
+        <p>Merci de votre inscription sur Club Propreté. Pour activer votre compte, veuillez confirmer votre adresse email en cliquant sur le lien ci-dessous :</p>
+        <a href="${link}" 
+           style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; text-decoration: none; border-radius: 8px; margin-top: 16px;">
+          Vérifier mon email
+        </a>
+        <p style="margin-top: 16px; color: #64748b; font-size: 12px;">Ce lien est valable 24 heures. Si vous n'êtes pas à l'origine de cette inscription, ignorez cet email.</p>
+        <p style="margin-top: 8px; color: #64748b; font-size: 12px;">Ou copiez ce lien : ${link}</p>
+      </div>
+    `,
+    text: `Bonjour ${firstName}, merci de votre inscription. Vérifiez votre email (valable 24h) : ${link}`,
+  });
+}

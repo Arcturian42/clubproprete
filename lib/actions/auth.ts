@@ -4,7 +4,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { signIn } from "@/auth";
-import { sendWelcomeEmail } from "@/lib/email";
+import { sendWelcomeEmail, sendEmailVerificationEmail } from "@/lib/email";
+import { createEmailVerificationToken } from "@/lib/email-verification";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
 
@@ -37,7 +38,7 @@ export type SignupInput = z.infer<typeof signupSchema>;
 export async function registerUser(data: SignupInput) {
   try {
     const ip = await getClientIp();
-    const limit = rateLimitByIp(ip, "register", 5, 3_600_000);
+    const limit = await rateLimitByIp(ip, "register", 5, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
     }
@@ -94,6 +95,14 @@ export async function registerUser(data: SignupInput) {
 
     await sendWelcomeEmail(user.email, firstName);
 
+    // Envoie un lien de vérification d'email (asynchrone, ne bloque pas l'inscription)
+    try {
+      const token = await createEmailVerificationToken(user.id);
+      await sendEmailVerificationEmail(user.email, firstName, token);
+    } catch (verifyErr) {
+      console.error("Email verification token/send failed:", verifyErr);
+    }
+
     return { success: true, userId: user.id };
   } catch (err) {
     console.error("registerUser error:", err);
@@ -104,7 +113,7 @@ export async function registerUser(data: SignupInput) {
 export async function loginUser(email: string, password: string) {
   try {
     const ip = await getClientIp();
-    const limit = rateLimitByIp(ip, "login", 10, 300_000);
+    const limit = await rateLimitByIp(ip, "login", 10, 300_000);
     if (!limit.success) {
       return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
     }

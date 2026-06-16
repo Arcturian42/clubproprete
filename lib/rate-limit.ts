@@ -1,30 +1,31 @@
-// Rate limiter simple en mémoire (à remplacer par Redis en production multi-instance)
-// Ce rate limiter utilise un Map en mémoire Node.js. Sur Vercel (serverless),
-// il est partagé au sein d'une même instance mais pas entre les workers.
-// Pour une production à fort trafic, brancher Upstash Redis ou Vercel KV.
+// Rate limiter hybride : Vercel KV en production, Map en mémoire en dev/fallback.
+// Pour activer Vercel KV, configurez KV_URL (ou KV_REST_API_URL + KV_REST_API_TOKEN).
+// Sans KV, le rate limiter fonctionne en mémoire (valide pour un seul worker).
+
+import crypto from "crypto";
 
 type RateLimitEntry = {
   count: number;
   resetAt: number;
 };
 
-const store = new Map<string, RateLimitEntry>();
+const memoryStore = new Map<string, RateLimitEntry>();
 
-function cleanup() {
+function memoryCleanup() {
   const now = Date.now();
-  for (const [key, entry] of store) {
-    if (entry.resetAt < now) store.delete(key);
+  for (const [key, entry] of memoryStore) {
+    if (entry.resetAt < now) memoryStore.delete(key);
   }
 }
 
-export function rateLimit(key: string, maxRequests = 5, windowMs = 60_000): { success: boolean; remaining: number; resetAt: number } {
-  cleanup();
+function memoryRateLimit(key: string, maxRequests = 5, windowMs = 60_000): { success: boolean; remaining: number; resetAt: number } {
+  memoryCleanup();
   const now = Date.now();
-  const entry = store.get(key);
+  const entry = memoryStore.get(key);
 
   if (!entry || entry.resetAt < now) {
     const resetAt = now + windowMs;
-    store.set(key, { count: 1, resetAt });
+    memoryStore.set(key, { count: 1, resetAt });
     return { success: true, remaining: maxRequests - 1, resetAt };
   }
 
@@ -36,11 +37,64 @@ export function rateLimit(key: string, maxRequests = 5, windowMs = 60_000): { su
   return { success: true, remaining: maxRequests - entry.count, resetAt: entry.resetAt };
 }
 
-export function rateLimitByIp(ip: string, action: string, maxRequests = 5, windowMs = 60_000) {
+// --- Vercel KV adapter ---
+
+function getKvToken(): { url: string; token: string } | null {
+  const url = process.env.KV_URL || process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+  return { url, token };
+}
+
+async function kvRateLimit(
+  key: string,
+  maxRequests = 5,
+  windowMs = 60_000
+): Promise<{ success: boolean; remaining: number; resetAt: number }> {
+  const kv = getKvToken();
+  if (!kv) {
+    return memoryRateLimit(key, maxRequests, windowMs);
+  }
+
+  const now = Date.now();
+  const windowKey = `${key}:${Math.floor(now / windowMs)}`;
+  const resetAt = (Math.floor(now / windowMs) + 1) * windowMs;
+
+  try {
+    const res = await fetch(`${kv.url}/incr/${encodeURIComponent(windowKey)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${kv.token}` },
+    });
+
+    if (!res.ok) {
+      // Fallback mémoire si KV est indisponible
+      return memoryRateLimit(key, maxRequests, windowMs);
+    }
+
+    const count = Number(await res.text());
+    const success = count <= maxRequests;
+    return { success, remaining: Math.max(0, maxRequests - count), resetAt };
+  } catch {
+    return memoryRateLimit(key, maxRequests, windowMs);
+  }
+}
+
+export async function rateLimit(
+  key: string,
+  maxRequests = 5,
+  windowMs = 60_000
+): Promise<{ success: boolean; remaining: number; resetAt: number }> {
+  if (getKvToken()) {
+    return kvRateLimit(key, maxRequests, windowMs);
+  }
+  return memoryRateLimit(key, maxRequests, windowMs);
+}
+
+export async function rateLimitByIp(ip: string, action: string, maxRequests = 5, windowMs = 60_000) {
   return rateLimit(`${ip}:${action}`, maxRequests, windowMs);
 }
 
-export function rateLimitByEmail(email: string, action: string, maxRequests = 5, windowMs = 60_000) {
+export async function rateLimitByEmail(email: string, action: string, maxRequests = 5, windowMs = 60_000) {
   return rateLimit(`${email.toLowerCase()}:${action}`, maxRequests, windowMs);
 }
 
@@ -48,7 +102,7 @@ export function rateLimitByEmail(email: string, action: string, maxRequests = 5,
  * Rate limit combiné IP + Email pour les actions sensibles (login, register).
  * Bloque si l'un des deux rate limits est dépassé.
  */
-export function rateLimitCombined(
+export async function rateLimitCombined(
   ip: string,
   email: string,
   action: string,
@@ -56,11 +110,16 @@ export function rateLimitCombined(
   maxPerEmail = 5,
   windowMs = 300_000
 ) {
-  const ipLimit = rateLimitByIp(ip, action, maxPerIp, windowMs);
+  const ipLimit = await rateLimitByIp(ip, action, maxPerIp, windowMs);
   if (!ipLimit.success) return ipLimit;
 
-  const emailLimit = rateLimitByEmail(email, action, maxPerEmail, windowMs);
+  const emailLimit = await rateLimitByEmail(email, action, maxPerEmail, windowMs);
   if (!emailLimit.success) return emailLimit;
 
   return { success: true, remaining: Math.min(ipLimit.remaining, emailLimit.remaining), resetAt: Math.max(ipLimit.resetAt, emailLimit.resetAt) };
+}
+
+// SHA-256 IP hash pour le logging (RGPD — pas d'IP en clair dans les logs)
+export function hashIp(ip: string): string {
+  return crypto.createHash("sha256").update(ip).digest("hex").slice(0, 16);
 }

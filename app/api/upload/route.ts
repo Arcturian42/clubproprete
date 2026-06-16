@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const limit = rateLimitByIp(await getClientIp(), "upload", 40, 600_000);
+  const limit = await rateLimitByIp(await getClientIp(), "upload", 40, 600_000);
   if (!limit.success) {
     return NextResponse.json({ success: false, error: "Trop d'envois. Veuillez réessayer plus tard." }, { status: 429 });
   }

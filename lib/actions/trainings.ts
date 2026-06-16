@@ -135,7 +135,7 @@ const createTrainingSchema = z.object({
 export async function createTraining(formData: FormData) {
   try {
     const session = await requireUser();
-    const limit = rateLimitByIp(await getClientIp(), "create_training", 20, 3_600_000);
+    const limit = await rateLimitByIp(await getClientIp(), "create_training", 20, 3_600_000);
     if (!limit.success) {
       return { success: false, message: "Trop de formations soumises récemment. Veuillez réessayer plus tard." };
     }

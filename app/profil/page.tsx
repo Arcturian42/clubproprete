@@ -14,6 +14,7 @@ import {
   Package,
   Plus,
   Save,
+  Shield,
   Trash2,
   UserRound,
   Briefcase,
@@ -517,6 +518,19 @@ export default function ProfilPage() {
                 Seul vous (et les recruteurs que vous autorisez) pouvez voir votre profil.
               </span>
             </button>
+          </div>
+        </section>
+
+        {/* Sécurité */}
+        <section className="card-soft p-6">
+          <h2 className="text-lg font-semibold text-slate-900">Sécurité</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Renforcez la protection de votre compte avec l&apos;authentification à deux facteurs.
+          </p>
+          <div className="mt-4">
+            <Link href="/profil/2fa" className="btn-soft inline-flex items-center gap-2">
+              <Shield size={16} /> Gérer l&apos;authentification à deux facteurs
+            </Link>
           </div>
         </section>
 

@@ -42,7 +42,7 @@ const updateUserRoleSchema = z.object({
 export async function updateUserRole(formData: FormData) {
   try {
     const ip = await getClientIp();
-    const limit = rateLimitByIp(ip, "super_admin_action", 20, 60_000);
+    const limit = await rateLimitByIp(ip, "super_admin_action", 20, 60_000);
     if (!limit.success) {
       return { success: false, message: "Trop d'actions. Veuillez ralentir." };
     }
@@ -106,7 +106,7 @@ const updateProfileVerificationSchema = z.object({
 export async function updateUserProfileVerification(formData: FormData) {
   try {
     const ip = await getClientIp();
-    const limit = rateLimitByIp(ip, "super_admin_action", 20, 60_000);
+    const limit = await rateLimitByIp(ip, "super_admin_action", 20, 60_000);
     if (!limit.success) {
       return { success: false, message: "Trop d'actions. Veuillez ralentir." };
     }
@@ -169,7 +169,7 @@ export async function updateUserProfileVerification(formData: FormData) {
 export async function updateUserStatus(formData: FormData) {
   try {
     const ip = await getClientIp();
-    const limit = rateLimitByIp(ip, "super_admin_action", 20, 60_000);
+    const limit = await rateLimitByIp(ip, "super_admin_action", 20, 60_000);
     if (!limit.success) {
       return { success: false, message: "Trop d'actions. Veuillez ralentir." };
     }
