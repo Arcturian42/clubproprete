@@ -74,7 +74,7 @@ test.describe('Vérification de compte & rôles (régressions audit)', () => {
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Pub');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Lisher');
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(email);
-    await page.getByPlaceholder('Votre mot de passe').fill('demo123');
+    await page.getByPlaceholder('Votre mot de passe').first().fill('DemoPass123!');
     await page.getByRole('checkbox').check();
     await page.getByRole('button', { name: /créer mon compte/i }).click();
     await page.waitForURL('/onboarding');
@@ -127,9 +127,10 @@ test.describe('Vérification de compte & rôles (régressions audit)', () => {
       }, { timeout: 10_000 })
       .toBe('company_owner');
 
-    // Le dashboard reflète immédiatement la nouvelle capacité (vue entreprise), sans reconnexion.
+    // Le dashboard reflète immédiatement la nouvelle capacité sans reconnexion :
+    // le rôle company_owner redirige désormais vers la vue entreprise dédiée.
     await page.goto('/dashboard');
-    await expect(page.getByRole('heading', { name: /optimiser ma fiche/i }).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard\/entreprise/);
   });
 
   test('PB-2 — l’approbation d’adhésion se reflète sur le dashboard sans reconnexion', async ({ page }) => {

@@ -64,8 +64,9 @@ test.describe('Réinitialisation de mot de passe', () => {
 
     // Connexion avec le nouveau mot de passe.
     await loginAs(page, EMAIL, 'nouveauMotDePasse123');
-    await page.waitForURL('/dashboard');
-    await expect(page.getByRole('heading', { name: /mon espace/i })).toBeVisible();
+    // La connexion réussie avec le nouveau mot de passe atterrit dans l'espace
+    // connecté (redirigé par rôle).
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 
   test('un jeton invalide est refusé', async ({ page }) => {
