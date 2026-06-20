@@ -11,6 +11,7 @@
   --color-bento-muted: #64748b;
   --color-bento-light: #e2e8f0;
   --color-bento-accent: #6366f1;
+  --color-cta: #4f46e5;
   --color-bento-green: #34d399;
   --color-bento-red: #f87171;
   --color-bento-amber: #fbbf24;
@@ -35,6 +36,29 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* A3 — Indicateur de focus clavier global (WCAG 2.4.7). `a { text-decoration:
+   none }` ci-dessus retire le repère visuel par défaut : on le restaure pour la
+   navigation clavier via un anneau de focus net sur tous les éléments focusables. */
+:focus-visible {
+  outline: 2px solid var(--color-cta);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* A4 — Respect de prefers-reduced-motion : on neutralise animations et
+   transitions (mouvements de cartes/boutons, animate-in du toast) pour les
+   utilisateurs sensibles au mouvement (troubles vestibulaires). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 button,
@@ -109,6 +133,16 @@ textarea {
 .bento-btn:active {
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 var(--color-bento-primary);
+}
+
+/* U2 — État désactivé explicite : un bouton désactivé doit être visiblement
+   inactif (le formulaire d'inscription n'utilise plus `disabled` que pendant le
+   chargement, mais d'autres boutons s'appuient sur cet état). */
+.bento-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: 1px 1px 0 var(--color-bento-primary);
+  transform: none;
 }
 
 .bento-btn-primary {

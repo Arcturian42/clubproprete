@@ -63,54 +63,52 @@ export default function RootLayout({
             <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">Club Propreté</h3>
-                  <p className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+                  <h3 className="text-base font-black uppercase tracking-wide text-slate-900">Club Propreté</h3>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
                     La boîte à outils gratuite des professionnels de la propreté.
                   </p>
                   <a
                     href="https://www.linkedin.com/company/club-proprete"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-indigo-600"
+                    className="mt-3 inline-flex items-center gap-1.5 py-2 text-sm font-bold text-slate-600 hover:text-indigo-600"
                   >
                     <Linkedin size={14} aria-hidden="true" />
                     Suivez-nous sur LinkedIn
                   </a>
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">Annuaires</h3>
+                  <h3 className="text-base font-black uppercase tracking-wide text-slate-900">Annuaires</h3>
                   <ul className="mt-2 space-y-1">
-                    <li><Link href="/annuaire/societes" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Sociétés</Link></li>
-                    <li><Link href="/annuaire/fournisseurs" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Fournisseurs</Link></li>
-                    <li><Link href="/annuaire/centres-formation" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Centres de formation</Link></li>
-                    <li><Link href="/membres" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Membres</Link></li>
-                    <li><Link href="/inscription?role=candidate_profile" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Profil candidat</Link></li>
-                    <li><Link href="/independants" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Indépendants</Link></li>
+                    <li><Link href="/annuaire/societes" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Sociétés</Link></li>
+                    <li><Link href="/annuaire/fournisseurs" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Fournisseurs</Link></li>
+                    <li><Link href="/annuaire/centres-formation" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Centres de formation</Link></li>
+                    <li><Link href="/membres" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Membres</Link></li>
+                    <li><Link href="/independants" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Indépendants</Link></li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">Services</h3>
+                  <h3 className="text-base font-black uppercase tracking-wide text-slate-900">Services</h3>
                   <ul className="mt-2 space-y-1">
-                    <li><Link href="/emploi" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Emploi</Link></li>
-                    <li><Link href="/formations" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Formations</Link></li>
-                    <li><Link href="/association" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Association</Link></li>
-                    <li><Link href="/ressources" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Ressources</Link></li>
-                    <li><Link href="/a-propos" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">À propos</Link></li>
+                    <li><Link href="/emploi" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Emploi</Link></li>
+                    <li><Link href="/formations" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Formations</Link></li>
+                    <li><Link href="/association" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Association</Link></li>
+                    <li><Link href="/ressources" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Ressources</Link></li>
+                    <li><Link href="/a-propos" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">À propos</Link></li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wide text-slate-900">Légal</h3>
+                  <h3 className="text-base font-black uppercase tracking-wide text-slate-900">Légal</h3>
                   <ul className="mt-2 space-y-1">
-                    <li><Link href="/mentions-legales" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Mentions légales</Link></li>
-                    <li><Link href="/politique-confidentialite" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Politique de confidentialité</Link></li>
-                    <li><Link href="/cgu" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">CGU</Link></li>
-                    <li><Link href="/export-donnees" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Exporter mes données</Link></li>
-                    <li><Link href="/supprimer-compte" className="text-xs font-semibold text-slate-500 hover:text-indigo-600">Supprimer mon compte</Link></li>
+                    <li><Link href="/mentions-legales" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Mentions légales</Link></li>
+                    <li><Link href="/politique-confidentialite" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Politique de confidentialité</Link></li>
+                    <li><Link href="/cgu" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">CGU</Link></li>
+                    <li><Link href="/export-donnees" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Exporter mes données</Link></li>
                   </ul>
                 </div>
               </div>
               <div className="mt-8 border-t-2 border-slate-100 pt-4 text-center">
-                <p className="text-[11px] font-bold text-slate-400">© 2026 Club Propreté. Tous droits réservés.</p>
+                <p className="text-xs font-bold text-slate-500">© 2026 Club Propreté. Tous droits réservés.</p>
               </div>
             </div>
           </footer>

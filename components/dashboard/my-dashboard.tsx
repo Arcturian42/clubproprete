@@ -411,7 +411,7 @@ export function MyDashboard({
               </p>
             </div>
             <Link href="/onboarding" className="bento-btn bento-btn-primary shrink-0">
-              Reprendre l&apos;onboarding <ArrowRight size={16} aria-hidden="true" />
+              Finaliser mon profil <ArrowRight size={16} aria-hidden="true" />
             </Link>
           </div>
 

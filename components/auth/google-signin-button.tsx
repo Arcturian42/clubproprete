@@ -55,7 +55,7 @@ export function GoogleSignInButton({
 export function AuthDivider() {
   if (!isGoogleAuthEnabled) return null;
   return (
-    <div className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
+    <div className="flex items-center gap-3 text-[11px] font-extrabold uppercase tracking-wide text-slate-500">
       <span className="h-px flex-1 bg-slate-200" />
       ou
       <span className="h-px flex-1 bg-slate-200" />

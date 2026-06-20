@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowRight, KeyRound } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, KeyRound } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { demoAccounts, areDemoAccountsEnabled } from "@/lib/auth-demo";
@@ -14,6 +15,7 @@ export function LoginForm() {
   const [email, setEmail] = useState(showDemoAccounts ? demoAccounts[0].email : "");
   const [password, setPassword] = useState(showDemoAccounts ? "demo" : "");
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -75,12 +77,17 @@ export function LoginForm() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-[14px] border-2 border-red-500 bg-red-50 p-3 text-sm font-bold text-red-600">
+          <div role="alert" className="mb-4 rounded-[14px] border-2 border-red-500 bg-red-50 p-3 text-sm font-bold text-red-600">
             {error}
+            {/* U8 — Transforme l'impasse en chemin : lien d'aide secondaire. */}
+            <span className="mt-1 block text-xs font-semibold normal-case text-red-600">
+              Pas encore de compte ?{" "}
+              <Link href="/inscription" className="underline hover:text-red-800">Créer un compte</Link>
+            </span>
           </div>
         )}
 
-        <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
+        <label className="grid gap-1.5 text-sm font-semibold text-slate-700">
           Email
           <input
             type="email"
@@ -92,17 +99,29 @@ export function LoginForm() {
             required
           />
         </label>
-        <label className="mt-4 grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
+        <label className="mt-4 grid gap-1.5 text-sm font-semibold text-slate-700">
           Mot de passe
-          <input
-            className="bento-input"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            aria-label="Mot de passe"
-            autoComplete="current-password"
-            required
-          />
+          {/* U5 — Bascule afficher/masquer le mot de passe. */}
+          <div className="relative">
+            <input
+              className="bento-input w-full pr-11"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              aria-label="Mot de passe"
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-[8px] p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              aria-pressed={showPassword}
+            >
+              {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+            </button>
+          </div>
         </label>
         <button
           type="submit"
