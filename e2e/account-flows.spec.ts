@@ -74,7 +74,7 @@ test.describe('Vérification de compte & rôles (régressions audit)', () => {
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Pub');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Lisher');
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(email);
-    await page.getByLabel('Mot de passe').fill('demo123');
+    await page.getByPlaceholder('Votre mot de passe').fill('demo123');
     await page.getByRole('checkbox').check();
     await page.getByRole('button', { name: /créer mon compte/i }).click();
     await page.waitForURL('/onboarding');

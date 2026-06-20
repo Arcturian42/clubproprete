@@ -7,6 +7,9 @@ export async function loginAs(page: Page, email: string, password: string = 'dem
   await page.goto('/connexion');
   await page.waitForLoadState('networkidle');
   await page.getByLabel('Adresse email').fill(email);
-  await page.getByLabel('Mot de passe').fill(password);
+  // Le champ mot de passe expose aria-label="Mot de passe" (exact). Le bouton
+  // afficher/masquer contient « mot de passe » dans son libellé : on cible donc
+  // le libellé exact pour éviter l'ambiguïté (strict mode).
+  await page.getByLabel('Mot de passe', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Se connecter' }).click();
 }

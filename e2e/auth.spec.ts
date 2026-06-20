@@ -22,7 +22,7 @@ test.describe('Authentification', () => {
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Jean');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Test');
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(`jean.test+${timestamp}@clubproprete.test`);
-    await page.getByLabel('Mot de passe').fill('demo123');
+    await page.getByPlaceholder('Votre mot de passe').fill('demo123');
     await page.getByRole('textbox', { name: /Téléphone/i }).fill('0600000000');
 
     await page.getByRole('checkbox').check();
@@ -40,7 +40,7 @@ test.describe('Authentification', () => {
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Jean');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Onboard');
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(email);
-    await page.getByLabel('Mot de passe').fill('demo123');
+    await page.getByPlaceholder('Votre mot de passe').fill('demo123');
     await page.getByRole('checkbox').check();
     await page.getByRole('button', { name: /créer mon compte/i }).click();
     await page.waitForURL('/onboarding');
