@@ -94,6 +94,7 @@ export default function RootLayout({
                     <li><Link href="/formations" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Formations</Link></li>
                     <li><Link href="/association" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Association</Link></li>
                     <li><Link href="/ressources" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">Ressources</Link></li>
+                    <li><Link href="/faq" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">FAQ</Link></li>
                     <li><Link href="/a-propos" className="block py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600">À propos</Link></li>
                   </ul>
                 </div>

@@ -694,6 +694,21 @@ export function OnboardingFlow({
             </button>
           )}
         </div>
+
+        {/* F3 — Sortie sans blocage : l'utilisateur qui n'a pas ses informations
+            sous la main (SIRET, etc.) peut accéder à son espace tout de suite et
+            finaliser plus tard depuis le tableau de bord, plutôt que de fermer
+            l'onglet et ne jamais revenir. */}
+        {currentStep !== "recap" && (
+          <div className="mt-4 text-center">
+            <Link
+              href="/dashboard"
+              className="text-sm font-semibold text-slate-500 underline hover:text-slate-700"
+            >
+              Passer pour l&apos;instant — je compléterai plus tard
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
