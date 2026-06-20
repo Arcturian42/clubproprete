@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { authConfig } from "./auth.config";
 
 const credentialsSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email(),
   password: z.string().min(1),
 });
 
@@ -138,12 +138,31 @@ const providers: Provider[] = [
       if (!parsed.success) return null;
 
       const { email, password } = parsed.data;
-      const user = await findUserWithContext(email);
-      // Un compte supprimé (soft-delete) ne peut plus se connecter.
-      if (!user || user.deletedAt || user.status !== "active" || !user.passwordHash) return null;
 
-      const valid = await bcrypt.compare(password, user.passwordHash);
+      // P3 : vérification *légère* des identifiants d'abord (aucune relation
+      // lourde chargée). La plupart des tentatives échouent (bots, fautes de
+      // frappe) : inutile de charger companies/suppliers/profile/etc. à chaque
+      // fois. On ne charge le contexte qu'après validation du mot de passe.
+      const credentialUser = await prisma.user.findUnique({
+        where: { email },
+        select: { passwordHash: true, deletedAt: true, status: true },
+      });
+      // Un compte supprimé (soft-delete) ne peut plus se connecter.
+      if (
+        !credentialUser ||
+        credentialUser.deletedAt ||
+        credentialUser.status !== "active" ||
+        !credentialUser.passwordHash
+      ) {
+        return null;
+      }
+
+      const valid = await bcrypt.compare(password, credentialUser.passwordHash);
       if (!valid) return null;
+
+      // Identifiants valides : on charge maintenant le contexte pour la session.
+      const user = await findUserWithContext(email);
+      if (!user) return null;
 
       return toSessionUser(user);
     },
@@ -155,9 +174,11 @@ if (googleConfigured) {
     Google({
       clientId: process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET,
-      // Liaison par email : on rattache une connexion Google à un compte
-      // existant de même adresse (la création/résolution se fait dans signIn).
-      allowDangerousEmailAccountLinking: true,
+      // S5 : on N'active PAS `allowDangerousEmailAccountLinking`. La liaison/
+      // résolution du compte est gérée manuellement dans le callback `signIn`
+      // ci-dessous (aucun adapter), qui exige une vérification d'email *positive*
+      // (`email_verified === true`) avant de rattacher l'identité Google à un
+      // compte existant de même adresse.
     })
   );
 }

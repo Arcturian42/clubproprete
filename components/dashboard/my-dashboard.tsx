@@ -214,8 +214,20 @@ type CompanyProfile = {
   photos: string | null;
 } | null;
 
+function safeParsePhotos(raw: string | null): string[] {
+  // P6 : `photos` est une chaîne JSON. Une valeur corrompue (édition manuelle en
+  // base, bug de migration) ne doit pas faire planter le rendu du dashboard.
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 function computeCompanyScore(company: NonNullable<CompanyProfile>) {
-  const photos = company.photos ? (JSON.parse(company.photos) as string[]) : [];
+  const photos = safeParsePhotos(company.photos);
   let score = 0;
   const missing: string[] = [];
 
