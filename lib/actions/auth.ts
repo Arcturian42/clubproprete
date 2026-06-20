@@ -1,6 +1,7 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { signIn } from "@/auth";
@@ -10,7 +11,7 @@ import { rateLimitByIp } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
 
 const signupSchema = z.object({
-  email: z.string().email("Veuillez saisir un email valide."),
+  email: z.string().trim().email("Veuillez saisir un email valide."),
   password: z
     .string()
     .min(10, "Le mot de passe doit contenir au moins 10 caractères.")
@@ -18,9 +19,9 @@ const signupSchema = z.object({
     .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule.")
     .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre.")
     .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un symbole."),
-  firstName: z.string().min(1, "Le prénom est obligatoire."),
-  lastName: z.string().min(1, "Le nom est obligatoire."),
-  phone: z.string().optional(),
+  firstName: z.string().trim().min(1, "Le prénom est obligatoire."),
+  lastName: z.string().trim().min(1, "Le nom est obligatoire."),
+  phone: z.string().trim().optional(),
   termsAccepted: z.literal(true, {
     errorMap: () => ({ message: "Vous devez accepter les conditions." }),
   }),
@@ -93,15 +94,19 @@ export async function registerUser(data: SignupInput) {
       return createdUser;
     });
 
-    await sendWelcomeEmail(user.email, firstName);
-
-    // Envoie un lien de vérification d'email (asynchrone, ne bloque pas l'inscription)
-    try {
-      const token = await createEmailVerificationToken(user.id);
-      await sendEmailVerificationEmail(user.email, firstName, token);
-    } catch (verifyErr) {
-      console.error("Email verification token/send failed:", verifyErr);
-    }
+    // A4 : l'envoi d'emails (HTTP vers Resend, ~200–800 ms) est déporté APRÈS la
+    // réponse via `after()`. L'utilisateur n'attend plus la latence réseau de
+    // Resend pour voir son inscription confirmée ; l'envoi reste exécuté dans le
+    // cycle de vie de la requête (pas de fire-and-forget perdu en serverless).
+    after(async () => {
+      try {
+        await sendWelcomeEmail(user.email, firstName);
+        const token = await createEmailVerificationToken(user.id);
+        await sendEmailVerificationEmail(user.email, firstName, token);
+      } catch (verifyErr) {
+        console.error("Welcome/verification email failed:", verifyErr);
+      }
+    });
 
     return { success: true, userId: user.id };
   } catch (err) {
@@ -110,16 +115,22 @@ export async function registerUser(data: SignupInput) {
   }
 }
 
+// Message unique renvoyé aussi bien pour un échec d'authentification que pour un
+// dépassement de limite de débit (S4) : exposer un message/état distinct pour le
+// rate-limit aux appelants non authentifiés permet d'inférer l'existence d'un
+// compte (oracle 429 vs 401). On ne révèle donc rien de différenciant.
+const GENERIC_LOGIN_ERROR = "Email ou mot de passe incorrect.";
+
 export async function loginUser(email: string, password: string) {
   try {
     const ip = await getClientIp();
     const limit = await rateLimitByIp(ip, "login", 10, 300_000);
     if (!limit.success) {
-      return { success: false, message: "Trop de tentatives. Veuillez réessayer plus tard." };
+      return { success: false, message: GENERIC_LOGIN_ERROR };
     }
     await signIn("credentials", { email, password, redirect: false });
     return { success: true };
   } catch {
-    return { success: false, message: "Email ou mot de passe incorrect." };
+    return { success: false, message: GENERIC_LOGIN_ERROR };
   }
 }

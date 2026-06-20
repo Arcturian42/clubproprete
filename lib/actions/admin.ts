@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { ADMIN_ENTITY_TYPES, WORKFLOW_STATUSES, type AdminEntityType } from "@/lib/types";
+import { ADMIN_ENTITY_TYPES, WORKFLOW_STATUSES, type AdminEntityType, type WorkflowStatus } from "@/lib/types";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
 import { PermissionError } from "@/lib/permissions";
@@ -58,197 +58,14 @@ export async function updateEntityStatus(formData: FormData) {
     }
 
     // Notification in-app destinée au propriétaire/demandeur concerné par la décision.
-    let notify: NotificationInput | null = null;
+    // Q2 : chaque type d'entité est traité par un handler dédié (statusHandlers)
+    // plutôt qu'un switch monolithique, ce qui améliore la testabilité et réduit
+    // les conflits de fusion sur cette action fréquemment modifiée.
     const reasonSuffix = status === "rejected" && rejectionReason ? ` Motif : ${rejectionReason}` : "";
-
-    switch (entityType) {
-      case "company": {
-        const company = await prisma.company.update({
-          where: { id: entityId },
-          data: { verificationStatus: status },
-        });
-        // Clôt la demande de vérification associée (RDV + questionnaire) :
-        // la décision admin porte sur cette demande.
-        await prisma.verificationRequest.updateMany({
-          where: { entityType: "company", entityId, status: "pending" },
-          data: {
-            status: status === "approved" ? "approved" : "rejected",
-            reviewedBy: admin.id,
-            reviewedAt: new Date(),
-            rejectionReason: status === "rejected" ? rejectionReason ?? null : null,
-          },
-        });
-        notify = {
-          userId: company.ownerUserId,
-          type: "moderation",
-          title:
-            status === "approved"
-              ? "Fiche vérifiée ✓"
-              : `Demande de vérification ${decisionLabel(status)}`,
-          body:
-            status === "approved"
-              ? `Votre fiche « ${company.name} » est désormais vérifiée : le badge est visible sur l'annuaire.`
-              : `Votre demande de vérification pour « ${company.name} » a été ${decisionLabel(status)}.${reasonSuffix} Votre fiche reste visible dans l'annuaire.`,
-          link: status === "approved" ? `/annuaire/societes/${company.id}` : "/dashboard/entreprise",
-        };
-        break;
-      }
-      case "supplier": {
-        const supplier = await prisma.supplier.update({
-          where: { id: entityId },
-          data: { verificationStatus: status },
-        });
-        notify = {
-          userId: supplier.ownerUserId,
-          type: "moderation",
-          title: `Fournisseur ${decisionLabel(status)}`,
-          body: `Votre fiche « ${supplier.name} » a été ${decisionLabel(status)}.${reasonSuffix}`,
-          link: status === "approved" ? `/annuaire/fournisseurs/${supplier.id}` : "/dashboard/fournisseur",
-        };
-        break;
-      }
-      case "training_organization": {
-        const organization = await prisma.trainingOrganization.update({
-          where: { id: entityId },
-          data: { verificationStatus: status },
-        });
-        notify = {
-          userId: organization.ownerUserId,
-          type: "moderation",
-          title: `Centre de formation ${decisionLabel(status)}`,
-          body: `Votre fiche « ${organization.name} » a été ${decisionLabel(status)}.${reasonSuffix}`,
-          link: status === "approved" ? `/annuaire/centres-formation/${organization.id}` : "/dashboard/centre-formation",
-        };
-        break;
-      }
-      case "job": {
-        const jobStatus = status === "approved" ? "published" : status;
-        const jobData: Record<string, unknown> = { status: jobStatus };
-        if (jobStatus === "published") {
-          jobData.publishedAt = new Date();
-        }
-        const job = await prisma.job.update({ where: { id: entityId }, data: jobData });
-        notify = {
-          userId: job.createdBy,
-          type: "moderation",
-          title: `Offre ${decisionLabel(jobStatus)}`,
-          body: `Votre offre « ${job.title} » a été ${decisionLabel(jobStatus)}.${reasonSuffix}`,
-          link: jobStatus === "published" ? `/emploi/${job.id}` : "/dashboard/entreprise/offres",
-        };
-        break;
-      }
-      case "training": {
-        const trainingData: Record<string, unknown> = { status };
-        const training = await prisma.training.update({ where: { id: entityId }, data: trainingData });
-        notify = {
-          userId: training.creatorUserId,
-          type: "moderation",
-          title: `Formation ${decisionLabel(status)}`,
-          body: `Votre formation « ${training.title} » a été ${decisionLabel(status)}.${reasonSuffix}`,
-          link: status === "approved" ? `/formations/${training.id}` : "/formations/nouvelle",
-        };
-        break;
-      }
-      case "article": {
-        const articleStatus = status === "approved" ? "published" : status;
-        const articleData: Record<string, unknown> = { status: articleStatus };
-        if (articleStatus === "published") {
-          articleData.publishedAt = new Date();
-        }
-        const article = await prisma.article.update({ where: { id: entityId }, data: articleData });
-        notify = {
-          userId: article.authorId,
-          type: "moderation",
-          title: `Article ${decisionLabel(articleStatus)}`,
-          body: `Votre article « ${article.title} » a été ${decisionLabel(articleStatus)}.${reasonSuffix}`,
-          link: articleStatus === "published" ? `/ressources/${article.id}` : "/dashboard/auteur",
-        };
-        break;
-      }
-      case "author_application": {
-        const applicationStatus = status === "approved" ? "approved" : status;
-        const application = await prisma.authorApplication.update({
-          where: { id: entityId },
-          data: {
-            status: applicationStatus,
-            reviewedBy: admin.id,
-            reviewedAt: new Date(),
-            rejectionReason: applicationStatus === "rejected" ? rejectionReason ?? null : null,
-          },
-          include: { article: true },
-        });
-
-        if (application.articleId) {
-          const articleStatus = applicationStatus === "approved" ? "published" : applicationStatus;
-          await prisma.article.update({
-            where: { id: application.articleId },
-            data: {
-              status: articleStatus,
-              publishedAt: articleStatus === "published" ? new Date() : application.article?.publishedAt ?? null,
-            },
-          });
-        }
-
-        // Élève un compte générique au rôle auteur pour que son dashboard ouvre le panel
-        // de rédaction. Les rôles structurels (société, fournisseur…) sont préservés :
-        // l'accès auteur reste porté par la demande approuvée (hasAuthorAccess).
-        if (applicationStatus === "approved") {
-          await prisma.user.updateMany({
-            where: { id: application.userId, mainRole: "registered_user" },
-            data: { mainRole: "author" },
-          });
-        }
-
-        notify = {
-          userId: application.userId,
-          type: "moderation",
-          title: `Demande auteur ${decisionLabel(applicationStatus)}`,
-          body:
-            applicationStatus === "approved"
-              ? "Votre accès auteur est validé : votre premier article est publié et votre espace rédaction est ouvert."
-              : `Votre demande auteur a été ${decisionLabel(applicationStatus)}.${reasonSuffix}`,
-          link: "/dashboard/auteur",
-        };
-        break;
-      }
-      case "membership": {
-        const membership = await prisma.associationMembership.update({
-          where: { id: entityId },
-          data: {
-            status,
-            reviewedBy: admin.id,
-            reviewedAt: new Date(),
-            rejectionReason: status === "rejected" ? rejectionReason ?? null : null,
-          },
-        });
-        await prisma.userProfile.updateMany({
-          where: { userId: membership.userId },
-          data: { associationStatus: status === "approved" ? "approved" : status === "rejected" ? "rejected" : "pending" },
-        });
-        await prisma.independentProfile.updateMany({
-          where: { userId: membership.userId },
-          data: { associationStatus: status === "approved" ? "approved" : status === "rejected" ? "rejected" : "pending" },
-        });
-        if (membership.entityType === "company" && membership.entityId) {
-          await prisma.company.updateMany({
-            where: { id: membership.entityId },
-            data: { associationMember: status === "approved" },
-          });
-        }
-
-        notify = {
-          userId: membership.userId,
-          type: "moderation",
-          title: `Adhésion association ${decisionLabel(status)}`,
-          body:
-            status === "approved"
-              ? "Votre adhésion à l'association est validée : votre espace membre est désormais accessible."
-              : `Votre demande d'adhésion a été ${decisionLabel(status)}.${reasonSuffix}`,
-          link: "/association",
-        };
-        break;
-      }
-    }
+    const handler = statusHandlers[entityType];
+    const notify = handler
+      ? await handler({ entityId, status, rejectionReason, reasonSuffix, adminId: admin.id })
+      : null;
 
     if (notify) {
       await notifyUser(notify);
@@ -274,6 +91,210 @@ export async function updateEntityStatus(formData: FormData) {
     return { success: false, message: "Une erreur est survenue. Veuillez réessayer." };
   }
 }
+
+// --- Q2 : handlers de mise à jour de statut, un par type d'entité ---
+
+type StatusHandlerArgs = {
+  entityId: string;
+  status: WorkflowStatus;
+  rejectionReason?: string;
+  reasonSuffix: string;
+  adminId: string;
+};
+
+type StatusHandler = (args: StatusHandlerArgs) => Promise<NotificationInput | null>;
+
+async function handleCompanyStatusUpdate({ entityId, status, rejectionReason, reasonSuffix, adminId }: StatusHandlerArgs) {
+  const company = await prisma.company.update({
+    where: { id: entityId },
+    data: { verificationStatus: status },
+  });
+  // Clôt la demande de vérification associée (RDV + questionnaire) :
+  // la décision admin porte sur cette demande.
+  await prisma.verificationRequest.updateMany({
+    where: { entityType: "company", entityId, status: "pending" },
+    data: {
+      status: status === "approved" ? "approved" : "rejected",
+      reviewedBy: adminId,
+      reviewedAt: new Date(),
+      rejectionReason: status === "rejected" ? rejectionReason ?? null : null,
+    },
+  });
+  return {
+    userId: company.ownerUserId,
+    type: "moderation",
+    title: status === "approved" ? "Fiche vérifiée ✓" : `Demande de vérification ${decisionLabel(status)}`,
+    body:
+      status === "approved"
+        ? `Votre fiche « ${company.name} » est désormais vérifiée : le badge est visible sur l'annuaire.`
+        : `Votre demande de vérification pour « ${company.name} » a été ${decisionLabel(status)}.${reasonSuffix} Votre fiche reste visible dans l'annuaire.`,
+    link: status === "approved" ? `/annuaire/societes/${company.id}` : "/dashboard/entreprise",
+  } satisfies NotificationInput;
+}
+
+async function handleSupplierStatusUpdate({ entityId, status, reasonSuffix }: StatusHandlerArgs) {
+  const supplier = await prisma.supplier.update({
+    where: { id: entityId },
+    data: { verificationStatus: status },
+  });
+  return {
+    userId: supplier.ownerUserId,
+    type: "moderation",
+    title: `Fournisseur ${decisionLabel(status)}`,
+    body: `Votre fiche « ${supplier.name} » a été ${decisionLabel(status)}.${reasonSuffix}`,
+    link: status === "approved" ? `/annuaire/fournisseurs/${supplier.id}` : "/dashboard/fournisseur",
+  } satisfies NotificationInput;
+}
+
+async function handleTrainingOrganizationStatusUpdate({ entityId, status, reasonSuffix }: StatusHandlerArgs) {
+  const organization = await prisma.trainingOrganization.update({
+    where: { id: entityId },
+    data: { verificationStatus: status },
+  });
+  return {
+    userId: organization.ownerUserId,
+    type: "moderation",
+    title: `Centre de formation ${decisionLabel(status)}`,
+    body: `Votre fiche « ${organization.name} » a été ${decisionLabel(status)}.${reasonSuffix}`,
+    link: status === "approved" ? `/annuaire/centres-formation/${organization.id}` : "/dashboard/centre-formation",
+  } satisfies NotificationInput;
+}
+
+async function handleJobStatusUpdate({ entityId, status, reasonSuffix }: StatusHandlerArgs) {
+  const jobStatus = status === "approved" ? "published" : status;
+  const job = await prisma.job.update({
+    where: { id: entityId },
+    data: { status: jobStatus, ...(jobStatus === "published" ? { publishedAt: new Date() } : {}) },
+  });
+  return {
+    userId: job.createdBy,
+    type: "moderation",
+    title: `Offre ${decisionLabel(jobStatus)}`,
+    body: `Votre offre « ${job.title} » a été ${decisionLabel(jobStatus)}.${reasonSuffix}`,
+    link: jobStatus === "published" ? `/emploi/${job.id}` : "/dashboard/entreprise/offres",
+  } satisfies NotificationInput;
+}
+
+async function handleTrainingStatusUpdate({ entityId, status, reasonSuffix }: StatusHandlerArgs) {
+  const training = await prisma.training.update({ where: { id: entityId }, data: { status } });
+  return {
+    userId: training.creatorUserId,
+    type: "moderation",
+    title: `Formation ${decisionLabel(status)}`,
+    body: `Votre formation « ${training.title} » a été ${decisionLabel(status)}.${reasonSuffix}`,
+    link: status === "approved" ? `/formations/${training.id}` : "/formations/nouvelle",
+  } satisfies NotificationInput;
+}
+
+async function handleArticleStatusUpdate({ entityId, status, reasonSuffix }: StatusHandlerArgs) {
+  const articleStatus = status === "approved" ? "published" : status;
+  const article = await prisma.article.update({
+    where: { id: entityId },
+    data: { status: articleStatus, ...(articleStatus === "published" ? { publishedAt: new Date() } : {}) },
+  });
+  return {
+    userId: article.authorId,
+    type: "moderation",
+    title: `Article ${decisionLabel(articleStatus)}`,
+    body: `Votre article « ${article.title} » a été ${decisionLabel(articleStatus)}.${reasonSuffix}`,
+    link: articleStatus === "published" ? `/ressources/${article.id}` : "/dashboard/auteur",
+  } satisfies NotificationInput;
+}
+
+async function handleAuthorApplicationStatusUpdate({ entityId, status, rejectionReason, reasonSuffix, adminId }: StatusHandlerArgs) {
+  const applicationStatus = status === "approved" ? "approved" : status;
+  const application = await prisma.authorApplication.update({
+    where: { id: entityId },
+    data: {
+      status: applicationStatus,
+      reviewedBy: adminId,
+      reviewedAt: new Date(),
+      rejectionReason: applicationStatus === "rejected" ? rejectionReason ?? null : null,
+    },
+    include: { article: true },
+  });
+
+  if (application.articleId) {
+    const articleStatus = applicationStatus === "approved" ? "published" : applicationStatus;
+    await prisma.article.update({
+      where: { id: application.articleId },
+      data: {
+        status: articleStatus,
+        publishedAt: articleStatus === "published" ? new Date() : application.article?.publishedAt ?? null,
+      },
+    });
+  }
+
+  // Élève un compte générique au rôle auteur pour que son dashboard ouvre le panel
+  // de rédaction. Les rôles structurels (société, fournisseur…) sont préservés :
+  // l'accès auteur reste porté par la demande approuvée (hasAuthorAccess).
+  if (applicationStatus === "approved") {
+    await prisma.user.updateMany({
+      where: { id: application.userId, mainRole: "registered_user" },
+      data: { mainRole: "author" },
+    });
+  }
+
+  return {
+    userId: application.userId,
+    type: "moderation",
+    title: `Demande auteur ${decisionLabel(applicationStatus)}`,
+    body:
+      applicationStatus === "approved"
+        ? "Votre accès auteur est validé : votre premier article est publié et votre espace rédaction est ouvert."
+        : `Votre demande auteur a été ${decisionLabel(applicationStatus)}.${reasonSuffix}`,
+    link: "/dashboard/auteur",
+  } satisfies NotificationInput;
+}
+
+async function handleMembershipStatusUpdate({ entityId, status, rejectionReason, reasonSuffix, adminId }: StatusHandlerArgs) {
+  const membership = await prisma.associationMembership.update({
+    where: { id: entityId },
+    data: {
+      status,
+      reviewedBy: adminId,
+      reviewedAt: new Date(),
+      rejectionReason: status === "rejected" ? rejectionReason ?? null : null,
+    },
+  });
+  const associationStatus = status === "approved" ? "approved" : status === "rejected" ? "rejected" : "pending";
+  await prisma.userProfile.updateMany({
+    where: { userId: membership.userId },
+    data: { associationStatus },
+  });
+  await prisma.independentProfile.updateMany({
+    where: { userId: membership.userId },
+    data: { associationStatus },
+  });
+  if (membership.entityType === "company" && membership.entityId) {
+    await prisma.company.updateMany({
+      where: { id: membership.entityId },
+      data: { associationMember: status === "approved" },
+    });
+  }
+
+  return {
+    userId: membership.userId,
+    type: "moderation",
+    title: `Adhésion association ${decisionLabel(status)}`,
+    body:
+      status === "approved"
+        ? "Votre adhésion à l'association est validée : votre espace membre est désormais accessible."
+        : `Votre demande d'adhésion a été ${decisionLabel(status)}.${reasonSuffix}`,
+    link: "/association",
+  } satisfies NotificationInput;
+}
+
+const statusHandlers: Record<AdminEntityType, StatusHandler> = {
+  company: handleCompanyStatusUpdate,
+  supplier: handleSupplierStatusUpdate,
+  training_organization: handleTrainingOrganizationStatusUpdate,
+  job: handleJobStatusUpdate,
+  training: handleTrainingStatusUpdate,
+  article: handleArticleStatusUpdate,
+  author_application: handleAuthorApplicationStatusUpdate,
+  membership: handleMembershipStatusUpdate,
+};
 
 async function checkEntityExists(entityType: AdminEntityType, entityId: string): Promise<boolean> {
   switch (entityType) {

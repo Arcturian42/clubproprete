@@ -1,8 +1,10 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { sendNewJobNotification, sendAdminNotification, sendJobApplicationNotification, escapeHtml } from "@/lib/email";
 import { canPublishJob, PermissionError, requireEntityRole, requireUser } from "@/lib/permissions";
 import { rateLimitByIp } from "@/lib/rate-limit";
@@ -92,16 +94,49 @@ async function attachEmployerSummaries<T extends JobWithEmployerFields>(jobs: T[
     new Set(jobs.filter((job) => job.employerType === "supplier" && job.employerEntityId).map((job) => job.employerEntityId as string))
   );
 
-  const suppliers = supplierIds.length
-    ? await prisma.supplier.findMany({
-        where: { id: { in: supplierIds }, deletedAt: null },
-        select: { id: true, slug: true, name: true, verificationStatus: true },
-      })
-    : [];
+  // P1/P5/Q5 : on charge AUSSI les entreprises par lot (une seule requête `in`),
+  // au lieu de retomber sur `job.company` éventuellement absent puis sur une
+  // requête par offre. On ne requête que les entreprises non déjà incluses.
+  const companyIds = Array.from(
+    new Set(
+      jobs
+        .filter((job) => !job.company)
+        .map((job) => job.companyId ?? (job.employerType === "company" ? job.employerEntityId : null))
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+
+  const [suppliers, companies] = await Promise.all([
+    supplierIds.length
+      ? prisma.supplier.findMany({
+          where: { id: { in: supplierIds }, deletedAt: null },
+          select: { id: true, slug: true, name: true, verificationStatus: true },
+        })
+      : Promise.resolve([]),
+    companyIds.length
+      ? prisma.company.findMany({
+          where: { id: { in: companyIds }, deletedAt: null },
+          select: { id: true, slug: true, name: true, verificationStatus: true },
+        })
+      : Promise.resolve([]),
+  ]);
   const supplierById = new Map(suppliers.map((supplier) => [supplier.id, supplier]));
+  const companyById = new Map(companies.map((company) => [company.id, company]));
 
   return jobs.map((job) => {
     const supplier = job.employerType === "supplier" && job.employerEntityId ? supplierById.get(job.employerEntityId) : null;
+    const fallbackCompanyId = job.companyId ?? (job.employerType === "company" ? job.employerEntityId : null);
+    const company = job.company
+      ? {
+          id: job.company.id,
+          slug: job.company.slug ?? null,
+          name: job.company.name,
+          verificationStatus: job.company.verificationStatus ?? "unknown",
+        }
+      : fallbackCompanyId
+      ? companyById.get(fallbackCompanyId) ?? null
+      : null;
+
     const employer = supplier
       ? {
           id: supplier.id,
@@ -110,13 +145,13 @@ async function attachEmployerSummaries<T extends JobWithEmployerFields>(jobs: T[
           verificationStatus: supplier.verificationStatus,
           href: `/annuaire/fournisseurs/${supplier.slug ?? supplier.id}`,
         }
-      : job.company
+      : company
       ? {
-          id: job.company.id,
+          id: company.id,
           type: "company" as const,
-          name: job.company.name,
-          verificationStatus: job.company.verificationStatus ?? "unknown",
-          href: `/annuaire/societes/${job.company.slug ?? job.company.id}`,
+          name: company.name,
+          verificationStatus: company.verificationStatus ?? "unknown",
+          href: `/annuaire/societes/${company.slug ?? company.id}`,
         }
       : null;
 
@@ -197,14 +232,20 @@ export async function createJob(formData: FormData) {
       include: { company: true },
     });
 
-    if (user.email) {
-      await sendNewJobNotification(user.email, title);
-    }
-
-    await sendAdminNotification(
-      "Nouvelle offre d'emploi à modérer",
-      `<p><strong>${escapeHtml(title)}</strong> — ${escapeHtml(entity.name)} (${escapeHtml(city)})</p>`
-    );
+    // A4 : emails déportés après la réponse (latence Resend hors du temps perçu).
+    after(async () => {
+      try {
+        if (user.email) {
+          await sendNewJobNotification(user.email, title);
+        }
+        await sendAdminNotification(
+          "Nouvelle offre d'emploi à modérer",
+          `<p><strong>${escapeHtml(title)}</strong> — ${escapeHtml(entity.name)} (${escapeHtml(city)})</p>`
+        );
+      } catch (mailErr) {
+        console.error("createJob notification email failed:", mailErr);
+      }
+    });
 
     revalidatePath("/emploi");
     return { success: true, job };
@@ -219,7 +260,7 @@ export async function createJob(formData: FormData) {
 }
 
 export async function getPublishedJobs(search?: string, page?: number, limit = 12) {
-  const where: Record<string, unknown> = { status: "published", deletedAt: null };
+  const where: Prisma.JobWhereInput = { status: "published", deletedAt: null };
   if (search) {
     where.OR = [
       { title: { contains: search, mode: "insensitive" } },
@@ -346,11 +387,18 @@ export async function applyToJob(formData: FormData) {
     });
 
     const candidateName = `${candidateProfile.firstName ?? ""} ${candidateProfile.lastName ?? ""}`.trim() || "Un candidat";
-    const employer = await resolveEmployerSummary(job);
-    const toEmail = job?.company?.owner?.email ?? employer?.ownerEmail;
-    if (toEmail) {
-      await sendJobApplicationNotification(toEmail, candidateName, job.title);
-    }
+    // A4 : notification email à l'employeur déportée après la réponse.
+    after(async () => {
+      try {
+        const employer = await resolveEmployerSummary(job);
+        const toEmail = job?.company?.owner?.email ?? employer?.ownerEmail;
+        if (toEmail) {
+          await sendJobApplicationNotification(toEmail, candidateName, job.title);
+        }
+      } catch (mailErr) {
+        console.error("applyToJob notification email failed:", mailErr);
+      }
+    });
 
     // Notification in-app à l'employeur (propriétaire de la société ou du fournisseur).
     let employerOwnerUserId: string | null = job.company?.ownerUserId ?? null;

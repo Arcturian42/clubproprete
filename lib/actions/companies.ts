@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { PermissionError, requireEntityRole, requireUser } from "@/lib/permissions";
@@ -11,7 +12,7 @@ import { notifyUser } from "@/lib/notifications";
 export async function getPublishedCompanies(search?: string, page?: number, limit = 12, region?: string) {
   // Publication immédiate : toute fiche créée est visible. La vérification
   // (badge) est un parcours séparé, à la demande du propriétaire.
-  const where: Record<string, unknown> = { deletedAt: null };
+  const where: Prisma.CompanyWhereInput = { deletedAt: null };
   if (search) {
     where.OR = [
       { name: { contains: search, mode: "insensitive" } },

@@ -110,9 +110,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Le nom contient l'id du propriétaire + un UUID aléatoire : l'URL n'est pas
+    // devinable. Ce n'est PAS un contrôle d'autorisation (cf. TODO S3 ci-dessous).
     const fileName = `${session.user.id}-${randomUUID()}${ext}`;
 
     if (HAS_BLOB_STORAGE) {
+      // TODO (S3 — confidentialité des documents) : ces fichiers sont publics.
+      //   `access: "public"` est aujourd'hui nécessaire car la même route sert
+      //   aussi bien des ressources destinées à l'affichage public (avatars,
+      //   logos, photos de fiches d'annuaire rendues par <Image> sur des pages
+      //   non authentifiées) que des documents potentiellement sensibles (PDF).
+      //   Rendre l'ensemble privé casserait l'annuaire public ; basculer en privé
+      //   suppose donc :
+      //     1. distinguer le *type* d'upload (public: avatar/logo/photo vs privé:
+      //        document/CV) côté appelant ;
+      //     2. pour les fichiers privés, stocker une correspondance
+      //        propriétaire → clé blob en base, puis les servir via une route
+      //        proxy authentifiée (/api/files/[id]) qui vérifie la propriété et
+      //        renvoie une URL signée à courte durée de vie.
+      //   C'est une décision produit (quels uploads sont sensibles) + une
+      //   évolution de schéma : hors périmètre de ce correctif pour ne pas casser
+      //   l'affichage public existant.
       const blob = await put(`uploads/${fileName}`, buffer, {
         access: "public",
         contentType: detectedType,

@@ -117,77 +117,65 @@ export async function canViewCandidate(viewer: CandidateViewer, candidateUserId:
     return true;
   }
 
-  const companyMemberships = await prisma.entityMember.findMany({
-    where: {
-      userId: viewer.id,
-      entityType: "company",
-      status: "active",
-      deletedAt: null,
-      role: { in: ["owner", "admin", "recruiter"] },
-    },
-    select: { entityId: true },
-  });
+  // P2 : on charge les appartenances en parallèle (requêtes courtes sur colonnes
+  // indexées), puis on remplace les deux `count` à filtres `some` profondément
+  // imbriqués par UNE seule requête d'existence (`findFirst` + `select id`) sur
+  // jobApplication, qui court-circuite dès la première correspondance.
+  const [companyMemberships, supplierMemberships, legacySuppliers] = await Promise.all([
+    prisma.entityMember.findMany({
+      where: {
+        userId: viewer.id,
+        entityType: "company",
+        status: "active",
+        deletedAt: null,
+        role: { in: ["owner", "admin", "recruiter"] },
+      },
+      select: { entityId: true },
+    }),
+    prisma.entityMember.findMany({
+      where: {
+        userId: viewer.id,
+        entityType: "supplier",
+        status: "active",
+        deletedAt: null,
+        role: { in: ["owner", "admin", "recruiter"] },
+      },
+      select: { entityId: true },
+    }),
+    prisma.supplier.findMany({
+      where: { ownerUserId: viewer.id, deletedAt: null },
+      select: { id: true },
+    }),
+  ]);
+
   const memberCompanyIds = companyMemberships.map((membership) => membership.entityId);
-  const supplierMemberships = await prisma.entityMember.findMany({
-    where: {
-      userId: viewer.id,
-      entityType: "supplier",
-      status: "active",
-      deletedAt: null,
-      role: { in: ["owner", "admin", "recruiter"] },
-    },
-    select: { entityId: true },
-  });
-  const legacySuppliers = await prisma.supplier.findMany({
-    where: { ownerUserId: viewer.id, deletedAt: null },
-    select: { id: true },
-  });
   const memberSupplierIds = [
     ...supplierMemberships.map((membership) => membership.entityId),
     ...legacySuppliers.map((supplier) => supplier.id),
   ];
 
-  const [matchingCompanyCount, matchingSupplierJobCount] = await Promise.all([
-    prisma.company.count({
-      where: {
-        verificationStatus: "approved",
+  const application = await prisma.jobApplication.findFirst({
+    where: {
+      deletedAt: null,
+      candidateProfile: { userId: candidateUserId, deletedAt: null },
+      job: {
         deletedAt: null,
-        OR: [{ ownerUserId: viewer.id }, { id: { in: memberCompanyIds } }],
-        jobs: {
-          some: {
-            deletedAt: null,
-            applications: {
-              some: {
-                deletedAt: null,
-                candidateProfile: {
-                  userId: candidateUserId,
-                  deletedAt: null,
-                },
-              },
-            },
-          },
-        },
-      },
-    }),
-    prisma.job.count({
-      where: {
-        employerType: "supplier",
-        employerEntityId: { in: memberSupplierIds },
-        deletedAt: null,
-        applications: {
-          some: {
-            deletedAt: null,
-            candidateProfile: {
-              userId: candidateUserId,
+        OR: [
+          {
+            company: {
+              verificationStatus: "approved",
               deletedAt: null,
+              OR: [{ ownerUserId: viewer.id }, { id: { in: memberCompanyIds } }],
             },
           },
-        },
+          { employerType: "supplier", employerEntityId: { in: memberSupplierIds } },
+        ],
       },
-    }),
-  ]);
+    },
+    select: { id: true },
+  });
 
-  return matchingCompanyCount > 0 || matchingSupplierJobCount > 0;
+  return application !== null;
 }
 
 export function isVerifiedPersonalAccount(user: PermissionUser) {

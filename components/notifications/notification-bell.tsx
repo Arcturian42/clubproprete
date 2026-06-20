@@ -11,14 +11,24 @@ export function NotificationBell() {
   useEffect(() => {
     let active = true;
     async function load() {
+      // P7 : on ne sonde pas quand l'onglet est masqué (arrière-plan), pour
+      // éviter des appels serveur inutiles toutes les 60 s sur des onglets inactifs.
+      if (document.visibilityState === "hidden") return;
       const value = await getUnreadNotificationCount();
       if (active) setCount(value);
     }
     load();
     const interval = setInterval(load, 60_000);
+    // Recharge immédiatement quand l'utilisateur revient sur l'onglet, pour que
+    // le compteur soit à jour sans attendre le prochain tick.
+    function onVisibility() {
+      if (document.visibilityState === "visible") load();
+    }
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       active = false;
       clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 

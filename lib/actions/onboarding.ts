@@ -17,8 +17,8 @@ import { uniqueSlug } from "@/lib/slug";
 
 const onboardingSchema = z
   .object({
-    phone: z.string().max(30).optional(),
-    city: z.string().max(120).optional(),
+    phone: z.string().trim().max(30).optional(),
+    city: z.string().trim().max(120).optional(),
     linkedinUrl: z
       .string()
       .url("Le lien LinkedIn doit être une URL valide (https://...).")
@@ -27,20 +27,20 @@ const onboardingSchema = z
     situations: z.array(z.enum(ONBOARDING_SITUATIONS)),
     company: z
       .object({
-        name: z.string().min(1, "Le nom de la société est obligatoire."),
+        name: z.string().trim().min(1, "Le nom de la société est obligatoire."),
         siret: z.string().max(20).optional(),
-        city: z.string().max(120).optional(),
+        city: z.string().trim().max(120).optional(),
       })
       .optional(),
     supplier: z
       .object({
-        name: z.string().min(1, "Le nom du fournisseur est obligatoire."),
+        name: z.string().trim().min(1, "Le nom du fournisseur est obligatoire."),
         family: z.string().optional(),
       })
       .optional(),
     training: z
       .object({
-        name: z.string().min(1, "Le nom de l'organisme est obligatoire."),
+        name: z.string().trim().min(1, "Le nom de l'organisme est obligatoire."),
         siret: z.string().max(20).optional(),
         declarationNumber: z.string().max(40).optional(),
         qualiopi: z.boolean().optional(),

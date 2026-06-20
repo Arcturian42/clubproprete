@@ -10,7 +10,13 @@ const csp = [
   // Next.js needs unsafe-inline/unsafe-eval in dev for HMR; tighter in prod
   `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
-  // Vercel Blob (photos/documents uploadés) + tuiles OpenStreetMap de la carte.
+  // img-src (S6) :
+  //  - data: / blob: → aperçus locaux des fichiers AVANT upload (les composants
+  //    d'upload affichent un <img> sur un URL.createObjectURL/dataURL). Nécessaire
+  //    pour l'UX d'upload (avatar, logo, photos). Aucun vecteur XSS identifié,
+  //    mais blob: élargit légèrement la surface : à retirer si la prévisualisation
+  //    locale est supprimée.
+  //  - Vercel Blob (photos/documents uploadés) + tuiles OpenStreetMap de la carte.
   "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://*.tile.openstreetmap.org",
   "font-src 'self' data:",
   // recherche-entreprises.api.gouv.fr : autocomplétion SIRET de l'onboarding
