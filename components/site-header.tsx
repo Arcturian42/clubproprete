@@ -1,14 +1,81 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldCheck, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { ShieldCheck, Menu, X, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { AuthNav } from "@/components/auth/auth-nav";
-import { publicRoutes } from "@/lib/routes";
+import { publicRoutes, directoryRoutes } from "@/lib/routes";
 import { ResourcesMegaMenu, ResourcesMobileMenu } from "@/components/resources-mega-menu";
+
+function isActivePath(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
+// N1 — Menu déroulant « Annuaires » (desktop), clic pour ouvrir + fermeture au
+// clic extérieur et touche Échap (accessibilité clavier).
+function AnnuairesMenu({ pathname }: { pathname: string }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const active = directoryRoutes.some((route) => isActivePath(pathname, route.href));
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) setOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={`flex items-center gap-1 whitespace-nowrap rounded-[12px] px-2 py-2 hover:bg-white hover:text-slate-900 ${
+          active ? "bg-white text-slate-900 shadow-[2px_2px_0px_#0f172a]" : ""
+        }`}
+      >
+        Annuaires
+        <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 z-50 mt-2 w-60 overflow-hidden rounded-[14px] border-2 border-slate-900 bg-white shadow-[4px_4px_0px_#0f172a]"
+        >
+          {directoryRoutes.map((route) => (
+            <Link
+              key={route.href}
+              href={route.href}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className={`block px-4 py-2.5 text-sm font-bold normal-case tracking-normal hover:bg-indigo-50 hover:text-indigo-700 ${
+                isActivePath(pathname, route.href) ? "bg-indigo-50 text-indigo-700" : "text-slate-700"
+              }`}
+            >
+              {route.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname() ?? "/";
 
   return (
     <header className="sticky top-0 z-20 border-b-2 border-slate-900 bg-[#f8fafc]/95 backdrop-blur">
@@ -25,6 +92,7 @@ export function SiteHeader() {
 
         {/* Desktop nav */}
         <nav className="hidden min-w-0 items-center gap-0.5 text-[12px] font-extrabold uppercase tracking-wide text-slate-600 lg:flex">
+          <AnnuairesMenu pathname={pathname} />
           {publicRoutes.map((route) =>
             route.href === "/ressources" ? (
               <ResourcesMegaMenu key={route.href} />
@@ -32,7 +100,10 @@ export function SiteHeader() {
               <Link
                 key={route.href}
                 href={route.href}
-                className="whitespace-nowrap rounded-[12px] px-2 py-2 hover:bg-white hover:text-slate-900"
+                aria-current={isActivePath(pathname, route.href) ? "page" : undefined}
+                className={`whitespace-nowrap rounded-[12px] px-2 py-2 hover:bg-white hover:text-slate-900 ${
+                  isActivePath(pathname, route.href) ? "bg-white text-slate-900 shadow-[2px_2px_0px_#0f172a]" : ""
+                }`}
               >
                 {route.label}
               </Link>
@@ -56,10 +127,27 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu — M3 : hauteur bornée + défilement interne pour ne pas
+          occuper tout le viewport sur les petits téléphones. */}
       {mobileOpen && (
-        <div className="lg:hidden border-t-2 border-slate-900 bg-white px-4 py-4">
+        <div className="lg:hidden max-h-[80vh] overflow-y-auto border-t-2 border-slate-900 bg-white px-4 py-4">
           <nav className="flex flex-col gap-2 text-[12px] font-extrabold uppercase tracking-wide text-slate-600">
+            {/* N1 — Section Annuaires en accordéon simple (toujours déplié sur mobile). */}
+            <p className="px-3 pt-1 text-[11px] font-black uppercase tracking-wide text-slate-400">Annuaires</p>
+            {directoryRoutes.map((route) => (
+              <Link
+                key={route.href}
+                href={route.href}
+                aria-current={isActivePath(pathname, route.href) ? "page" : undefined}
+                className={`rounded-[12px] px-3 py-3 hover:bg-indigo-50 hover:text-slate-900 ${
+                  isActivePath(pathname, route.href) ? "bg-indigo-50 text-slate-900" : ""
+                }`}
+                onClick={() => setMobileOpen(false)}
+              >
+                {route.label}
+              </Link>
+            ))}
+            <div className="my-1 border-t-2 border-slate-100" />
             {publicRoutes.map((route) =>
               route.href === "/ressources" ? (
                 <ResourcesMobileMenu key={route.href} onNavigate={() => setMobileOpen(false)} />
@@ -67,7 +155,10 @@ export function SiteHeader() {
                 <Link
                   key={route.href}
                   href={route.href}
-                  className="rounded-[12px] px-3 py-2 hover:bg-indigo-50 hover:text-slate-900"
+                  aria-current={isActivePath(pathname, route.href) ? "page" : undefined}
+                  className={`rounded-[12px] px-3 py-3 hover:bg-indigo-50 hover:text-slate-900 ${
+                    isActivePath(pathname, route.href) ? "bg-indigo-50 text-slate-900" : ""
+                  }`}
                   onClick={() => setMobileOpen(false)}
                 >
                   {route.label}

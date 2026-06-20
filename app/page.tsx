@@ -61,10 +61,19 @@ export default async function HomePage() {
               entreprises de nettoyage, indépendants, fournisseurs et organismes de formation.
             </p>
             <div className="mt-7">
-              <Link href="/inscription" className="bento-btn bento-btn-primary">
-                Créer mon compte gratuit <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-              <p className="mt-2 text-xs font-bold text-slate-400">Gratuit · sans carte bancaire · 2 minutes</p>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/inscription" className="bento-btn bento-btn-primary">
+                  Créer mon compte gratuit <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+                {/* F4 — CTA secondaire pour les visiteurs en intention de
+                    consultation (trafic SEO) qui ne sont pas prêts à s'inscrire. */}
+                <Link href="/annuaire/societes" className="bento-btn">
+                  Explorer l&apos;annuaire des sociétés
+                </Link>
+              </div>
+              {/* A1 — slate-500 (~5,2:1) au lieu de slate-400 (~2,8:1) pour ce
+                  texte de réassurance lisible. */}
+              <p className="mt-2 text-xs font-bold text-slate-500">Gratuit · sans carte bancaire · 2 minutes</p>
             </div>
             <p className="mt-5 text-sm font-semibold text-slate-600">
               Rejoignez les <span className="font-black text-slate-900">membres fondateurs</span> de Club Propreté.{" "}

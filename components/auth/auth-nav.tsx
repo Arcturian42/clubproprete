@@ -2,18 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, LayoutDashboard, LogOut, Settings, Trash2, UserRound } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, Settings, UserRound } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { roleLabels } from "@/lib/auth-demo";
-import { deleteMyAccount } from "@/lib/actions/profile";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 
 export function AuthNav() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Ferme le menu au clic extérieur et à la touche Échap.
@@ -37,14 +33,6 @@ export function AuthNav() {
     };
   }, [open]);
 
-  // Réinitialise l'état de confirmation quand le menu se referme.
-  useEffect(() => {
-    if (!open) {
-      setConfirmingDelete(false);
-      setError("");
-    }
-  }, [open]);
-
   // Pendant la vérification de session, afficher l'état visiteur par défaut
   // plutôt qu'un "Chargement..." bloquant (la majorité du trafic est non connecté).
   if (status === "loading" || !session?.user) {
@@ -64,19 +52,6 @@ export function AuthNav() {
   const fullName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email;
   const roleLabel = roleLabels[user.role as keyof typeof roleLabels] || user.role;
   const isPlatformAdmin = user.role === "admin" || user.role === "super_admin";
-
-  async function handleDelete() {
-    setDeleting(true);
-    setError("");
-    const result = await deleteMyAccount();
-    if (!result.success) {
-      setDeleting(false);
-      setError(result.message || "Une erreur est survenue.");
-      return;
-    }
-    // Compte supprimé : on clôt la session et on renvoie à l'accueil.
-    await signOut({ callbackUrl: "/" });
-  }
 
   return (
     <div className="flex items-center gap-2">
@@ -106,7 +81,7 @@ export function AuthNav() {
           >
             <div className="border-b-2 border-slate-100 px-4 py-3">
               <p className="truncate text-sm font-black text-slate-900">{fullName}</p>
-              <p className="truncate text-[11px] font-bold text-slate-400">{user.email}</p>
+              <p className="truncate text-[11px] font-bold text-slate-500">{user.email}</p>
               <span className="mt-1 inline-block text-[11px] font-extrabold uppercase tracking-wide text-indigo-600">
                 {roleLabel}
               </span>
@@ -138,44 +113,10 @@ export function AuthNav() {
                 <LogOut size={15} aria-hidden="true" /> Se déconnecter
               </button>
             </div>
-
-            <div className="border-t-2 border-slate-100 p-2">
-              {!confirmingDelete ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => setConfirmingDelete(true)}
-                  className="flex w-full items-center gap-2 rounded-[10px] px-2 py-2 text-left text-sm font-bold text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 size={15} aria-hidden="true" /> Supprimer mon compte
-                </button>
-              ) : (
-                <div className="rounded-[10px] bg-red-50 p-2">
-                  <p className="px-1 text-[12px] font-bold text-red-700">
-                    Cette action est irréversible. Vos informations personnelles seront supprimées.
-                  </p>
-                  {error && <p className="mt-1 px-1 text-[11px] font-bold text-red-600">{error}</p>}
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setConfirmingDelete(false)}
-                      disabled={deleting}
-                      className="flex-1 rounded-[8px] border-2 border-slate-300 bg-white px-2 py-1.5 text-[12px] font-bold text-slate-600 hover:bg-slate-50"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      disabled={deleting}
-                      className="flex-1 rounded-[8px] border-2 border-red-600 bg-red-600 px-2 py-1.5 text-[12px] font-black text-white hover:bg-red-700 disabled:opacity-60"
-                    >
-                      {deleting ? "Suppression…" : "Confirmer"}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* U4 — La suppression de compte (action destructrice) a été retirée
+                de ce menu pour ne pas la placer sur le même chemin de mémoire
+                musculaire que « Mon profil » / « Se déconnecter ». Elle reste
+                accessible depuis /profil et /supprimer-compte. */}
           </div>
         )}
       </div>

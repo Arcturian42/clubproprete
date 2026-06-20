@@ -21,7 +21,7 @@ export default async function InscriptionPage() {
     <PageShell
       eyebrow="Compte gratuit"
       title="Inscription"
-      description="Créez votre compte gratuit en 2 minutes : un onboarding rapide active ensuite les fonctionnalités adaptées à votre activité."
+      description="Créez votre compte gratuit en 2 minutes : quelques questions activent ensuite les fonctionnalités adaptées à votre activité."
       actions={
         <Link href="/connexion" className="bento-btn">
           Déjà inscrit

@@ -10,7 +10,7 @@ type PageShellProps = {
 
 export function PageShell({ eyebrow, title, description, actions, children }: PageShellProps) {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
           {eyebrow ? <p className="mb-2 text-[12px] font-extrabold uppercase tracking-wide text-indigo-600">{eyebrow}</p> : null}
