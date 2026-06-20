@@ -107,6 +107,9 @@ test.describe('Super Admin', () => {
 
   test('le dashboard membre redirige le super admin vers le cockpit', async ({ page }) => {
     await loginAs(page, 'superadmin@clubproprete.test');
+    // Attendre que la connexion soit posée (redirection rôle → /admin) avant de
+    // renavigauer, sinon le goto part sans session et retombe sur /connexion.
+    await page.waitForURL('/admin');
     await page.goto('/dashboard');
     await page.waitForURL('/admin');
     await expect(page.getByRole('heading', { name: /centre de contrôle/i })).toBeVisible();
@@ -115,6 +118,7 @@ test.describe('Super Admin', () => {
 
   test('le registre utilisateurs expose les filtres et les fiches de contrôle', async ({ page }) => {
     await loginAs(page, 'superadmin@clubproprete.test');
+    await page.waitForURL('/admin');
     await page.goto('/admin/users');
     await expect(page.getByPlaceholder('Nom, email ou téléphone')).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Filtrer par statut' })).toBeVisible();

@@ -55,6 +55,12 @@ test.describe('Flux auteur (demande → validation → panel)', () => {
       .locator('textarea[name="content"]')
       .fill('Contenu complet de l’article de test, suffisamment long pour dépasser la validation minimale de quatre-vingts caractères imposée par le schéma.');
     await page.locator('textarea[name="motivation"]').fill('Je souhaite partager mon expertise terrain en propreté.');
+    // L'image de couverture est obligatoire. L'upload réel passe par /api/upload
+    // (stockage Blob) indisponible en CI : on renseigne directement la valeur de
+    // l'input caché, lue telle quelle par le FormData à la soumission.
+    await page.locator('input[name="featuredImage"]').evaluate((el) => {
+      (el as HTMLInputElement).value = 'https://picsum.photos/seed/qa/1200/630';
+    });
     await page.getByRole('button', { name: /demander l'accès auteur/i }).click();
 
     await expect(page.getByText(/demande envoyée/i)).toBeVisible();

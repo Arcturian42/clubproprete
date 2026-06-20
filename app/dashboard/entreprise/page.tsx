@@ -33,6 +33,7 @@ import { StatCard } from "@/components/stat-card";
 import { EntityCard } from "@/components/entity-card";
 import { createCompanyProfile, getCompanyByOwner, updateCompanyProfile } from "@/lib/actions/companies";
 import { getApplicationsForCompany, getJobsForCurrentPublisher } from "@/lib/actions/jobs";
+import { hasApprovedAssociationMembership } from "@/lib/actions/memberships";
 import { parsePhotos } from "@/lib/photos";
 import { CompanyVerificationCard } from "@/components/dashboard/company-verification-card";
 
@@ -84,6 +85,7 @@ export default function EntrepriseProfilePage() {
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [isAssociationMember, setIsAssociationMember] = useState(false);
 
   const [profile, setProfile] = useState<CompanyProfile>({
     name: "",
@@ -159,6 +161,9 @@ export default function EntrepriseProfilePage() {
           clients: [],
         });
       }
+      // Statut association relu à chaque montage : reflète une approbation admin
+      // sans imposer de reconnexion (PB-2).
+      setIsAssociationMember(await hasApprovedAssociationMembership(user.id));
       setIsLoading(false);
     };
     loadCompany();
@@ -384,9 +389,14 @@ export default function EntrepriseProfilePage() {
                 )}
               </div>
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
                   <h1 className="text-3xl font-black text-slate-900">{profile.name}</h1>
                   <BadgeCheck className="text-emerald-500" size={24} />
+                  {isAssociationMember && (
+                    <span className="bento-tag border-indigo-400 bg-indigo-50 text-indigo-700">
+                      <Star size={13} aria-hidden="true" /> Membre association
+                    </span>
+                  )}
                 </div>
                 <p className="text-lg text-slate-500 mb-4">{profile.shortDesc}</p>
                 <div className="flex flex-wrap gap-4 text-sm">

@@ -74,7 +74,7 @@ export default async function AssociationPage() {
             meta={["Networking", "Échanges", "Partenariats"]}
           >
             <div className="space-y-3">
-              <div className="surface p-3 flex items-start gap-3">
+              <div className="card-soft p-3 flex items-start gap-3">
                 <div className="rounded-[12px] border-2 border-slate-900 bg-indigo-600 p-2 text-white">
                   <Calendar size={16} />
                 </div>
@@ -83,7 +83,7 @@ export default async function AssociationPage() {
                   <p className="text-xs text-slate-500">15 juillet 2026 · 18h30 · Paris 15e</p>
                 </div>
               </div>
-              <div className="surface p-3 flex items-start gap-3">
+              <div className="card-soft p-3 flex items-start gap-3">
                 <div className="rounded-[12px] border-2 border-slate-900 bg-amber-400 p-2 text-slate-900">
                   <GraduationCap size={16} />
                 </div>
@@ -92,7 +92,7 @@ export default async function AssociationPage() {
                   <p className="text-xs text-slate-500">22 juillet 2026 · 14h · En ligne</p>
                 </div>
               </div>
-              <div className="surface p-3 flex items-start gap-3">
+              <div className="card-soft p-3 flex items-start gap-3">
                 <div className="rounded-[12px] border-2 border-slate-900 bg-emerald-500 p-2 text-white">
                   <Handshake size={16} />
                 </div>
@@ -113,7 +113,7 @@ export default async function AssociationPage() {
             meta={["Formation continue", "Replay 30j"]}
           >
             <div className="space-y-3">
-              <div className="surface p-3 flex items-start gap-3">
+              <div className="card-soft p-3 flex items-start gap-3">
                 <div className="rounded-[12px] border-2 border-slate-900 bg-indigo-600 p-2 text-white">
                   <Video size={16} />
                 </div>
@@ -122,7 +122,7 @@ export default async function AssociationPage() {
                   <p className="text-xs text-slate-500">Replay disponible · 45 min</p>
                 </div>
               </div>
-              <div className="surface p-3 flex items-start gap-3">
+              <div className="card-soft p-3 flex items-start gap-3">
                 <div className="rounded-[12px] border-2 border-slate-900 bg-indigo-600 p-2 text-white">
                   <Video size={16} />
                 </div>

@@ -49,8 +49,20 @@ function CategoryLinks({ category, onNavigate }: { category: ResourceCategory; o
 
 export function ResourcesMegaMenu() {
   const [open, setOpen] = useState(false);
+  // M2 — L'ouverture au survol n'est activée qu'à partir de 1280px. En dessous
+  // (≈ tablettes, petits laptops, paysage mobile), le menu s'ouvre uniquement au
+  // clic, pour éviter un panneau dense qui se ferme à un déplacement involontaire.
+  const [hoverEnabled, setHoverEnabled] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1280px)");
+    const update = () => setHoverEnabled(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
 
   // Un léger délai avant fermeture permet de traverser l'espace entre le
   // bouton et le panneau (padding du header) sans que le menu se referme.
@@ -93,10 +105,14 @@ export function ResourcesMegaMenu() {
     <div
       ref={wrapperRef}
       onMouseEnter={() => {
+        if (!hoverEnabled) return;
         cancelClose();
         setOpen(true);
       }}
-      onMouseLeave={scheduleClose}
+      onMouseLeave={() => {
+        if (!hoverEnabled) return;
+        scheduleClose();
+      }}
     >
       <button
         type="button"

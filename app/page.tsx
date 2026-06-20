@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ChevronDown, Crown, FileText, Handshake, Rocket, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Crown, FileText, Handshake, Rocket, Sparkles } from "lucide-react";
 import { getPublishedCompanies } from "@/lib/actions/companies";
 import { getPublishedJobs } from "@/lib/actions/jobs";
 import { getPublishedSuppliers } from "@/lib/actions/suppliers";
@@ -8,7 +8,6 @@ import {
   accountBenefits,
   associationPerks,
   audiences,
-  faq,
   features,
   fieldRealities,
   levels,
@@ -18,21 +17,10 @@ import {
   steps,
   subcontractingPerks,
 } from "@/lib/landing-content";
-import { JsonLd } from "@/components/json-ld";
+import { MobileStickyCta } from "@/components/home/mobile-sticky-cta";
 
 // Les compteurs viennent de la base, indisponible au moment du build.
 export const dynamic = "force-dynamic";
-
-// Données structurées FAQ (AEO) : éligibilité aux réponses directes Google/IA.
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faq.map(({ q, a }) => ({
-    "@type": "Question",
-    name: q,
-    acceptedAnswer: { "@type": "Answer", text: a },
-  })),
-};
 
 export default async function HomePage() {
   const [{ total: companiesCount }, { total: jobsCount }, { total: suppliersCount }, { total: trainingsCount }] =
@@ -45,7 +33,6 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <JsonLd data={faqJsonLd} />
       {/* HERO */}
       <section className="surface p-6 sm:p-10">
         <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -328,9 +315,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* POURQUOI */}
+      {/* AVANTAGES — fusion de « Pourquoi rejoindre » et « Pensé pour le terrain »
+          (V1 : réduit la répétition de propositions de valeur quasi identiques). */}
       <section className="mt-14">
-        <SectionTitle eyebrow="Les bénéfices" title="Pourquoi rejoindre Club Propreté ?" />
+        <SectionTitle
+          eyebrow="Les bénéfices"
+          title="Pourquoi rejoindre Club Propreté ?"
+          subtitle="Une plateforme pensée pour les réalités concrètes du secteur. La promesse est simple : rendre la propreté plus connectée, plus visible et plus organisée."
+        />
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {reasons.map(({ icon: Icon, title, description }) => (
             <article key={title} className="bento-card bento-card-interactive p-6">
@@ -342,32 +334,16 @@ export default async function HomePage() {
             </article>
           ))}
         </div>
-      </section>
-
-      {/* TERRAIN / AMBITION */}
-      <section className="mt-14">
-        <div className="bento-card p-6 sm:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
-            <div>
-              <h2 className="text-3xl font-black leading-tight text-slate-900">Une plateforme pensée pour le terrain</h2>
-              <p className="mt-4 text-base font-medium leading-7 text-slate-600">
-                Club Propreté n'a pas été imaginé comme un outil froid ou institutionnel. La plateforme est pensée pour
-                les réalités concrètes du secteur. La promesse est simple :{" "}
-                <span className="font-bold text-slate-900">
-                  rendre le secteur plus connecté, plus visible et plus organisé.
-                </span>
-              </p>
-            </div>
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {fieldRealities.map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-700">
-                  <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-indigo-600" aria-hidden="true" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="mt-8 flex flex-wrap gap-2 border-t-2 border-slate-900 pt-6">
+        <div className="mt-6 bento-card p-6 sm:p-8">
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {fieldRealities.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-700">
+                <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-indigo-600" aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-6 flex flex-wrap gap-2 border-t-2 border-slate-900 pt-6">
             {["Un média", "Un annuaire", "Un job board", "Un espace ressources", "Un réseau", "Une association", "Un club professionnel"].map(
               (item) => (
                 <span key={item} className="bento-tag">
@@ -376,26 +352,6 @@ export default async function HomePage() {
               ),
             )}
           </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="mt-14">
-        <SectionTitle eyebrow="Vous vous demandez…" title="Questions fréquentes" />
-        <div className="mt-8 grid gap-3">
-          {faq.map(({ q, a }) => (
-            <details key={q} className="bento-card group p-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-black text-slate-900">
-                {q}
-                <ChevronDown
-                  size={18}
-                  className="shrink-0 text-indigo-600 transition-transform group-open:rotate-180"
-                  aria-hidden="true"
-                />
-              </summary>
-              <p className="mt-3 text-sm font-medium leading-6 text-slate-500">{a}</p>
-            </details>
-          ))}
         </div>
       </section>
 
@@ -421,8 +377,16 @@ export default async function HomePage() {
           <p className="mt-6 text-xs font-bold uppercase tracking-wide text-slate-400">
             Club Propreté · La plateforme gratuite des professionnels de la propreté
           </p>
+          <p className="mt-3 text-sm font-semibold text-slate-600">
+            Une question ?{" "}
+            <Link href="/faq" className="font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+              Consultez la FAQ →
+            </Link>
+          </p>
         </div>
       </section>
+
+      <MobileStickyCta />
     </div>
   );
 }

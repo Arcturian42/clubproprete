@@ -84,6 +84,12 @@ export async function rateLimit(
   maxRequests = 5,
   windowMs = 60_000
 ): Promise<{ success: boolean; remaining: number; resetAt: number }> {
+  // En mode démo (CI / e2e, jamais activé en production), on neutralise le rate
+  // limiting : la suite de tests crée légitimement de nombreux comptes et
+  // déclenche de nombreuses actions sensibles depuis une seule et même IP.
+  if (process.env.ENABLE_DEMO_ACCOUNTS === "true") {
+    return { success: true, remaining: maxRequests, resetAt: Date.now() + windowMs };
+  }
   if (getKvToken()) {
     return kvRateLimit(key, maxRequests, windowMs);
   }

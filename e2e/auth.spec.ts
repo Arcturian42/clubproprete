@@ -4,8 +4,9 @@ import { loginAs } from './fixtures';
 test.describe('Authentification', () => {
   test('connexion compte démo société', async ({ page }) => {
     await loginAs(page, 'societe@clubproprete.test');
-    await page.waitForURL('/dashboard');
-    await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible();
+    // Un compte société (company_owner) est redirigé vers son tableau de bord
+    // entreprise par rôle.
+    await expect(page).toHaveURL(/\/dashboard\/entreprise/);
   });
 
   test('connexion compte démo admin', async ({ page }) => {
@@ -22,7 +23,7 @@ test.describe('Authentification', () => {
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Jean');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Test');
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(`jean.test+${timestamp}@clubproprete.test`);
-    await page.getByLabel('Mot de passe').fill('demo123');
+    await page.getByPlaceholder('Votre mot de passe').first().fill('DemoPass123!');
     await page.getByRole('textbox', { name: /Téléphone/i }).fill('0600000000');
 
     await page.getByRole('checkbox').check();
@@ -40,7 +41,7 @@ test.describe('Authentification', () => {
     await page.getByRole('textbox', { name: 'Prénom *', exact: true }).fill('Jean');
     await page.getByRole('textbox', { name: 'Nom *', exact: true }).fill('Onboard');
     await page.getByRole('textbox', { name: 'Email *', exact: true }).fill(email);
-    await page.getByLabel('Mot de passe').fill('demo123');
+    await page.getByPlaceholder('Votre mot de passe').first().fill('DemoPass123!');
     await page.getByRole('checkbox').check();
     await page.getByRole('button', { name: /créer mon compte/i }).click();
     await page.waitForURL('/onboarding');
