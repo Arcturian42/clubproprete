@@ -18,9 +18,37 @@ import {
   subcontractingPerks,
 } from "@/lib/landing-content";
 import { MobileStickyCta } from "@/components/home/mobile-sticky-cta";
+import { JsonLd } from "@/components/json-ld";
+import { itemListJsonLd } from "@/lib/seo";
 
 // Les compteurs viennent de la base, indisponible au moment du build.
 export const dynamic = "force-dynamic";
+
+// Titre/description spécifiques à l'accueil (le layout fournit le titre par
+// défaut, mais une intention requête-cible améliore le CTR en SERP).
+export const metadata = {
+  title:
+    "Club Propreté — Annuaire, emploi et formations des professionnels du nettoyage",
+  description:
+    "Plateforme B2B gratuite pour les professionnels de la propreté en France : annuaire de sociétés et fournisseurs, offres d'emploi, formations, association et sous-traitance privée.",
+  alternates: { canonical: "/" },
+};
+
+// Liste structurée des publics ciblés : aide les IA (AEO) à répondre « à qui
+// s'adresse Club Propreté » et renforce les sitelinks (SEO).
+const homeAudiencesJsonLd = itemListJsonLd({
+  name: "À qui s'adresse Club Propreté",
+  path: "/",
+  description:
+    "Club Propreté réunit les acteurs du secteur de la propreté : entreprises de nettoyage, indépendants, fournisseurs, centres de formation et candidats.",
+  items: [
+    { name: "Entreprises de nettoyage", path: "/annuaire/societes" },
+    { name: "Fournisseurs du secteur", path: "/annuaire/fournisseurs" },
+    { name: "Centres de formation", path: "/annuaire/centres-formation" },
+    { name: "Indépendants et sous-traitants", path: "/independants" },
+    { name: "Candidats à l'emploi", path: "/candidats" },
+  ],
+});
 
 export default async function HomePage() {
   const [{ total: companiesCount }, { total: jobsCount }, { total: suppliersCount }, { total: trainingsCount }] =
@@ -33,6 +61,7 @@ export default async function HomePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <JsonLd data={homeAudiencesJsonLd} />
       {/* HERO */}
       <section className="surface p-6 sm:p-10">
         <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">

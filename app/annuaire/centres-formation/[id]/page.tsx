@@ -5,10 +5,33 @@ import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
 import { getTrainingOrganizationById } from "@/lib/actions/training-organizations";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbJsonLd, getBaseUrl } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
+
+function externalUrl(url: string) {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const organization = await getTrainingOrganizationById(id);
+  if (!organization) {
+    return { title: "Centre de formation introuvable" };
+  }
+  return {
+    title: `${organization.name} — Centre de formation propreté`,
+    description:
+      organization.description ||
+      `${organization.name}, centre de formation pour les métiers de la propreté${
+        organization.qualiopiStatus ? ` (${organization.qualiopiStatus})` : ""
+      }, référencé sur Club Propreté.`,
+    alternates: { canonical: `/annuaire/centres-formation/${id}` },
+  };
+}
 
 export default async function TrainingCenterDetailPage({ params }: Props) {
   const { id } = await params;
@@ -17,6 +40,48 @@ export default async function TrainingCenterDetailPage({ params }: Props) {
   if (!organization) {
     notFound();
   }
+
+  const baseUrl = getBaseUrl();
+  const organizationUrl = `${baseUrl}/annuaire/centres-formation/${organization.id}`;
+  // Donnée structurée EducationalOrganization : permet aux moteurs (SEO) et aux
+  // IA (AEO/GEO) d'identifier le centre, son agrément Qualiopi et son catalogue.
+  const educationalOrganizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "@id": `${organizationUrl}#organization`,
+    name: organization.name,
+    ...(organization.description ? { description: organization.description } : {}),
+    url: organizationUrl,
+    ...(organization.logoUrl?.startsWith("http") ? { logo: organization.logoUrl } : {}),
+    ...(organization.email ? { email: organization.email } : {}),
+    ...(organization.phone ? { telephone: organization.phone } : {}),
+    ...(organization.website ? { sameAs: [externalUrl(organization.website)] } : {}),
+    areaServed: { "@type": "Country", name: "France" },
+    ...(organization.qualiopiStatus || organization.declarationNumber
+      ? {
+          hasCredential: [
+            ...(organization.qualiopiStatus
+              ? [
+                  {
+                    "@type": "EducationalOccupationalCredential",
+                    name: "Qualiopi",
+                    credentialCategory: organization.qualiopiStatus,
+                  },
+                ]
+              : []),
+            ...(organization.declarationNumber
+              ? [
+                  {
+                    "@type": "EducationalOccupationalCredential",
+                    name: "Numéro de déclaration d'activité (NDA)",
+                    credentialCategory: organization.declarationNumber,
+                  },
+                ]
+              : []),
+          ],
+        }
+      : {}),
+  };
 
   return (
     <PageShell
@@ -29,6 +94,16 @@ export default async function TrainingCenterDetailPage({ params }: Props) {
         </Link>
       }
     >
+      <JsonLd
+        data={[
+          educationalOrganizationJsonLd,
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Centres de formation", path: "/annuaire/centres-formation" },
+            { name: organization.name, path: `/annuaire/centres-formation/${organization.id}` },
+          ]),
+        ]}
+      />
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Formations" value={String(organization.trainings.length)} detail="Publiées" />
         <StatCard label="Qualiopi" value={organization.qualiopiStatus || "À vérifier"} detail="Statut déclaré" />

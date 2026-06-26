@@ -3,6 +3,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 import { faq } from "@/lib/landing-content";
 import { PageShell } from "@/components/page-shell";
 import { JsonLd } from "@/components/json-ld";
+import { faqJsonLd } from "@/lib/seo";
 
 export const metadata = {
   title: "Questions fréquentes",
@@ -12,15 +13,7 @@ export const metadata = {
 };
 
 // Données structurées FAQ (AEO) : éligibilité aux réponses directes Google/IA.
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faq.map(({ q, a }) => ({
-    "@type": "Question",
-    name: q,
-    acceptedAnswer: { "@type": "Answer", text: a },
-  })),
-};
+const faqStructuredData = faqJsonLd(faq);
 
 export default function FaqPage() {
   return (
@@ -34,7 +27,7 @@ export default function FaqPage() {
         </Link>
       }
     >
-      <JsonLd data={faqJsonLd} />
+      <JsonLd data={faqStructuredData} />
       <div className="grid gap-3">
         {faq.map(({ q, a }) => (
           <details key={q} className="bento-card group p-5">

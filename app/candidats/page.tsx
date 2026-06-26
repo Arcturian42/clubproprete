@@ -3,6 +3,13 @@ import { BriefcaseBusiness, ShieldCheck, UserRoundPlus } from "lucide-react";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
 
+export const metadata = {
+  title: "Candidats — Trouvez un emploi dans la propreté",
+  description:
+    "Créez votre profil candidat gratuit sur Club Propreté : profil privé par défaut, candidature réutilisable et accès recruteur contrôlé pour les métiers du nettoyage.",
+  alternates: { canonical: "/candidats" },
+};
+
 const candidatePrinciples = [
   {
     title: "Profil privé par défaut",
