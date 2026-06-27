@@ -6,6 +6,7 @@ import { PageShell } from "@/components/page-shell";
 import { StatCard } from "@/components/stat-card";
 import { EmptyState } from "@/components/empty-state";
 import { getPublishedSubcontractingMissions } from "@/lib/actions/subcontracting";
+import { hasApprovedAssociationMembership } from "@/lib/actions/memberships";
 
 export const metadata = {
   title: "Sous-traitance en propreté entre professionnels",
@@ -17,10 +18,14 @@ export default async function SubcontractingPage() {
   const session = await auth();
   const user = session?.user;
 
+  // Le claim `associationMember` du JWT est figé au login : un membre fraîchement
+  // approuvé ne le voit pas tant qu'il ne se reconnecte pas. On ajoute un repli
+  // relu en base (cohérent avec la page « nouvelle mission » et le dashboard).
   const canAccess =
     user?.role === "admin" ||
     user?.role === "super_admin" ||
-    user?.associationMember === true;
+    user?.associationMember === true ||
+    (user?.id ? await hasApprovedAssociationMembership(user.id) : false);
 
   const missions = canAccess ? await getPublishedSubcontractingMissions() : [];
   const applicationsCount = missions.reduce(
