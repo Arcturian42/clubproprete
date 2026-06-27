@@ -19,9 +19,25 @@ import { getResourceContent, type ResourceContent } from "@/lib/resources-conten
 export function resourceDetailMetadata(categorySlug: ResourceCategorySlug, slug: string) {
   const resource = getResource(categorySlug, slug);
   if (!resource) return { title: "Ressource introuvable | Club Propreté" };
+  // Canonical auto-référencée + Open Graph/Twitter spécifiques à la page :
+  // sans cela, chaque ressource hérite du canonical "/" et de l'OG générique
+  // du layout racine, ce qui empêche son indexation comme page distincte.
+  const canonical = getResourceHref(resource);
   return {
     title: resource.seoTitle,
     description: resource.seoDescription,
+    alternates: { canonical },
+    openGraph: {
+      type: "article",
+      title: resource.seoTitle,
+      description: resource.seoDescription,
+      url: canonical,
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title: resource.seoTitle,
+      description: resource.seoDescription,
+    },
   };
 }
 

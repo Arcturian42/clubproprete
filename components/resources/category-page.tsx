@@ -19,9 +19,26 @@ type CategoryPageProps = {
 
 export function categoryPageMetadata(categorySlug: ResourceCategorySlug) {
   const category = getResourceCategory(categorySlug);
+  const title = `${category?.h1 ?? "Ressources"} | Club Propreté`;
+  const description = category?.description;
+  // Canonical auto-référencée + OG dédié : la page rubrique doit être indexée
+  // pour elle-même, pas redirigée vers la home par le canonical hérité du layout.
+  const canonical = `/ressources/${categorySlug}`;
   return {
-    title: `${category?.h1 ?? "Ressources"} | Club Propreté`,
-    description: category?.description,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "website" as const,
+      title,
+      description,
+      url: canonical,
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title,
+      description,
+    },
   };
 }
 
