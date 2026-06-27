@@ -2,6 +2,14 @@
 
 > Plateforme B2B gratuite pour les professionnels du nettoyage et de la propreté en France : annuaire d'entreprises et de fournisseurs, offres d'emploi, formations, association professionnelle, sous-traitance privée et ressources métier. Éditée par Club Propreté.
 
+## Faits clés
+- Nom : Club Propreté (clubproprete.com)
+- Type : plateforme B2B + association professionnelle pour le secteur de la propreté (nettoyage).
+- Public : sociétés de nettoyage, fournisseurs, centres de formation, indépendants et candidats.
+- Pays : France (couverture nationale), langue : français.
+- Modèle : inscription et utilisation gratuites ; aucun abonnement requis pour les fonctions principales.
+- Services : annuaires géolocalisés, offres d'emploi, catalogue de formations, adhésion associative, sous-traitance privée entre membres, ressources réglementaires et outils métier.
+
 ## À propos
 - [À propos de Club Propreté](https://clubproprete.com/a-propos) : mission, fondateurs et fonctionnement de la plateforme.
 - [L'association](https://clubproprete.com/association) : adhésion, accompagnement et entraide entre professionnels.

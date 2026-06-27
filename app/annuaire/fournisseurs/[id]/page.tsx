@@ -22,11 +22,16 @@ import {
   getSupplierFamilyLabel,
   getSupplierSubCategoryLabel,
 } from "@/lib/supplier-taxonomy";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbJsonLd, getBaseUrl } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
 
+function externalUrl(url: string) {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
 
 export async function generateMetadata({ params }: Props) {
   const { id } = await params;
@@ -34,11 +39,20 @@ export async function generateMetadata({ params }: Props) {
   if (!supplier) {
     return { title: "Fournisseur introuvable" };
   }
+  const description =
+    supplier.description ||
+    `Fiche de ${supplier.name}, fournisseur vérifié pour les professionnels du nettoyage.`;
+  const title = `${supplier.name} — Fournisseur propreté`;
   return {
-    title: `${supplier.name} — Fournisseur propreté`,
-    description:
-      supplier.description ||
-      `Fiche de ${supplier.name}, fournisseur vérifié pour les professionnels du nettoyage.`,
+    title,
+    description,
+    alternates: { canonical: `/annuaire/fournisseurs/${supplier.slug ?? id}` },
+    openGraph: {
+      type: "profile",
+      title,
+      description,
+      url: `${getBaseUrl()}/annuaire/fournisseurs/${supplier.slug ?? id}`,
+    },
   };
 }
 
@@ -62,6 +76,27 @@ export default async function SupplierDetailPage({ params }: Props) {
     ? `${familyLabel} · ${subCategoryLabel} · ${offerTypeLabel}`
     : `${familyLabel} · ${subCategoryLabel}`;
 
+  const baseUrl = getBaseUrl();
+  const supplierUrl = `${baseUrl}/annuaire/fournisseurs/${supplier.slug ?? supplier.id}`;
+  // Donnée structurée Organization : identifie le fournisseur, son offre et sa
+  // zone de couverture pour les moteurs (SEO) et les IA génératives (AEO/GEO).
+  const supplierJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${supplierUrl}#supplier`,
+    name: supplier.name,
+    description: supplier.description || `${supplier.name} — ${taxonomyLabel}`,
+    url: supplierUrl,
+    ...(supplier.logoUrl?.startsWith("http") ? { logo: supplier.logoUrl } : {}),
+    ...(supplier.email ? { email: supplier.email } : {}),
+    ...(supplier.phone ? { telephone: supplier.phone } : {}),
+    ...(supplier.website ? { sameAs: [externalUrl(supplier.website)] } : {}),
+    areaServed: supplier.nationalCoverage
+      ? { "@type": "Country", name: "France" }
+      : supplier.deliveryAreas || "France",
+    ...(specialties.length > 0 ? { knowsAbout: specialties } : {}),
+  };
+
   return (
     <PageShell
       eyebrow="Fournisseur"
@@ -73,6 +108,16 @@ export default async function SupplierDetailPage({ params }: Props) {
         </Link>
       }
     >
+      <JsonLd
+        data={[
+          supplierJsonLd,
+          breadcrumbJsonLd([
+            { name: "Accueil", path: "/" },
+            { name: "Fournisseurs", path: "/annuaire/fournisseurs" },
+            { name: supplier.name, path: `/annuaire/fournisseurs/${supplier.slug ?? supplier.id}` },
+          ]),
+        ]}
+      />
       {/* Stats rapides */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Famille" value={familyLabel} detail={subCategoryLabel} />
