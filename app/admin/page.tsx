@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { BadgeCheck, CircleSlash, Download, ShieldAlert, ShieldCheck, Users, ArrowRight, Briefcase, UserRoundCheck, UserCog } from "lucide-react";
+import { BadgeCheck, CircleSlash, Download, Gauge, ShieldAlert, ShieldCheck, Users, ArrowRight, Briefcase, UserRoundCheck, UserCog } from "lucide-react";
 import { auth } from "@/auth";
 import { EntityCard } from "@/components/entity-card";
 import { PageShell } from "@/components/page-shell";
@@ -63,7 +63,12 @@ export default async function AdminPage() {
       actions={
         <div className="flex flex-wrap gap-3">
           {isSuperAdmin && (
-            <Link href="/admin/users" className="bento-btn bento-btn-primary">
+            <Link href="/admin/dashboard" className="bento-btn bento-btn-primary">
+              <Gauge size={16} aria-hidden="true" /> Tableau de bord global
+            </Link>
+          )}
+          {isSuperAdmin && (
+            <Link href="/admin/users" className="bento-btn">
               <Users size={16} aria-hidden="true" /> Gestion utilisateurs
             </Link>
           )}
