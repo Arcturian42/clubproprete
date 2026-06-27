@@ -53,7 +53,8 @@ test.describe('Réinitialisation de mot de passe', () => {
     });
 
     await page.goto(`/reinitialiser-mot-de-passe?token=${rawToken}`);
-    await page.getByLabel('Nouveau mot de passe').fill('nouveauMotDePasse123');
+    // Mot de passe conforme à la politique forte (≥10 car., majuscule, minuscule, chiffre, symbole).
+    await page.getByLabel('Nouveau mot de passe').fill('NouveauMotDePasse123!');
     await page.getByRole('button', { name: /réinitialiser le mot de passe/i }).click();
 
     await expect(page.getByText(/mot de passe mis à jour/i)).toBeVisible();
@@ -63,7 +64,7 @@ test.describe('Réinitialisation de mot de passe', () => {
     expect(used?.usedAt).not.toBeNull();
 
     // Connexion avec le nouveau mot de passe.
-    await loginAs(page, EMAIL, 'nouveauMotDePasse123');
+    await loginAs(page, EMAIL, 'NouveauMotDePasse123!');
     // La connexion réussie avec le nouveau mot de passe atterrit dans l'espace
     // connecté (redirigé par rôle).
     await expect(page).toHaveURL(/\/dashboard/);
@@ -71,7 +72,8 @@ test.describe('Réinitialisation de mot de passe', () => {
 
   test('un jeton invalide est refusé', async ({ page }) => {
     await page.goto('/reinitialiser-mot-de-passe?token=jetontotalementbidonquinexistepas');
-    await page.getByLabel('Nouveau mot de passe').fill('peuImporte123');
+    // Mot de passe conforme : la validation passe, le refus vient bien du jeton invalide.
+    await page.getByLabel('Nouveau mot de passe').fill('PeuImporte123!');
     await page.getByRole('button', { name: /réinitialiser le mot de passe/i }).click();
 
     await expect(page.getByText(/invalide ou expiré/i)).toBeVisible();
