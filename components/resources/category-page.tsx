@@ -4,9 +4,12 @@ import { PageShell } from "@/components/page-shell";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { EmptyState } from "@/components/empty-state";
 import { ResourceCard } from "@/components/resources/resource-card";
+import { JsonLd } from "@/components/json-ld";
+import { itemListJsonLd } from "@/lib/seo";
 import { getPublishedArticles } from "@/lib/actions/articles";
 import {
   getResourceCategory,
+  getResourceHref,
   getResourcesByCategory,
   regulatoryDisclaimer,
   type ResourceCategorySlug,
@@ -22,6 +25,7 @@ export function categoryPageMetadata(categorySlug: ResourceCategorySlug) {
   return {
     title: `${category?.h1 ?? "Ressources"} | Club Propreté`,
     description: category?.description,
+    alternates: { canonical: `/ressources/${categorySlug}` },
   };
 }
 
@@ -65,6 +69,23 @@ export async function ResourceCategoryPage({ categorySlug, searchParams }: Categ
         </Link>
       }
     >
+      {/* CollectionPage + ItemList : vue structurée de la rubrique pour les
+          moteurs (SEO) et les IA (AEO). Basée sur le catalogue complet, pas sur
+          le filtre de recherche courant. */}
+      {allResources.length > 0 && (
+        <JsonLd
+          data={itemListJsonLd({
+            name: category.h1,
+            path: `/ressources/${category.slug}`,
+            description: category.description,
+            items: allResources.map((resource) => ({
+              name: resource.title,
+              path: getResourceHref(resource),
+              description: resource.description,
+            })),
+          })}
+        />
+      )}
       <Breadcrumb
         items={[
           { label: "Accueil", href: "/" },
