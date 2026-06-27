@@ -3,11 +3,10 @@
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/auth";
 import { ADMIN_ENTITY_TYPES, WORKFLOW_STATUSES, type AdminEntityType, type WorkflowStatus } from "@/lib/types";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
-import { PermissionError } from "@/lib/permissions";
+import { PermissionError, requireUser } from "@/lib/permissions";
 import { notifyUser, type NotificationInput } from "@/lib/notifications";
 
 function decisionLabel(status: string) {
@@ -26,12 +25,16 @@ const updateStatusSchema = z.object({
 });
 
 async function requireAdmin() {
-  const session = await auth();
-  const role = session?.user?.role;
+  // Sécurité : on relit le rôle/statut EN BASE via requireUser() (qui rejette les
+  // comptes suspendus/supprimés et réécrit session.user.role depuis mainRole).
+  // Se fier au seul rôle du JWT laisserait un admin rétrogradé ou suspendu agir
+  // jusqu'à 30 jours (durée de vie du token).
+  const session = await requireUser();
+  const role = session.user.role;
   if (role !== "admin" && role !== "super_admin") {
     throw new PermissionError("FORBIDDEN", "Accès réservé aux administrateurs.");
   }
-  return session!.user;
+  return session.user;
 }
 
 export async function updateEntityStatus(formData: FormData) {
@@ -109,6 +112,20 @@ async function handleCompanyStatusUpdate({ entityId, status, rejectionReason, re
     where: { id: entityId },
     data: { verificationStatus: status },
   });
+  // Reflète la vérification sur le rôle plateforme du propriétaire. updateMany
+  // ciblé sur le rôle de base : ne touche jamais un rôle structurel/élevé
+  // (admin, super_admin, author…). Sans ça, "verified_company" n'était jamais posé.
+  if (status === "approved") {
+    await prisma.user.updateMany({
+      where: { id: company.ownerUserId, mainRole: "company_owner" },
+      data: { mainRole: "verified_company" },
+    });
+  } else if (status === "rejected" || status === "suspended") {
+    await prisma.user.updateMany({
+      where: { id: company.ownerUserId, mainRole: "verified_company" },
+      data: { mainRole: "company_owner" },
+    });
+  }
   // Clôt la demande de vérification associée (RDV + questionnaire) :
   // la décision admin porte sur cette demande.
   await prisma.verificationRequest.updateMany({
@@ -137,6 +154,18 @@ async function handleSupplierStatusUpdate({ entityId, status, reasonSuffix }: St
     where: { id: entityId },
     data: { verificationStatus: status },
   });
+  // Idem société : élève/rétrograde le rôle plateforme du propriétaire.
+  if (status === "approved") {
+    await prisma.user.updateMany({
+      where: { id: supplier.ownerUserId, mainRole: "supplier_owner" },
+      data: { mainRole: "verified_supplier" },
+    });
+  } else if (status === "rejected" || status === "suspended") {
+    await prisma.user.updateMany({
+      where: { id: supplier.ownerUserId, mainRole: "verified_supplier" },
+      data: { mainRole: "supplier_owner" },
+    });
+  }
   return {
     userId: supplier.ownerUserId,
     type: "moderation",

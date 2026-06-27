@@ -11,7 +11,9 @@ import { rateLimitByIp } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/ip";
 
 const signupSchema = z.object({
-  email: z.string().trim().email("Veuillez saisir un email valide."),
+  // Normalisé en minuscules : évite les comptes en doublon ne différant que par
+  // la casse et les comptes Google/credentials non reliés (Google est déjà lowercased).
+  email: z.string().trim().toLowerCase().email("Veuillez saisir un email valide."),
   password: z
     .string()
     .min(10, "Le mot de passe doit contenir au moins 10 caractères.")
@@ -51,7 +53,11 @@ export async function registerUser(data: SignupInput) {
 
     const { email, password, firstName, lastName, phone } = parsed.data;
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    // Détection de doublon insensible à la casse (comptes historiques en casse mixte).
+    const existing = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      select: { id: true },
+    });
     if (existing) {
       return { success: false, errors: { email: ["Cet email est déjà utilisé."] } };
     }

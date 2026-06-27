@@ -27,10 +27,14 @@ export async function subscribeNewsletter(
   }
 
   try {
+    // Email normalisé en minuscules (déduplication). Un ré-abonnement d'une adresse
+    // précédemment désabonnée la réactive (status: "active") — sans ça, le message
+    // « Vous êtes inscrit·e » était trompeur car l'update vide laissait le désabonné désabonné.
+    const email = parsed.data.email.toLowerCase();
     await prisma.newsletterSubscriber.upsert({
-      where: { email: parsed.data.email },
-      update: {},
-      create: { email: parsed.data.email, source: "ressources_page" },
+      where: { email },
+      update: { status: "active" },
+      create: { email, source: "ressources_page" },
     });
     return { success: true, message: "Merci ! Vous êtes inscrit·e à la newsletter." };
   } catch (err) {

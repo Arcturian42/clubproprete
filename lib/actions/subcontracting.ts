@@ -91,19 +91,31 @@ export async function getSubcontractingMissionById(id: string) {
         creator: {
           select: { id: true, firstName: true, lastName: true, email: true, phone: true, avatarUrl: true },
         },
-        applications: {
+        _count: { select: { applications: true } },
+      },
+    });
+
+    if (!mission) return null;
+
+    // RGPD / minimisation : la PII des candidats (email, téléphone…) n'est chargée
+    // que pour le créateur de la mission ou un admin. Auparavant, tout membre de
+    // l'association recevait ces données dans la payload RSC (même si l'UI les
+    // masquait). Les autres ne reçoivent que le compteur (_count).
+    const canSeeApplicants =
+      mission.creatorUserId === user.id || user.role === "admin" || user.role === "super_admin";
+    const applications = canSeeApplicants
+      ? await prisma.subcontractingApplication.findMany({
+          where: { missionId: id },
           include: {
             applicant: {
               select: { id: true, firstName: true, lastName: true, email: true, phone: true, avatarUrl: true },
             },
           },
           orderBy: { createdAt: "desc" },
-        },
-        _count: { select: { applications: true } },
-      },
-    });
+        })
+      : [];
 
-    return mission;
+    return { ...mission, applications };
   } catch (err) {
     if (err instanceof PermissionError) {
       return null;

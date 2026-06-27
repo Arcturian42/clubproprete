@@ -57,13 +57,28 @@ export async function updateUserRole(formData: FormData) {
 
     const { userId, role } = parsed.data;
 
-    // Interdit de modifier un autre super_admin
-    const targetUser = await prisma.user.findUnique({
-      where: { id: userId },
+    // On ne crée pas de super_admin depuis l'UI : ce rôle se pose uniquement via
+    // le script de bootstrap (et reste ensuite non modifiable ci-dessous).
+    if (role === "super_admin") {
+      return { success: false, message: "Le rôle super admin ne peut pas être attribué depuis l'interface." };
+    }
+
+    // Un opérateur ne peut pas modifier son propre rôle (anti auto-rétrogradation/lock-out).
+    if (userId === admin.id) {
+      return { success: false, message: "Vous ne pouvez pas modifier votre propre rôle." };
+    }
+
+    // Interdit de modifier un autre super_admin ; ignore les comptes supprimés.
+    const targetUser = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
       select: { mainRole: true },
     });
 
-    if (targetUser?.mainRole === "super_admin") {
+    if (!targetUser) {
+      return { success: false, message: "Compte introuvable." };
+    }
+
+    if (targetUser.mainRole === "super_admin") {
       return { success: false, message: "Impossible de modifier un super admin." };
     }
 
@@ -184,12 +199,21 @@ export async function updateUserStatus(formData: FormData) {
 
     const { userId, status } = parsed.data;
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id: userId },
+    // Un opérateur ne peut pas se suspendre lui-même.
+    if (userId === admin.id) {
+      return { success: false, message: "Vous ne pouvez pas modifier votre propre statut." };
+    }
+
+    const targetUser = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
       select: { mainRole: true },
     });
 
-    if (targetUser?.mainRole === "super_admin") {
+    if (!targetUser) {
+      return { success: false, message: "Compte introuvable." };
+    }
+
+    if (targetUser.mainRole === "super_admin") {
       return { success: false, message: "Impossible de modifier un super admin." };
     }
 
@@ -381,6 +405,10 @@ export async function getUserAdminDetail(userId: string) {
     await requireSuperAdmin();
     const user = await prisma.user.findFirst({
       where: { id: userId, deletedAt: null },
+      // Sécurité : on exclut explicitement les secrets d'authentification. Sans
+      // cet omit, `include` renvoie TOUS les scalaires (dont passwordHash et
+      // twoFactorSecret), sérialisés dans la payload RSC envoyée au navigateur.
+      omit: { passwordHash: true, twoFactorSecret: true },
       include: {
         profile: true,
         companies: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } },
