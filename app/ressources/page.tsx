@@ -17,10 +17,26 @@ import {
   searchResources,
 } from "@/lib/resources";
 
+const HUB_TITLE = "Ressources pour les professionnels de la propreté";
+const HUB_DESCRIPTION =
+  "Guides métier, modèles de documents, calculateurs, actualités, comparatifs et ressources réglementaires pour créer, structurer et développer votre activité dans le nettoyage professionnel.";
+
 export const metadata = {
-  title: "Ressources pour les professionnels de la propreté",
-  description:
-    "Guides métier, modèles de documents, calculateurs, actualités, comparatifs et ressources réglementaires pour créer, structurer et développer votre activité dans le nettoyage professionnel.",
+  title: HUB_TITLE,
+  description: HUB_DESCRIPTION,
+  // Hub Ressources : canonical auto-référencée pour ne pas hériter du "/" du layout.
+  alternates: { canonical: "/ressources" },
+  openGraph: {
+    type: "website" as const,
+    title: `${HUB_TITLE} | Club Propreté`,
+    description: HUB_DESCRIPTION,
+    url: "/ressources",
+  },
+  twitter: {
+    card: "summary_large_image" as const,
+    title: `${HUB_TITLE} | Club Propreté`,
+    description: HUB_DESCRIPTION,
+  },
 };
 
 interface ResourcesPageProps {

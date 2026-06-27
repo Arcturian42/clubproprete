@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { LayoutDashboard, ShieldCheck, Users } from "lucide-react";
+import { Gauge, LayoutDashboard, ShieldCheck, Users } from "lucide-react";
 
 type AdminNavProps = {
-  current: "overview" | "users";
+  current: "overview" | "users" | "dashboard";
   isSuperAdmin: boolean;
 };
 
 export function AdminNav({ current, isSuperAdmin }: AdminNavProps) {
   const links = [
+    ...(isSuperAdmin
+      ? [{ key: "dashboard", href: "/admin/dashboard", label: "Tableau de bord global", icon: Gauge }]
+      : []),
     { key: "overview", href: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard },
     ...(isSuperAdmin
       ? [{ key: "users", href: "/admin/users", label: "Utilisateurs et profils", icon: Users }]
