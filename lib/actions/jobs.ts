@@ -318,6 +318,16 @@ export async function applyToJob(formData: FormData) {
     if (!limit.success) {
       return { success: false, message: "Trop de candidatures envoyées récemment. Veuillez réessayer plus tard." };
     }
+
+    // Compte personnel vérifié requis (cohérent avec la publication d'offre) :
+    // limite le spam de candidatures par des comptes non vérifiés.
+    const account = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { emailVerified: true, profile: { select: { verificationStatus: true } } },
+    });
+    if (!account || !(account.emailVerified || account.profile?.verificationStatus === "approved")) {
+      return { success: false, message: "Veuillez vérifier votre adresse email avant de postuler." };
+    }
     const raw = Object.fromEntries(formData.entries());
     const parsed = applySchema.safeParse(raw);
 

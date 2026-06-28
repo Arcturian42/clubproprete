@@ -64,7 +64,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         </div>
         <div>
           <h2 className="text-xl font-black text-slate-900">Nouveau mot de passe</h2>
-          <p className="text-sm font-semibold text-slate-500">Choisissez un mot de passe d'au moins 6 caractères.</p>
+          <p className="text-sm font-semibold text-slate-500">Au moins 10 caractères, avec majuscule, minuscule, chiffre et symbole.</p>
         </div>
       </div>
 
@@ -74,7 +74,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
       <label className="grid gap-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600">
         Nouveau mot de passe
-        <input name="password" type="password" required minLength={6} className="bento-input" aria-label="Nouveau mot de passe" placeholder="Minimum 6 caractères" />
+        <input name="password" type="password" required minLength={10} className="bento-input" aria-label="Nouveau mot de passe" placeholder="Minimum 10 caractères" />
       </label>
 
       <button type="submit" disabled={submitting} className="bento-btn bento-btn-primary mt-5 w-full">

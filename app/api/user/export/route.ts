@@ -21,8 +21,10 @@ export async function GET() {
 
   const userId = session.user.id;
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+  const user = await prisma.user.findFirst({
+    // Un compte supprimé (soft-delete) ne doit plus pouvoir exporter ses données,
+    // même avec un JWT encore valide ; ses données ont par ailleurs été anonymisées.
+    where: { id: userId, deletedAt: null },
     select: {
       // Champs scalaires du compte (hors secrets).
       id: true,

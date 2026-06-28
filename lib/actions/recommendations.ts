@@ -48,6 +48,12 @@ export async function requestRecommendation(formData: FormData) {
 
     const { candidateUserId, authorEmail, authorEntityId } = parsed.data;
 
+    // On ne peut pas se demander une recommandation à soi-même (cohérent avec
+    // submitRecommendation qui refuse déjà l'auto-recommandation).
+    if (candidateUserId === session.user.id) {
+      return { success: false, message: "Vous ne pouvez pas demander une recommandation pour vous-même." };
+    }
+
     const candidate = await prisma.user.findFirst({
       where: { id: candidateUserId, deletedAt: null },
       select: { id: true },

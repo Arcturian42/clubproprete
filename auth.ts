@@ -7,6 +7,7 @@ import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { rateLimitByEmail } from "@/lib/rate-limit";
 import { authConfig } from "./auth.config";
 
 const credentialsSchema = z.object({
@@ -139,13 +140,21 @@ const providers: Provider[] = [
 
       const { email, password } = parsed.data;
 
+      // Anti brute-force / credential-stuffing : borne les tentatives par email
+      // (clé normalisée en minuscules). Sans cela, /connexion appelle signIn
+      // directement, sans aucune limite de débit.
+      const limit = await rateLimitByEmail(email.toLowerCase(), "login", 10, 60_000);
+      if (!limit.success) return null;
+
       // P3 : vérification *légère* des identifiants d'abord (aucune relation
       // lourde chargée). La plupart des tentatives échouent (bots, fautes de
       // frappe) : inutile de charger companies/suppliers/profile/etc. à chaque
       // fois. On ne charge le contexte qu'après validation du mot de passe.
-      const credentialUser = await prisma.user.findUnique({
-        where: { email },
-        select: { passwordHash: true, deletedAt: true, status: true },
+      // Lookup insensible à la casse : gère les comptes historiques en casse
+      // mixte (l'email est normalisé en minuscules à l'inscription).
+      const credentialUser = await prisma.user.findFirst({
+        where: { email: { equals: email, mode: "insensitive" } },
+        select: { email: true, passwordHash: true, deletedAt: true, status: true },
       });
       // Un compte supprimé (soft-delete) ne peut plus se connecter.
       if (
@@ -160,8 +169,8 @@ const providers: Provider[] = [
       const valid = await bcrypt.compare(password, credentialUser.passwordHash);
       if (!valid) return null;
 
-      // Identifiants valides : on charge maintenant le contexte pour la session.
-      const user = await findUserWithContext(email);
+      // Identifiants valides : on charge le contexte avec l'email canonique stocké.
+      const user = await findUserWithContext(credentialUser.email);
       if (!user) return null;
 
       return toSessionUser(user);

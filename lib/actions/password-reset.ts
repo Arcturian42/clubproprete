@@ -60,7 +60,15 @@ export async function requestPasswordReset(formData: FormData) {
 
 const resetSchema = z.object({
   token: z.string().min(10, "Lien invalide."),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères."),
+  // Même politique de complexité qu'à l'inscription : sinon le flux « mot de passe
+  // oublié » permettait de contourner la politique forte avec 6 caractères faibles.
+  password: z
+    .string()
+    .min(10, "Le mot de passe doit contenir au moins 10 caractères.")
+    .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule.")
+    .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule.")
+    .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre.")
+    .regex(/[^A-Za-z0-9]/, "Le mot de passe doit contenir au moins un symbole."),
 });
 
 export async function resetPassword(formData: FormData) {
